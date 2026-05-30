@@ -1669,10 +1669,10 @@ function renderLockForDay(dayMs, dayDate, isToday) {
     ).join('<br>');
   }
 
-  const ph2 = `${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
-  panel.innerHTML = `<span class="lock-badge lock-open">OPERATIONAL · ${ph2}</span>
+  const ph2 = `~${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
+  panel.innerHTML = `<span class="lock-badge lock-open">TAWE LOCK · ${ph2}</span>
     <div class="lock-window">${lwWarn}${slotsHtml}<br><br>
-    <span style="color:var(--ink3);font-size:10px">VHF Ch 18 · 01792 470310 · call 10 min before · out on the hour · in on the half</span></div>`;
+    <span style="color:var(--ink3);font-size:10px">Hours estimated from Marina Lock schedule — confirm with Tawe Lockmaster<br>VHF Ch 18 · 'Tawe Lock' · call 10 min before · first slot ~07:10 · out on hour · in on half</span></div>`;
 }
 
 // ── MOON / SOLAR ───────────────────────────────────────────────────
