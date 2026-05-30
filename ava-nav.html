@@ -604,6 +604,119 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 </div>
 
+<!-- SUN ALMANAC -->
+<div class="panel" style="margin-top:10px">
+  <h2>Sun Almanac · <span id="cel-alm-date">Today</span> (UTC)</h2>
+  <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:10px">Computed GHA and Declination of the sun for each full UTC hour. Find the row for the sight hour, note GHA and Dec, then add the increment for the remaining minutes and seconds below.</p>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="proc-table" id="cel-almanac-table" style="min-width:320px">
+      <tr><th>UT h</th><th>GHA Sun</th><th>Dec</th><th style="font-size:9px;color:var(--ink3)">d ′/h</th></tr>
+    </table>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Increments — Minutes of time (Sun)</div>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">Rate: 15.0′ per minute. Add to hourly GHA.</p>
+      <div style="overflow-x:auto">
+        <table class="proc-table" id="cel-incr-min" style="min-width:240px">
+          <tr><th>m</th><th>Incr</th><th>m</th><th>Incr</th><th>m</th><th>Incr</th></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Increments — Seconds of time (Sun)</div>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">Rate: 0.25′ per second. Add after minutes.</p>
+      <div style="overflow-x:auto">
+        <table class="proc-table" id="cel-incr-sec" style="min-width:240px">
+          <tr><th>s</th><th>Incr</th><th>s</th><th>Incr</th><th>s</th><th>Incr</th></tr>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--ink3);margin-top:10px"><strong style="color:var(--ink2)">d correction:</strong> For partial hours, d corr (arcmin/h) × minutes ÷ 60. Add to Dec if increasing, subtract if decreasing.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SIGHT REDUCTION CALCULATOR -->
+<div class="panel" style="margin-top:10px">
+  <h2>Sun Sight Reduction · Intercept Method</h2>
+  <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Enter your observation. This calculator gives Hc, azimuth Zn, and intercept — ready to plot your line of position.</p>
+
+  <div class="grid" style="margin-top:0;align-items:start">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Observation</div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">UTC date</label>
+      <input type="date" id="sr-date" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">UTC time (h m s)</label>
+      <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px">
+        <input type="number" id="sr-h" placeholder="12" min="0" max="23" style="width:54px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 6px;outline:none">
+        <span style="color:var(--ink3);font-size:11px">h</span>
+        <input type="number" id="sr-m" placeholder="34" min="0" max="59" style="width:54px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 6px;outline:none">
+        <span style="color:var(--ink3);font-size:11px">m</span>
+        <input type="number" id="sr-s" placeholder="00" min="0" max="59" style="width:54px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 6px;outline:none">
+        <span style="color:var(--ink3);font-size:11px">s</span>
+      </div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Hs (° ′)</label>
+      <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px">
+        <input type="number" id="sr-hs-deg" placeholder="62" min="0" max="89" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+        <span style="color:var(--ink3)">°</span>
+        <input type="number" id="sr-hs-min" placeholder="14.5" min="0" max="59.9" step="0.1" style="width:78px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+        <span style="color:var(--ink3)">′</span>
+      </div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Index Error (′  — on arc = negative)</label>
+      <input type="number" id="sr-ie" placeholder="0" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Height of eye (m)</label>
+      <input type="number" id="sr-hoe" placeholder="2.5" value="2.5" min="0" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Sun limb observed</label>
+      <select id="sr-limb" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+        <option value="lower">Lower limb  (+16.0′)</option>
+        <option value="upper">Upper limb  (−16.0′)</option>
+      </select>
+    </div>
+
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Assumed Position (AP)</div>
+      <p style="font-size:11px;color:var(--ink3);line-height:1.6;margin-bottom:10px">Choose AP longitude so that LHA comes out to a whole number of degrees — required for HO 249/AP3270 tables. The calculator works with any longitude.</p>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">AP Latitude (whole °)</label>
+      <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px">
+        <input type="number" id="sr-alat" placeholder="51" min="0" max="89" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+        <span style="color:var(--ink3)">°</span>
+        <select id="sr-alat-ns" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+          <option value="N">N</option>
+          <option value="S">S</option>
+        </select>
+      </div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">AP Longitude</label>
+      <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <input type="number" id="sr-alon-d" placeholder="3" min="0" max="179" style="width:54px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 6px;outline:none">
+        <span style="color:var(--ink3)">°</span>
+        <input type="number" id="sr-alon-m" placeholder="54.0" min="0" max="59.9" step="0.1" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 6px;outline:none">
+        <span style="color:var(--ink3)">′</span>
+        <select id="sr-alon-ew" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+          <option value="W">W</option>
+          <option value="E">E</option>
+        </select>
+      </div>
+
+      <div style="background:rgba(200,164,90,.06);border:1px solid rgba(200,164,90,.2);border-radius:var(--r);padding:10px;margin-bottom:12px;font-size:12px;color:var(--ink3);line-height:1.7">
+        <strong style="color:var(--amber)">Whole-degree LHA tip:</strong> From the almanac table, note GHA at the sight hour. Add the minutes increment. The resulting GHA — rounded to the nearest whole degree — gives you the AP longitude to use. E.g. GHA = 188°58.8′ → use AP lon = 2°59′W → LHA = 186°.
+      </div>
+
+      <button class="sk-btn sk-btn-primary" onclick="calcSightReduction()" style="width:100%;margin-top:4px">Calculate sight</button>
+    </div>
+  </div>
+
+  <div id="sr-result" style="margin-top:14px"></div>
+</div>
+
 <!-- CORRECTIONS TABLE -->
 <div class="panel" style="margin-top:10px">
   <h2>Altitude Corrections · Quick Reference</h2>
@@ -1826,59 +1939,228 @@ document.addEventListener('change',e=>{
 });
 
 // ── CELESTIAL ──────────────────────────────────────────────────────
-function sunDeclination(date) {
-  const doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
-  const dec = 23.45 * Math.sin((360 / 365) * (doy - 81) * Math.PI / 180);
-  const ns = dec >= 0 ? 'N' : 'S';
-  return { val: dec, str: `${Math.abs(dec).toFixed(1)}° ${ns}` };
+// ── CELESTIAL EPHEMERIS (Jean Meeus, accurate to ~0.5′) ────────────
+function jdFromDate(d) { return d.getTime() / 86400000 + 2440587.5; }
+
+function sunEphemeris(jd) {
+  const T = (jd - 2451545.0) / 36525;
+  let L0 = ((280.46646 + 36000.76983 * T) % 360 + 360) % 360;
+  let M  = ((357.52911 + 35999.05029 * T - 0.0001537 * T * T) % 360 + 360) % 360;
+  const Mr = M * Math.PI / 180;
+  const C = (1.914602 - 0.004817*T - 0.000014*T*T)*Math.sin(Mr)
+          + (0.019993 - 0.000101*T)*Math.sin(2*Mr) + 0.000289*Math.sin(3*Mr);
+  const lon = (L0 + C) * Math.PI / 180;
+  const eps = (23.439291111 - 0.013004167*T) * Math.PI / 180;
+  const ra  = Math.atan2(Math.cos(eps)*Math.sin(lon), Math.cos(lon));
+  const dec = Math.asin(Math.sin(eps)*Math.sin(lon));
+  const GMST = ((280.46061837 + 360.98564736629*(jd-2451545) + 0.000387933*T*T - T*T*T/38710000) % 360 + 360) % 360;
+  const gha  = ((GMST - ra*180/Math.PI) % 360 + 360) % 360;
+  return { gha, dec: dec*180/Math.PI };
 }
 
+function sunDeclination(date) {
+  const ep = sunEphemeris(jdFromDate(date));
+  return { val: ep.dec, str: `${Math.abs(ep.dec).toFixed(1)}° ${ep.dec>=0?'N':'S'}` };
+}
+
+function celRefraction(ha) {
+  // Meeus Bennett formula, arcminutes; cap at near-horizon
+  if (ha < 0.2) return 34.0;
+  return 1.02 / Math.tan((ha + 10.3/(ha+5.11)) * Math.PI/180);
+}
+
+// ── ALTITUDE CORRECTION (shared by noon and sight-reduction) ────────
+function altCorrect(hsDeg, hsMin, ie, hoe, limb) {
+  const hs  = hsDeg + hsMin/60;
+  const ha  = hs + ie/60 - 1.76*Math.sqrt(hoe)/60;
+  const dip = 1.76*Math.sqrt(hoe);
+  const refr= celRefraction(ha);
+  const sd  = limb==='lower' ? 16.0 : -16.0;
+  const ho  = ha + (-refr + sd)/60;
+  return { hs, ha, dip, refr, sd, ho };
+}
+
+// ── FORMAT HELPERS ──────────────────────────────────────────────────
+function fmtDM(deg) {
+  const d=Math.floor(deg), m=(deg-d)*60; return `${d}° ${m.toFixed(1)}′`;
+}
+function fmtGHAfull(g) { return fmtDM(g); }
+function fmtDecFull(d) {
+  const ns=d>=0?'N':'S', a=Math.abs(d);
+  const dd=Math.floor(a), m=(a-dd)*60; return `${ns} ${dd}° ${m.toFixed(1)}′`;
+}
+function fmtIncr(deg) {
+  const d=Math.floor(deg), m=(deg-d)*60;
+  return d===0 ? `${m.toFixed(1)}′` : `${d}° ${m.toFixed(1)}′`;
+}
+
+// ── ALMANAC TABLE ───────────────────────────────────────────────────
+function buildAlmanac() {
+  const now=new Date();
+  const alm=$('cel-alm-date');
+  if(alm) alm.textContent=now.toDateString();
+  const y=now.getUTCFullYear(), mo=now.getUTCMonth(), d=now.getUTCDate();
+
+  let rows='';
+  for(let h=0;h<=23;h++){
+    const dt =new Date(Date.UTC(y,mo,d,h,0,0));
+    const dt1=new Date(Date.UTC(y,mo,d,h+1,0,0));
+    const ep =sunEphemeris(jdFromDate(dt));
+    const ep1=sunEphemeris(jdFromDate(dt1));
+    const dCorr=(ep1.dec-ep.dec)*60;
+    const bg=h%2?'':' style="background:rgba(200,164,90,.04)"';
+    rows+=`<tr${bg}><td>${String(h).padStart(2,'0')}</td><td>${fmtGHAfull(ep.gha)}</td><td>${fmtDecFull(ep.dec)}</td><td style="color:var(--ink3)">${dCorr>=0?'+':''}${dCorr.toFixed(1)}</td></tr>`;
+  }
+  const t=$('cel-almanac-table');
+  if(t) t.innerHTML=`<tr><th>UT h</th><th>GHA Sun</th><th>Dec</th><th style="font-size:9px;color:var(--ink3)">d ′/h</th></tr>`+rows;
+
+  // Minutes increment (15.0'/min)
+  let mrows='';
+  for(let i=0;i<20;i++)
+    mrows+=`<tr><td>${i}</td><td>${fmtIncr(i*0.25)}</td><td>${i+20}</td><td>${fmtIncr((i+20)*0.25)}</td><td>${i+40}</td><td>${fmtIncr((i+40)*0.25)}</td></tr>`;
+  const mt=$('cel-incr-min');
+  if(mt) mt.innerHTML=`<tr><th>m</th><th>Incr</th><th>m</th><th>Incr</th><th>m</th><th>Incr</th></tr>`+mrows;
+
+  // Seconds increment (0.25'/s = 0.004167°/s)
+  let srows='';
+  for(let i=0;i<20;i++){
+    const a=i/240, b=(i+20)/240, c=(i+40)/240;
+    srows+=`<tr><td>${i}</td><td>${fmtIncr(a)}</td><td>${i+20}</td><td>${fmtIncr(b)}</td><td>${i+40}</td><td>${fmtIncr(c)}</td></tr>`;
+  }
+  const st=$('cel-incr-sec');
+  if(st) st.innerHTML=`<tr><th>s</th><th>Incr</th><th>s</th><th>Incr</th><th>s</th><th>Incr</th></tr>`+srows;
+}
+
+// ── NOON SIGHT ──────────────────────────────────────────────────────
 function calcNoon() {
-  const hsDeg = parseFloat($('cel-hs-deg').value) || 0;
-  const hsMin = parseFloat($('cel-hs-min').value) || 0;
-  const ie    = parseFloat($('cel-ie').value) || 0;
-  const hoe   = parseFloat($('cel-hoe').value) || 2.5;
-  const limb  = $('cel-limb').value;
-  const out   = $('cel-result');
-
-  const hs = hsDeg + hsMin / 60;
-  // IE: sign as entered (on arc = negative)
-  const ha_ie = hs + (ie / 60);
-  // Dip: always subtract, = 1.76 * sqrt(m) arcmin
-  const dip = 1.76 * Math.sqrt(hoe);
-  const ha = ha_ie - (dip / 60);
-  // Refraction (approx, degrees): 1/(tan(ha)) in arcmin
-  const refr = (1 / Math.tan(ha * Math.PI / 180)) / 60;
-  // Semi-diameter: lower limb +16.0', upper -16.0'
-  const sd = limb === 'lower' ? 16.0 / 60 : -16.0 / 60;
-  const ho = ha - refr + sd;
-  // Zenith distance
-  const zd = 90 - ho;
-  // Declination
-  const decObj = sunDeclination(new Date());
-  const dec = decObj.val;
-  // Latitude (sun transits S of observer in N hemisphere, N of declination)
-  // Lat = Dec + ZD if sun is S of observer (usual case for UK)
-  const lat = dec + zd;
-  const ns = lat >= 0 ? 'N' : 'S';
-
-  out.innerHTML = `
-    <div class="row"><span class="k">Hs</span><span class="v amber">${hs.toFixed(2)}°</span></div>
-    <div class="row"><span class="k">IE correction</span><span class="v">${ie >= 0 ? '+' : ''}${ie.toFixed(1)}′</span></div>
-    <div class="row"><span class="k">Dip correction</span><span class="v">−${dip.toFixed(1)}′</span></div>
-    <div class="row"><span class="k">Ha (apparent altitude)</span><span class="v">${ha.toFixed(2)}°</span></div>
-    <div class="row"><span class="k">Refraction</span><span class="v">−${(refr * 60).toFixed(1)}′</span></div>
-    <div class="row"><span class="k">Semi-diameter (${limb} limb)</span><span class="v">${sd > 0 ? '+' : ''}${(sd * 60).toFixed(1)}′</span></div>
-    <div class="row"><span class="k">Ho (observed altitude)</span><span class="v amber">${ho.toFixed(2)}°</span></div>
-    <div class="row"><span class="k">Zenith distance (90−Ho)</span><span class="v">${zd.toFixed(2)}°</span></div>
-    <div class="row"><span class="k">Sun declination today</span><span class="v">${decObj.str}</span></div>
+  const hsDeg=parseFloat($('cel-hs-deg').value)||0;
+  const hsMin=parseFloat($('cel-hs-min').value)||0;
+  const ie   =parseFloat($('cel-ie').value)||0;
+  const hoe  =parseFloat($('cel-hoe').value)||2.5;
+  const limb =$('cel-limb').value;
+  const out  =$('cel-result');
+  const {hs,ha,dip,refr,sd,ho}=altCorrect(hsDeg,hsMin,ie,hoe,limb);
+  const zd=90-ho;
+  const decObj=sunDeclination(new Date());
+  const lat=decObj.val+zd;
+  const ns=lat>=0?'N':'S';
+  out.innerHTML=`
+    <div class="row"><span class="k">Hs</span><span class="v amber">${fmtDM(hs)}</span></div>
+    <div class="row"><span class="k">IE</span><span class="v">${ie>=0?'+':''}${ie.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Dip (${hoe}m)</span><span class="v">−${dip.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Ha</span><span class="v">${fmtDM(ha)}</span></div>
+    <div class="row"><span class="k">Refraction</span><span class="v">−${refr.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">SD (${limb} limb)</span><span class="v">${sd>0?'+':''}${sd.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Ho</span><span class="v amber">${fmtDM(ho)}</span></div>
+    <div class="row"><span class="k">ZD (90°−Ho)</span><span class="v">${fmtDM(zd)}</span></div>
+    <div class="row"><span class="k">Sun Dec</span><span class="v">${decObj.str}</span></div>
     <div class="row" style="border-top:1px solid var(--accent);margin-top:4px;padding-top:4px"><span class="k">Latitude</span><span class="v big amber">${Math.abs(lat).toFixed(1)}° ${ns}</span></div>`;
 }
 
+// ── FULL SIGHT REDUCTION (intercept method) ─────────────────────────
+function calcSightReduction() {
+  const dateStr=$('sr-date').value;
+  const utH=parseInt($('sr-h').value)||0, utM=parseInt($('sr-m').value)||0, utS=parseInt($('sr-s').value)||0;
+  const hsDeg=parseFloat($('sr-hs-deg').value)||0, hsMin=parseFloat($('sr-hs-min').value)||0;
+  const ie=parseFloat($('sr-ie').value)||0, hoe=parseFloat($('sr-hoe').value)||2.5;
+  const limb=$('sr-limb').value;
+  const alatDeg=parseFloat($('sr-alat').value)||51, alatNS=$('sr-alat-ns').value;
+  const alonD=parseFloat($('sr-alon-d').value)||3, alonM=parseFloat($('sr-alon-m').value)||54;
+  const alonEW=$('sr-alon-ew').value;
+  const out=$('sr-result');
+  if(!hsDeg && !hsMin){ out.innerHTML='<p style="color:var(--ink3);font-family:var(--font-mono);font-size:12px">Enter sextant altitude to calculate.</p>'; return; }
+
+  // Observation datetime
+  let y,mo,d;
+  if(dateStr){ [y,mo,d]=dateStr.split('-').map(Number); mo--; }
+  else { const n=new Date(); y=n.getUTCFullYear(); mo=n.getUTCMonth(); d=n.getUTCDate(); }
+  const obsUTC=new Date(Date.UTC(y,mo,d,utH,utM,utS));
+  const jdObs=jdFromDate(obsUTC);
+
+  // Altitude corrections
+  const {hs,ha,dip,refr,sd,ho}=altCorrect(hsDeg,hsMin,ie,hoe,limb);
+
+  // Almanac at whole hour
+  const epH=sunEphemeris(jdFromDate(new Date(Date.UTC(y,mo,d,utH,0,0))));
+  const epH1=sunEphemeris(jdFromDate(new Date(Date.UTC(y,mo,d,utH+1,0,0))));
+  const ghaHour=epH.gha;
+  const decHour=epH.dec;
+  const dCorrPH=(epH1.dec-epH.dec)*60; // arcmin/hour
+
+  // GHA increment for minutes+seconds
+  const totSec=utM*60+utS;
+  const incrDeg=totSec*15.0/3600; // sun rate = exactly 15°/h for this calculator
+  const gha=((ghaHour+incrDeg)%360+360)%360;
+
+  // d correction for partial hour
+  const dCorrApplied=dCorrPH*(utM+utS/60)/60; // arcmin
+  const dec=decHour+dCorrApplied/60;
+
+  // LHA
+  const alon=alonD+alonM/60;
+  const lha=((alonEW==='W'?gha-alon:gha+alon)%360+360)%360;
+  const lhaWhole=Math.round(lha); // for HO 249 note
+
+  // Sight reduction (navigation triangle)
+  const L=(alatNS==='N'?1:-1)*alatDeg;
+  const Lr=L*Math.PI/180, dr=dec*Math.PI/180, LHAr=lha*Math.PI/180;
+  const sinHc=Math.sin(Lr)*Math.sin(dr)+Math.cos(Lr)*Math.cos(dr)*Math.cos(LHAr);
+  const Hc=Math.asin(Math.max(-1,Math.min(1,sinHc)))*180/Math.PI;
+  const Znr=Math.atan2(-Math.cos(dr)*Math.sin(LHAr), Math.sin(dr)*Math.cos(Lr)-Math.cos(dr)*Math.cos(LHAr)*Math.sin(Lr));
+  const Zn=((Znr*180/Math.PI)+360)%360;
+
+  // Intercept
+  const intercept=(ho-Hc)*60; // nm
+  const toward=intercept>=0;
+
+  // Format LHA nicely
+  const lhaDeg=Math.floor(lha), lhaMin=(lha-lhaDeg)*60;
+
+  const R=`<div style="margin-top:0;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-family:var(--font-mono);font-size:12px">
+  <div style="color:var(--ink3);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px">Sun sight · ${obsUTC.toISOString().replace('T',' ').slice(0,19)} UTC</div>
+
+  <div style="color:var(--amber);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:6px 0 4px">Altitude corrections (Hs → Ho)</div>
+  <div class="row"><span class="k">Hs</span><span class="v amber">${fmtDM(hs)}</span></div>
+  <div class="row"><span class="k">IE</span><span class="v">${ie>=0?'+':''}${ie.toFixed(1)}′</span></div>
+  <div class="row"><span class="k">Dip (${hoe}m)</span><span class="v">−${dip.toFixed(1)}′</span></div>
+  <div class="row"><span class="k">Ha</span><span class="v">${fmtDM(ha)}</span></div>
+  <div class="row"><span class="k">Refraction</span><span class="v">−${refr.toFixed(1)}′</span></div>
+  <div class="row"><span class="k">SD (${limb} limb)</span><span class="v">${sd>0?'+':''}${sd.toFixed(1)}′</span></div>
+  <div class="row" style="border-bottom:none"><span class="k" style="color:var(--ink)">Ho  (observed)</span><span class="v amber" style="font-size:15px">${fmtDM(ho)}</span></div>
+
+  <div style="color:var(--amber);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px">Almanac · GHA and Dec</div>
+  <div class="row"><span class="k">GHA at ${String(utH).padStart(2,'0')}h</span><span class="v">${fmtGHAfull(ghaHour)}</span></div>
+  <div class="row"><span class="k">Increment (${utM}m ${utS}s)</span><span class="v">+${fmtIncr(incrDeg)}</span></div>
+  <div class="row"><span class="k">GHA</span><span class="v amber">${fmtGHAfull(gha)}</span></div>
+  <div class="row"><span class="k">AP lon (${alonEW})</span><span class="v">${alonEW==='W'?'−':'+'}${fmtDM(alon)}</span></div>
+  <div class="row"><span class="k">LHA</span><span class="v amber">${lhaDeg}° ${lhaMin.toFixed(1)}′ ${lhaWhole!==Math.round(lha)?'':'(= '+lhaWhole+'° whole °)'}</span></div>
+  <div class="row"><span class="k">Dec (tabulated)</span><span class="v">${fmtDecFull(decHour)}</span></div>
+  <div class="row"><span class="k">d corr (${dCorrPH.toFixed(1)}′/h × ${utM}m)</span><span class="v">${dCorrApplied>=0?'+':''}${dCorrApplied.toFixed(1)}′</span></div>
+  <div class="row" style="border-bottom:none"><span class="k">Dec (corrected)</span><span class="v amber">${fmtDecFull(dec)}</span></div>
+
+  <div style="color:var(--amber);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px">Sight reduction · AP ${alatDeg}°${alatNS}</div>
+  <div class="row"><span class="k">Hc  (calculated)</span><span class="v amber" style="font-size:15px">${fmtDM(Hc)}</span></div>
+  <div class="row" style="border-bottom:none"><span class="k">Zn  (azimuth)</span><span class="v amber" style="font-size:15px">${Zn.toFixed(0)}°</span></div>
+
+  <div style="border-top:1px solid var(--accent);margin-top:10px;padding-top:10px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="k">Intercept</span>
+      <span class="v" style="font-size:18px;color:${toward?'var(--green)':'var(--red)'}">${Math.abs(intercept).toFixed(1)} nm  ${toward?'TOWARDS':'AWAY'}</span>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--ink3);line-height:1.7">
+      Ho − Hc = ${intercept>=0?'+':''}${intercept.toFixed(1)}′.<br>
+      Plot: From AP ${alatDeg}°${alatNS} / ${alonD}°${alonM.toFixed(1)}′${alonEW}, draw azimuth ${Zn.toFixed(0)}°. Mark ${Math.abs(intercept).toFixed(1)} nm ${toward?'towards (AP side)':'away (far side)'}. Draw LOP at 90° to azimuth through that point.
+    </div>
+  </div>
+</div>`;
+  out.innerHTML=R;
+}
+
 function initCelestial() {
-  const decObj = sunDeclination(new Date());
-  const el = $('cel-dec');
-  if (el) el.textContent = decObj.str;
+  const decObj=sunDeclination(new Date());
+  const el=$('cel-dec'); if(el) el.textContent=decObj.str;
+  const d=$('sr-date'); if(d) d.value=new Date().toISOString().split('T')[0];
+  buildAlmanac();
 }
 
 // ── INIT ───────────────────────────────────────────────────────────
