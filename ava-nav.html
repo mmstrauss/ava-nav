@@ -1584,13 +1584,19 @@ function drawTideGraph(dayMs, nowMs) {
     return `<line x1="${x}" y1="${H-8}" x2="${x}" y2="${H}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
   <text x="${x}" y="${H-10}" fill="var(--ink3)" font-size="7" font-family="monospace" text-anchor="middle" opacity="0.7">${h.toString().padStart(2,'0')}:00</text>`;
   }).join('');
+  // 1.5 m lock threshold line
+  const lockY = py(1.5);
+  const lockLine = (lockY >= 0 && lockY <= H)
+    ? `<line x1="0" y1="${lockY.toFixed(1)}" x2="${W}" y2="${lockY.toFixed(1)}" stroke="#d4a843" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+  <text x="2" y="${Math.max(lockY - 2, 7).toFixed(1)}" fill="#d4a843" font-size="7" font-family="monospace" opacity="0.6">1.5m lock</text>`
+    : '';
   svg.innerHTML = `<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#5b9fcf" stop-opacity="0.35"/>
     <stop offset="100%" stop-color="#5b9fcf" stop-opacity="0.03"/>
   </linearGradient></defs>
   <path d="${path}L${W},${H}L0,${H}Z" fill="url(#tg)"/>
   <path d="${path}" fill="none" stroke="#5b9fcf" stroke-width="1.5"/>
-  ${ticks}${nowLine}`;
+  ${lockLine}${ticks}${nowLine}`;
 }
 
 // ── LOCK ───────────────────────────────────────────────────────────
@@ -1637,43 +1643,63 @@ function renderLockForDay(dayMs, dayDate, isToday) {
 
   const { open, close } = getLockHours(dayDate);
 
-  // Build hourly OUT slots within operating hours, checking tide >= 1.5 m at slot time
-  const LOCK_MIN_TIDE = 1.5;
+  // Build hourly OUT slots within operating hours, checking tide >= 1.5 m
+  const LOCK_MIN = 1.5;
   const slots = [];
   for (let h = open; h < close; h++) {
     const outT = new Date(dayDate); outT.setHours(h, 0, 0, 0);
     const inT  = new Date(dayDate); inT.setHours(h, 30, 0, 0);
-    const tideOut = tideAt(outT.getTime());
-    const tideIn  = tideAt(inT.getTime());
-    const tideLow = tideOut < LOCK_MIN_TIDE || tideIn < LOCK_MIN_TIDE;
-    slots.push({ outT, inT, past: outT.getTime() < now, tideLow, tideOut });
+    const tOut = tideAt(outT.getTime()), tIn = tideAt(inT.getTime());
+    const tideLow = tOut < LOCK_MIN || tIn < LOCK_MIN;
+    slots.push({ outT, inT, past: outT.getTime() < now, tideLow, tOut, tIn });
   }
 
-  const renderSlot = (s, forceFull) => {
+  const fmtSlot = s => {
     if (s.tideLow) {
-      const style = s.past ? 'opacity:0.38;' : '';
-      return `<span style="${style}color:var(--ink3)"><strong>${fmt(s.outT)}</strong> — tide ${s.tideOut.toFixed(1)} m (min 1.5 m)</span>`;
+      const worst = Math.min(s.tOut, s.tIn).toFixed(1);
+      return `<span style="${s.past?'opacity:0.38;':''}color:var(--ink3)"><strong>${fmt(s.outT)}</strong> ✕ ${worst} m</span>`;
     }
-    const style = s.past ? 'opacity:0.38' : '';
-    return `<span style="${style}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`;
+    return `<span style="${s.past?'opacity:0.38':''}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`;
   };
 
   let slotsHtml;
   if (isToday) {
-    // Show last past slot + next 4 upcoming (all categories)
     const past = slots.filter(s => s.past).slice(-1);
-    const upcoming = slots.filter(s => !s.past).slice(0, 4);
-    slotsHtml = [...past, ...upcoming].map(s => renderSlot(s)).join('<br>');
+    const upcoming = slots.filter(s => !s.past).slice(0, 5);
+    slotsHtml = [...past, ...upcoming].map(fmtSlot).join('<br>');
     if (!slots.filter(s => !s.past).length)
-      slotsHtml += '<br><span style="color:var(--ink3)">No more slots today — reopens 07:00</span>';
+      slotsHtml = '<span style="color:var(--ink3)">No more slots today — reopens 07:00</span>';
   } else {
-    slotsHtml = slots.map(s => renderSlot(s)).join('<br>');
+    // Future day: list available slots; group blocked periods into a summary line
+    const avail = slots.filter(s => !s.tideLow);
+    const blocked = slots.filter(s => s.tideLow);
+    if (!avail.length) {
+      slotsHtml = `<span style="color:var(--red)">No slots available — tide below 1.5 m throughout operating hours</span>`;
+    } else {
+      slotsHtml = avail.map(fmtSlot).join('<br>');
+      if (blocked.length) {
+        // Group consecutive blocked hours into ranges
+        const groups = [];
+        let gs = blocked[0], gp = blocked[0];
+        for (let i = 1; i < blocked.length; i++) {
+          if (blocked[i].outT.getHours() === gp.outT.getHours() + 1) { gp = blocked[i]; }
+          else { groups.push([gs, gp]); gs = blocked[i]; gp = blocked[i]; }
+        }
+        groups.push([gs, gp]);
+        const bStr = groups.map(([s, e]) =>
+          s === e ? fmt(s.outT) : `${fmt(s.outT)}–${fmt(e.outT)}`
+        ).join(', ');
+        slotsHtml += `<br><span style="color:var(--ink3);font-size:10px">⚠ Tide &lt; 1.5 m: ${bStr}</span>`;
+      }
+    }
   }
 
   const ph2 = `~${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
   panel.innerHTML = `<span class="lock-badge lock-open">TAWE LOCK · ${ph2}</span>
-    <div class="lock-window">${lwWarn}${slotsHtml}<br><br>
-    <span style="color:var(--ink3);font-size:10px">Hours estimated from Marina Lock schedule — confirm with Tawe Lockmaster<br>VHF Ch 18 · 'Tawe Lock' · call 10 min before · first slot ~07:10 · out on hour · in on half</span></div>`;
+    <div class="lock-window">${slotsHtml}<br><br>
+    <span style="color:var(--ink3);font-size:10px">Be ready at berth ~:45 · first slot ~07:10 · out on hour · in on half<br>
+    Overnight away: inform Tawe Lockmaster &amp; Coastguard · holding buoys downstream of lock<br>
+    VHF Ch 18 · 'Tawe Lock' · call 10 min before · hours est. from Marina Lock schedule</span></div>`;
 }
 
 // ── MOON / SOLAR ───────────────────────────────────────────────────
