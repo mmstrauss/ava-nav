@@ -1550,7 +1550,7 @@ function renderDayView(offset) {
   drawTideGraph(dayMs, isToday ? Date.now() : null);
 
   // Lock panel
-  renderLockForDay(dayMs, base);
+  renderLockForDay(dayMs, base, isToday);
 
   // Weather
   renderWeatherForDay(offset);
@@ -1594,44 +1594,85 @@ function drawTideGraph(dayMs, nowMs) {
 }
 
 // ── LOCK ───────────────────────────────────────────────────────────
+// Tawe Barrage Lock schedule (Swansea Marina published hours):
+//   Weekdays GMT:  07:00–19:00   Weekdays BST:  07:00–22:00
+//   Sat/Sun:       07:00–22:00 (both seasons)
+// Procedure: OUT on the hour · IN on the half hour
+// First slot ~07:10 · Last IN = close − 30 min
+
 const LOCK_CLOSURES = [
   {start:new Date('2026-03-01T22:00:00'), end:new Date('2026-03-23T07:00:00'), label:'Major maintenance'},
   {start:new Date('2026-12-25T00:00:00'), end:new Date('2026-12-26T00:00:00'), label:'Christmas Day'},
-  // Add real 2026 closure dates from Swansea Marina when published
 ];
+
+function isBST(date) {
+  const y = date.getFullYear();
+  const lsMar = new Date(y, 2, 31); lsMar.setDate(31 - lsMar.getDay());
+  const lsOct = new Date(y, 9, 31); lsOct.setDate(31 - lsOct.getDay());
+  return date >= lsMar && date < lsOct;
+}
+
+function getLockHours(date) {
+  const weekend = date.getDay() === 0 || date.getDay() === 6;
+  return { open: 7, close: (weekend || isBST(date)) ? 22 : 19 };
+}
 
 function updateLock() {
   if (S.selectedDay === 0) {
     const base = new Date(); base.setHours(0,0,0,0);
-    renderLockForDay(base.getTime(), base);
+    renderLockForDay(base.getTime(), base, true);
   }
 }
 
-function renderLockForDay(dayMs, dayDate) {
+function renderLockForDay(dayMs, dayDate, isToday) {
   const panel = $('lock-panel'); if (!panel) return;
+  const now = Date.now();
+
   for (const cl of LOCK_CLOSURES) {
     if (dayDate >= cl.start && dayDate < cl.end) {
       panel.innerHTML = `<span class="lock-badge lock-closed">CLOSED – ${cl.label}</span><div class="lock-window">Reopens ${fmtDate(cl.end)} ${fmt(cl.end)}</div>`;
       return;
     }
   }
+
+  const { open, close } = getLockHours(dayDate);
+
+  // Build hourly OUT slots within operating hours
+  const slots = [];
+  for (let h = open; h < close; h++) {
+    const outT = new Date(dayDate); outT.setHours(h, 0, 0, 0);
+    const inT  = new Date(dayDate); inT.setHours(h, 30, 0, 0);
+    slots.push({ outT, inT, past: outT.getTime() < now });
+  }
+
+  // Tidal caution: warn if LW is very shallow (sea-side approaches)
   const extrema = findExtrema(dayMs, 8).filter(e => e.t < dayMs + 86400000);
-  const hws = extrema.filter(e => e.type === 'HW');
-  const windows = [];
-  for (const hw of hws) {
-    for (let off = -2.5*3.6e6; off <= 2.5*3.6e6; off += 3.6e6) {
-      const outT = new Date(hw.t + off), inT = new Date(hw.t + off + 30*60000);
-      if (outT.getTime() >= dayMs && outT.getTime() < dayMs + 86400000 && tideAt(outT.getTime()) >= 1.5)
-        windows.push(`<strong>${fmt(outT)}</strong> out · <strong>${fmt(inT)}</strong> in`);
-    }
+  const lws = extrema.filter(e => e.type === 'LW');
+  const minLW = lws.length ? Math.min(...lws.map(e => e.h)) : null;
+  const lwWarn = (minLW !== null && minLW < 1.0)
+    ? `<span style="color:var(--amber);font-size:10px">⚠ LW ${minLW.toFixed(1)} m – check sea-side depth on Ava's approach</span><br>`
+    : '';
+
+  let slotsHtml;
+  if (isToday) {
+    // Show last past slot (faded) + next 4 upcoming
+    const past = slots.filter(s => s.past).slice(-1);
+    const upcoming = slots.filter(s => !s.past).slice(0, 4);
+    slotsHtml = [...past, ...upcoming].map(s =>
+      `<span style="${s.past ? 'opacity:0.38' : ''}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`
+    ).join('<br>');
+    if (!upcoming.length) slotsHtml += '<br><span style="color:var(--ink3)">Lock closed for today — reopens 07:00</span>';
+  } else {
+    // Future day: show full compact schedule
+    slotsHtml = slots.map(s =>
+      `<strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in`
+    ).join('<br>');
   }
-  if (!windows.length && tideAt(dayMs + 43200000) < 1.5) {
-    panel.innerHTML = `<span class="lock-badge lock-closed">CHECK TIDES</span><div class="lock-window">Low neap — some windows may be below 1.5 m. Call marina.</div>`;
-    return;
-  }
-  panel.innerHTML = `<span class="lock-badge lock-open">OPERATIONAL</span>
-    <div class="lock-window">${windows.join('<br>') || 'No windows — check Swansea Marina.'}<br><br>
-    <span style="color:var(--ink3);font-size:10px">VHF Ch 18 · 01792 470310 · Call 10 min before</span></div>`;
+
+  const ph2 = `${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
+  panel.innerHTML = `<span class="lock-badge lock-open">OPERATIONAL · ${ph2}</span>
+    <div class="lock-window">${lwWarn}${slotsHtml}<br><br>
+    <span style="color:var(--ink3);font-size:10px">VHF Ch 18 · 01792 470310 · call 10 min before · out on the hour · in on the half</span></div>`;
 }
 
 // ── MOON / SOLAR ───────────────────────────────────────────────────
@@ -2063,7 +2104,7 @@ Concise skipper's briefing under these exact headings — no preamble, max 350 w
     const wn=parseFloat(windKn), bf=bfScale(wn);
     const go=wn<20?'✓ GOOD TO SAIL':wn<28?'⚠ CAUTION':'✕ DO NOT SAIL';
     out.innerHTML=`<h4>Go / No-Go</h4><p>${go} — ${wn.toFixed(1)} kn (F${bf}), gusts ${gustKn} kn, seas ${waveH} m.</p>
-<h4>Tide & Lock</h4><p>Tide ${tideH} m above CD · ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Lock HW ±2.5 h, out on the hour, in on the half. VHF Ch 18.</p>
+<h4>Tide & Lock</h4><p>Tide ${tideH} m above CD · ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Lock operates 07:00–19:00 GMT / 07:00–22:00 BST (weekdays), 07:00–22:00 weekends. Out on the hour, in on the half. VHF Ch 18.</p>
 <h4>Watch Points</h4><p>1. AIS traffic on Swansea Approach. 2. Monitor pressure trend every 30 min. 3. Tidal streams up to 3 kn — allow for set and drift.</p>
 <h4 style="color:var(--ink3)">No API key</h4><p style="color:var(--ink3);font-size:13px">Rule-based briefing only. Add Anthropic key in Settings for full AI briefings (~0.25p each on Haiku 4.5).</p>`;
     return;
