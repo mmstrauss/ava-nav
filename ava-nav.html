@@ -1430,6 +1430,13 @@ with open(fname, 'w', newline='') as f:
     <button class="sk-btn sk-btn-primary" onclick="saveWtKey()">Save &amp; fetch tides</button>
 
     <div class="divider"></div>
+    <h2>Sea State — StormGlass</h2>
+    <label for="set-sg-key">StormGlass API Key</label>
+    <input type="password" id="set-sg-key" placeholder="Paste your StormGlass API key" autocomplete="off">
+    <div class="set-note">Free tier: 10 requests/day — cached for 6 hours so typical use is 1–4 calls/day. Provides wave height, period and direction for Swansea Bay for today and the next 7 days.</div>
+    <button class="sk-btn sk-btn-primary" onclick="saveSgKey()">Save &amp; fetch waves</button>
+
+    <div class="divider"></div>
     <h2>Anthropic API</h2>
     <label for="set-key">API Key</label>
     <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off">
@@ -1498,7 +1505,9 @@ const S = {
   adminUrl:  localStorage.getItem('ava-admin-url')  || 'http://192.168.1.50:8082',
   selectedDay: 0,
   wtKey:   localStorage.getItem('ava-wt-key')   || '',
+  sgKey:   localStorage.getItem('ava-sg-key')   || '',
   tideData: null,
+  sgData: null,
 };
 
 // ── THEME ──────────────────────────────────────────────────────────
@@ -1583,6 +1592,7 @@ function saveAdminUrl() {
 // ── SETTINGS ───────────────────────────────────────────────────────
 function initSettings() {
   $('set-wt-key').value  = S.wtKey;
+  $('set-sg-key').value  = S.sgKey;
   $('set-key').value     = S.apiKey;
   $('set-model').value   = S.model;
   $('set-sk-host').value = S.skHost;
@@ -1594,10 +1604,86 @@ function initSettings() {
 function saveWtKey() {
   S.wtKey = $('set-wt-key').value.trim();
   localStorage.setItem('ava-wt-key', S.wtKey);
-  localStorage.removeItem('ava-tide-cache'); // force fresh fetch
+  localStorage.removeItem('ava-tide-cache');
   S.tideData = null;
   loadTides();
   alert('WorldTides key saved — fetching tide data…');
+}
+function saveSgKey() {
+  S.sgKey = $('set-sg-key').value.trim();
+  localStorage.setItem('ava-sg-key', S.sgKey);
+  localStorage.removeItem('ava-sg-cache');
+  S.sgData = null;
+  loadWaves();
+  alert('StormGlass key saved — fetching wave data…');
+}
+
+async function loadWaves() {
+  if (!S.sgKey) return;
+  try {
+    const cached = JSON.parse(localStorage.getItem('ava-sg-cache') || 'null');
+    if (cached?.fetchedAt > Date.now() - 6*3600000) {
+      S.sgData = cached; applyWaveNow(); return;
+    }
+  } catch(_) {}
+  const start = Math.floor(Date.now() / 1000);
+  const end   = start + 7 * 86400;
+  try {
+    const r = await fetch(
+      `https://api.stormglass.io/v2/weather/point?lat=51.617&lng=-3.944` +
+      `&params=waveHeight,wavePeriod,waveDirection,swellHeight,swellPeriod` +
+      `&start=${start}&end=${end}`,
+      { headers: { Authorization: S.sgKey } }
+    );
+    const d = await r.json();
+    if (!d.hours) throw new Error(d.errors?.key || JSON.stringify(d.errors) || 'StormGlass error');
+    S.sgData = { hours: d.hours, fetchedAt: Date.now() };
+    localStorage.setItem('ava-sg-cache', JSON.stringify(S.sgData));
+    applyWaveNow();
+  } catch(e) {
+    console.warn('StormGlass fetch failed:', e);
+    try {
+      const cached = JSON.parse(localStorage.getItem('ava-sg-cache') || 'null');
+      if (cached) { S.sgData = cached; applyWaveNow(); }
+    } catch(_) {}
+  }
+}
+
+function sgVal(entry, param) {
+  const v = entry?.[param];
+  return v?.sg ?? v?.noaa ?? v?.icon ?? null;
+}
+
+function waveForDay(offset) {
+  if (!S.sgData?.hours?.length) return null;
+  const base = new Date(); base.setHours(0,0,0,0);
+  base.setDate(base.getDate() + offset);
+  const dayStart = base.getTime(), dayEnd = dayStart + 86400000;
+  if (offset === 0) {
+    const nowMs = Date.now();
+    const h = S.sgData.hours.reduce((best, x) =>
+      Math.abs(new Date(x.time) - nowMs) < Math.abs(new Date(best.time) - nowMs) ? x : best
+    );
+    return { h: sgVal(h,'waveHeight')||0, p: sgVal(h,'wavePeriod')||0, d: sgVal(h,'waveDirection')||0, isMax: false };
+  }
+  const dayHrs = S.sgData.hours.filter(x => {
+    const t = new Date(x.time).getTime(); return t >= dayStart && t < dayEnd;
+  });
+  if (!dayHrs.length) return null;
+  const peak = dayHrs.reduce((m, x) => (sgVal(x,'waveHeight')||0) > (sgVal(m,'waveHeight')||0) ? x : m);
+  return { h: sgVal(peak,'waveHeight')||0, p: sgVal(peak,'wavePeriod')||0, d: sgVal(peak,'waveDirection')||0, isMax: true };
+}
+
+function fmtWave(w) {
+  const dir = w.d ? ` ${deg2cpt(w.d)}` : '';
+  const pfx = w.isMax ? 'max ' : '';
+  return `${pfx}${w.h.toFixed(1)} m · ${w.p.toFixed(0)} s${dir}`;
+}
+
+function applyWaveNow() {
+  const w = waveForDay(0); if (!w) return;
+  set('wave-now', fmtWave(w), w.h > 2 ? 'red' : w.h > 1 ? 'amber' : '');
+  if (S.selectedDay === 0) renderDayView(0);
 }
 function saveApi() {
   S.apiKey = $('set-key').value.trim();
@@ -2035,9 +2121,15 @@ function renderWeatherForDay(offset) {
   set('temp-now', `${d.temperature_2m_max[offset].toFixed(0)}° / ${d.temperature_2m_min[offset].toFixed(0)}°C`);
   set('vis-now', `${icon}  ${wCodeDesc(d.weather_code[offset])}`);
   set('press-now', '—');
-  set('wave-now', '—');
+  const sgW = waveForDay(offset);
+  if (sgW) {
+    set('wave-now', fmtWave(sgW), sgW.h > 2 ? 'red' : sgW.h > 1 ? 'amber' : '');
+    updateGoNoGo(wKn, gKn, sgW.h);
+  } else {
+    set('wave-now', '—');
+    updateGoNoGo(wKn, gKn, 0);
+  }
   buildBfBar(bf);
-  updateGoNoGo(wKn, gKn, 0);
   updateSailPlan(wKn, gKn, bf);
   drawHourlyWind(offset);
 }
@@ -2107,9 +2199,15 @@ async function loadWeather() {
       const diff=hrs[0]-hrs[3];
       set('press-now',`${hrs[0].toFixed(0)} hPa  ${diff>1.5?'↑ Rising':diff<-1.5?'↓ Falling':'→ Steady'}`,diff<-3?'red':'');
     }
-    if (waveH) set('wave-now',`${waveH.toFixed(1)} m  ${mar.current.wave_period?.toFixed(0)||'—'} s`,waveH>2?'red':waveH>1?'amber':'');
+    const sgW = waveForDay(0);
+    const activeWave = sgW ? sgW.h : waveH;
+    if (sgW) {
+      set('wave-now', fmtWave(sgW), sgW.h > 2 ? 'red' : sgW.h > 1 ? 'amber' : '');
+    } else if (waveH) {
+      set('wave-now',`${waveH.toFixed(1)} m · ${mar.current.wave_period?.toFixed(0)||'—'} s`,waveH>2?'red':waveH>1?'amber':'');
+    }
     buildBfBar(bf);
-    updateGoNoGo(windKn,gustKn,waveH);
+    updateGoNoGo(windKn,gustKn,activeWave);
     updateSailPlan(windKn,gustKn,bf);
     buildForecast(atm.daily);
     buildDayPicker(atm.daily.time);
@@ -3057,10 +3155,12 @@ function init() {
   initCelestial();
   loadTides();
   loadWeather();
+  loadWaves();
   renderDayView(0);
   setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
   setInterval(loadTides, 12*3600000);
   setInterval(loadWeather,15*60*1000);
+  setInterval(loadWaves, 6*3600000);
 }
 init();
 </script>
