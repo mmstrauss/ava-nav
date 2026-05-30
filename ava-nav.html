@@ -78,7 +78,8 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 .gonogo-no   { background: rgba(192,86,78,.08); border-color: rgba(192,86,78,.3); }
 
 /* ── TIDE SVG ── */
-#tide-svg { width: 100%; height: 88px; margin-top: 10px; }
+#tide-svg { width: 100%; height: 88px; margin-top: 10px; cursor: crosshair; }
+#tide-probe { font-family: var(--font-mono); font-size: 11px; color: var(--ink2); min-height: 16px; margin-top: 4px; text-align: center; letter-spacing: .04em; }
 
 /* ── LOCK ── */
 .lock-badge { display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; margin-bottom: 8px; }
@@ -239,6 +240,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <div class="row"><span class="k">Range today</span><span class="v" id="tide-range">—</span></div>
       <div class="row"><span class="k">Springs / Neaps</span><span class="v" id="tide-sn">—</span></div>
       <svg id="tide-svg" viewBox="0 0 400 88" preserveAspectRatio="none"></svg>
+      <div id="tide-probe"></div>
       <div class="source" id="tide-src">Harmonic model (inaccurate — add WorldTides key in Settings)</div>
     </div>
 
@@ -1744,11 +1746,15 @@ function updateTide() {
   if (S.selectedDay === 0) renderDayView(0);
 }
 
+// Store graph state for interactive probe
+const _tg = { dayMs: 0, mn: 0, mx: 1, H: 88, W: 400, dur: 86400000 };
+
 function drawTideGraph(dayMs, nowMs) {
   const svg = $('tide-svg'); if (!svg) return;
   const W = 400, H = 88, dur = 86400000;
   const pts = []; for (let i = 0; i <= 144; i++) pts.push(tideAt(dayMs + (i/144)*dur));
   const mn = Math.min(...pts), mx = Math.max(...pts);
+  Object.assign(_tg, { dayMs, mn, mx, H, W, dur });
   const py = v => H - ((v-mn)/(mx-mn))*(H-14) - 7;
   const xi = i => (i/144)*W;
   const path = pts.map((v,i) => `${i?'L':'M'}${xi(i).toFixed(1)},${py(v).toFixed(1)}`).join('');
@@ -1777,7 +1783,42 @@ function drawTideGraph(dayMs, nowMs) {
   </linearGradient></defs>
   <path d="${path}L${W},${H}L0,${H}Z" fill="url(#tg)"/>
   <path d="${path}" fill="none" stroke="#5b9fcf" stroke-width="1.5"/>
-  ${lockLine}${ticks}${nowLine}`;
+  ${lockLine}${ticks}${nowLine}
+  <line id="tg-cursor" x1="-1" y1="0" x2="-1" y2="${H}" stroke="#fff" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
+  <circle id="tg-dot" cx="-10" cy="-10" r="3" fill="#5b9fcf" stroke="#fff" stroke-width="1"/>`;
+  // Wire up tap/click interaction
+  svg.addEventListener('click', tgProbe);
+  svg.addEventListener('mousemove', tgProbe);
+  svg.addEventListener('mouseleave', () => { $('tide-probe').textContent = ''; hideTgCursor(); });
+}
+
+function tgProbe(e) {
+  const svg = $('tide-svg'); if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const { dayMs, mn, mx, H, W, dur } = _tg;
+  const probeMs = dayMs + frac * dur;
+  const height = tideAt(probeMs);
+  const timeStr = new Date(probeMs).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  const lockOk = height >= 1.5;
+  const lockTxt = lockOk ? ' · lock ✓' : ' · lock ✗';
+  $('tide-probe').textContent = `${timeStr} → ${height.toFixed(2)} m${lockTxt}`;
+  // Move cursor line and dot
+  const x = (frac * W).toFixed(1);
+  const py = v => H - ((v-mn)/(mx-mn))*(H-14) - 7;
+  const dotY = py(height).toFixed(1);
+  const cursor = svg.querySelector('#tg-cursor');
+  const dot = svg.querySelector('#tg-dot');
+  if (cursor) { cursor.setAttribute('x1', x); cursor.setAttribute('x2', x); }
+  if (dot) { dot.setAttribute('cx', x); dot.setAttribute('cy', dotY); }
+}
+
+function hideTgCursor() {
+  const svg = $('tide-svg'); if (!svg) return;
+  const cursor = svg.querySelector('#tg-cursor');
+  const dot = svg.querySelector('#tg-dot');
+  if (cursor) { cursor.setAttribute('x1', '-1'); cursor.setAttribute('x2', '-1'); }
+  if (dot) { dot.setAttribute('cx', '-10'); dot.setAttribute('cy', '-10'); }
 }
 
 // ── LOCK ───────────────────────────────────────────────────────────
