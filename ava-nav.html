@@ -1066,7 +1066,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       </div>
     </div>
   </div>
-</div>
+
+  <!-- PASSAGE LOG -->
+  <div class="panel" style="margin-top:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin-bottom:0">Passage Log</h2>
+      <button class="sk-btn sk-btn-secondary" style="font-size:10px;padding:4px 10px" onclick="clearPassageLog()">Clear all</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Saved plans are stored in browser localStorage on this device. Tap a row to expand. Use the Admin tab to keep the app updated so new passages are logged against the current version.</p>
+    <div id="passage-log-list">
+      <div style="color:var(--ink3);font-family:var(--font-mono);font-size:12px;padding:10px 0">No passages saved yet — plan a passage above, then tap Save to log.</div>
+    </div>
+  </div>
+</div><!-- /passage-tab -->
 
 
 <!-- ════════════════════════ SETTINGS ════════════════════════ -->
@@ -1249,6 +1261,7 @@ function showTab(name) {
   });
   if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
   if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
+  if (name === 'passage') renderPassageLog();
   if (name === 'admin') initAdmin();
 }
 
@@ -1926,6 +1939,72 @@ async function planPassage() {
       if (text) out.innerHTML+=`<h4>AI Briefing</h4><p>${text}</p>`;
     } catch{out.querySelector('.thinking')?.remove();}
   }
+  // Save button — captures plan after AI briefing
+  const routeLabel=`${$('p-from').options[$('p-from').selectedIndex].text} → ${$('p-to').options[$('p-to').selectedIndex].text}`;
+  const departLabel=`${$('p-date').value||'—'} ${$('p-time').value||''}`.trim();
+  out.innerHTML+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><button class="sk-btn sk-btn-secondary" style="font-size:11px" onclick="savePassageEntry('${routeLabel.replace(/'/g,'&#39;')}','${departLabel}')">⊕ Save to log</button></div>`;
+}
+
+// ── PASSAGE LOG ────────────────────────────────────────────────────
+function getPassageLog() { return JSON.parse(localStorage.getItem('ava-passage-log')||'[]'); }
+function setPassageLog(l) { localStorage.setItem('ava-passage-log',JSON.stringify(l)); }
+
+function savePassageEntry(route, depart) {
+  const out=$('passage-result');
+  // Strip the save button row from the captured HTML
+  const tmp=document.createElement('div'); tmp.innerHTML=out.innerHTML;
+  tmp.querySelector('.sk-btn-secondary')?.closest('div[style*="border-top"]')?.remove();
+  const entry={ id:Date.now(), route, depart, saved:new Date().toISOString(), html:tmp.innerHTML };
+  const log=getPassageLog(); log.unshift(entry); setPassageLog(log);
+  // Replace save button with confirmation
+  out.querySelector('button.sk-btn-secondary')?.closest('div')?.replaceWith(Object.assign(document.createElement('div'),{
+    innerHTML:'<span style="font-family:var(--font-mono);font-size:11px;color:var(--green)">✓ Saved to passage log</span>',
+    style:'margin-top:12px;border-top:1px solid var(--border);padding-top:10px'
+  }));
+  renderPassageLog();
+}
+
+function renderPassageLog() {
+  const el=$('passage-log-list'); if(!el) return;
+  const log=getPassageLog();
+  if(!log.length){ el.innerHTML='<div style="color:var(--ink3);font-family:var(--font-mono);font-size:12px;padding:10px 0">No passages saved yet.</div>'; return; }
+  el.innerHTML=log.map(e=>{
+    const saved=new Date(e.saved);
+    const savedStr=`${saved.toLocaleDateString('en-GB')} ${saved.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+    return `<div style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden">
+      <div onclick="toggleLog(${e.id})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;cursor:pointer;background:var(--bg2);gap:8px">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink)">${e.route}</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-top:2px">Depart: ${e.depart} · Saved: ${savedStr}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button onclick="event.stopPropagation();deletePassageEntry(${e.id})" style="background:none;border:1px solid var(--border);border-radius:3px;color:var(--ink3);font-size:11px;padding:2px 8px;cursor:pointer">✕</button>
+          <span id="log-arrow-${e.id}" style="color:var(--ink3);font-size:14px">▾</span>
+        </div>
+      </div>
+      <div id="log-body-${e.id}" style="display:none;padding:12px 13px;background:var(--bg3);font-size:13px;line-height:1.7;color:var(--ink2)">${e.html}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLog(id) {
+  const b=$(`log-body-${id}`), a=$(`log-arrow-${id}`);
+  if(!b) return;
+  const open=b.style.display==='none';
+  b.style.display=open?'block':'none';
+  if(a) a.textContent=open?'▴':'▾';
+}
+
+function deletePassageEntry(id) {
+  setPassageLog(getPassageLog().filter(e=>e.id!==id));
+  renderPassageLog();
+}
+
+function clearPassageLog() {
+  if(!getPassageLog().length) return;
+  if(!confirm('Clear all saved passages?')) return;
+  setPassageLog([]);
+  renderPassageLog();
 }
 
 // ── CHECKLIST ──────────────────────────────────────────────────────
@@ -2166,6 +2245,7 @@ function initCelestial() {
 // ── INIT ───────────────────────────────────────────────────────────
 function init() {
   applyTheme(localStorage.getItem('ava-theme') || 'dark');
+  renderPassageLog();
   initSettings();
   $('p-date').value=new Date().toISOString().split('T')[0];
   initCelestial();
