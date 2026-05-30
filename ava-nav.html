@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ava · Nav">
+<title>Ava · Nav</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #e8e2d6; --ink2:   #b8b0a0; --ink3:   #706858;
+  --bg:     #0d0f0e; --bg2:    #141714; --bg3:    #1b1f1b;
+  --border: #2a2f2a; --amber:  #d4a843; --green:  #5dba6e;
+  --red:    #c0564e; --blue:   #5b9fcf; --accent: #c8a45a;
+  --r: 6px;
+  --font-body: 'Crimson Pro', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; }
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── HEADER ── */
+header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 10px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; height: 52px; }
+.logo { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: .15em; text-transform: uppercase; margin-right: 8px; white-space: nowrap; }
+.logo span { color: var(--ink3); margin: 0 3px; }
+nav { display: flex; gap: 2px; flex: 1; }
+nav button { background: none; border: none; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 7px 10px; border-radius: var(--r); cursor: pointer; transition: color .15s, background .15s; white-space: nowrap; }
+nav button:hover { color: var(--ink); background: var(--bg3); }
+nav button.active { color: var(--accent); background: rgba(200,164,90,.1); border: 1px solid rgba(200,164,90,.2); }
+.chart-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 11px; border-radius: var(--r); background: rgba(91,159,207,.12); border: 1px solid rgba(91,159,207,.3); color: var(--blue); cursor: pointer; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+.chart-btn:hover { background: rgba(91,159,207,.22); }
+
+/* ── LAYOUT ── */
+#content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.tab { display: none; padding: 12px; max-width: 960px; margin: 0 auto; }
+.tab.visible { display: block; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+
+/* ── PANELS ── */
+.panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; }
+.panel h2 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #1e221e; }
+.row:last-child { border-bottom: none; }
+.k { color: var(--ink3); font-size: 13px; }
+.v { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+.v.amber { color: var(--amber); } .v.green { color: var(--green); } .v.red { color: var(--red); } .v.blue { color: var(--blue); }
+.v.big { font-size: 18px; }
+.source { font-size: 10px; color: var(--ink3); margin-top: 8px; font-family: var(--font-mono); }
+
+/* ── GO/NO-GO ── */
+#gonogo-banner { border-radius: var(--r); padding: 11px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); border: 1px solid var(--border); }
+#gonogo-icon { font-size: 26px; flex-shrink: 0; }
+#gonogo-verdict { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+#gonogo-reason { font-size: 11px; color: var(--ink2); margin-top: 3px; line-height: 1.4; }
+.gonogo-go   { background: rgba(93,186,110,.08); border-color: rgba(93,186,110,.3); }
+.gonogo-caution { background: rgba(212,168,67,.08); border-color: rgba(212,168,67,.3); }
+.gonogo-no   { background: rgba(192,86,78,.08); border-color: rgba(192,86,78,.3); }
+
+/* ── TIDE SVG ── */
+#tide-svg { width: 100%; height: 88px; margin-top: 10px; }
+
+/* ── LOCK ── */
+.lock-badge { display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; margin-bottom: 8px; }
+.lock-open   { background: rgba(93,186,110,.2); color: var(--green); }
+.lock-closed { background: rgba(192,86,78,.2); color: var(--red); }
+.lock-window { font-size: 12px; color: var(--ink2); line-height: 1.8; }
+.lock-window strong { color: var(--amber); font-weight: normal; }
+
+/* ── FORECAST ── */
+#forecast-strip { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; margin-top: 6px; -webkit-overflow-scrolling: touch; }
+.fc-day { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; min-width: 74px; text-align: center; flex-shrink: 0; }
+.fc-date { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); letter-spacing: .08em; }
+.fc-icon { font-size: 19px; margin: 3px 0; }
+.fc-wind { font-family: var(--font-mono); font-size: 11px; color: var(--amber); }
+.fc-temp { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); margin-top: 2px; }
+.fc-dot  { display: block; width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; }
+
+/* ── BEAUFORT BAR ── */
+.bf-bar { display: flex; gap: 2px; align-items: flex-end; margin-top: 8px; }
+.bf { width: 100%; border-radius: 2px; }
+
+/* ── BUTTONS ── */
+.sk-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 16px; border-radius: var(--r); border: 1px solid; cursor: pointer; transition: all .15s; }
+.sk-btn-primary { background: rgba(200,164,90,.12); border-color: var(--accent); color: var(--accent); }
+.sk-btn-primary:hover { background: rgba(200,164,90,.22); }
+.sk-btn-secondary { background: transparent; border-color: var(--border); color: var(--ink2); }
+.sk-btn-secondary:hover { border-color: var(--ink3); color: var(--ink); }
+.sk-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* ── AI OUTPUT ── */
+#ai-output { font-size: 15px; line-height: 1.7; color: var(--ink2); min-height: 60px; }
+#ai-output h4 { color: var(--accent); font-size: 11px; font-family: var(--font-mono); letter-spacing: .12em; margin: 12px 0 4px; text-transform: uppercase; }
+#ai-output p { margin-bottom: 8px; }
+#ai-output strong { color: var(--ink); font-weight: 600; }
+.thinking { color: var(--ink3); font-style: italic; font-family: var(--font-mono); font-size: 12px; animation: pulse 1.4s infinite; }
+@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+/* ── SIGNAL K BAR ── */
+#sk-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 10px; font-family: var(--font-mono); font-size: 11px; }
+#sk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
+#sk-dot.connected { background: var(--green); box-shadow: 0 0 5px var(--green); }
+#sk-dot.error { background: var(--red); }
+#sk-label { color: var(--ink3); flex: 1; min-width: 0; }
+#sk-live { display: flex; gap: 10px; }
+.sk-lv { color: var(--amber); }
+.sk-lnk { all: unset; cursor: pointer; color: var(--blue); text-decoration: underline; font-size: 11px; font-family: var(--font-mono); }
+
+/* ── COMPASS ── */
+.compass-wrap { display: flex; justify-content: center; margin: 6px 0 10px; }
+.wind-arrow { transition: transform .4s ease; }
+
+/* ── TRIM GRID ── */
+.trim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trim-head { font-family: var(--font-mono); font-size: 10px; color: var(--amber); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+
+/* ── WATCH LOG ── */
+.sk-log { max-height: 180px; overflow-y: auto; font-family: var(--font-mono); font-size: 11px; }
+.sk-log-entry { padding: 3px 0; border-bottom: 1px solid var(--border); }
+.sk-log-t { color: var(--ink3); margin-right: 6px; }
+
+/* ── SOLO PROCEDURES ── */
+.proc-list { padding-left: 16px; font-size: 14px; line-height: 1.9; color: var(--ink2); }
+.proc-list li { margin-bottom: 3px; }
+.proc-list li strong { color: var(--ink); }
+.proc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.proc-table th { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.proc-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); color: var(--ink2); }
+.proc-table td:first-child { font-family: var(--font-mono); color: var(--amber); white-space: nowrap; }
+.check-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.check-item:last-of-type { border-bottom: none; }
+.check-item input[type=checkbox] { accent-color: var(--amber); margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+.check-item label { font-size: 13px; color: var(--ink2); cursor: pointer; line-height: 1.5; }
+.check-item.done label { color: var(--ink3); text-decoration: line-through; }
+
+/* ── PASSAGE ── */
+#passage-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+#passage-fields label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); display: block; margin-bottom: 4px; }
+#passage-fields select, #passage-fields input[type=date], #passage-fields input[type=time] { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); color: var(--ink); font-family: var(--font-mono); font-size: 12px; padding: 7px 9px; outline: none; }
+#passage-fields select:focus, #passage-fields input:focus { border-color: var(--accent); }
+#passage-result h4 { color: var(--accent); font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; margin: 10px 0 4px; }
+#passage-result { font-size: 14px; line-height: 1.7; color: var(--ink2); }
+
+/* ── SETTINGS ── */
+#settings-tab label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 5px; }
+#settings-tab input[type=text], #settings-tab input[type=password], #settings-tab select { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); color: var(--ink); font-family: var(--font-mono); font-size: 13px; padding: 8px 11px; outline: none; margin-bottom: 12px; }
+#settings-tab input:focus, #settings-tab select:focus { border-color: var(--accent); }
+.set-note { font-size: 12px; color: var(--ink3); margin-top: -8px; margin-bottom: 12px; line-height: 1.5; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+@media (max-width: 540px) {
+  header { height: 48px; padding: 0 7px; }
+  .logo { font-size: 11px; display: none; }
+  nav button { padding: 6px 7px; font-size: 10px; }
+  .tab { padding: 9px; }
+  #passage-fields, .trim-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header>
+  <div class="logo">Ava<span>·</span>Nav</div>
+  <nav>
+    <button class="active" onclick="showTab('almanac')">☽ Almanac</button>
+    <button onclick="showTab('skipper')">⊕ Skipper</button>
+    <button onclick="showTab('solo')">⛵ Solo</button>
+    <button onclick="showTab('passage')">⇝ Passage</button>
+    <button onclick="showTab('settings')">⚙</button>
+  </nav>
+  <a id="chart-btn" href="#" target="_blank" class="chart-btn">⬡ Chart</a>
+</header>
+
+<div id="content">
+
+<!-- ════════════════════════ ALMANAC ════════════════════════ -->
+<div id="almanac-tab" class="tab visible">
+
+  <div id="gonogo-banner" class="gonogo-caution">
+    <div id="gonogo-icon">⧗</div>
+    <div id="gonogo-text">
+      <div id="gonogo-verdict">Loading conditions…</div>
+      <div id="gonogo-reason">Fetching weather and tide data</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Conditions · Swansea Bay</h2>
+      <div class="row"><span class="k">Wind</span><span class="v amber big" id="wind-now">—</span></div>
+      <div class="row"><span class="k">Gusts</span><span class="v amber" id="gust-now">—</span></div>
+      <div class="row"><span class="k">Sea state (Hs)</span><span class="v" id="wave-now">—</span></div>
+      <div class="row"><span class="k">Visibility</span><span class="v" id="vis-now">—</span></div>
+      <div class="row"><span class="k">Pressure / trend</span><span class="v" id="press-now">—</span></div>
+      <div class="row"><span class="k">Air temp</span><span class="v" id="temp-now">—</span></div>
+      <div class="bf-bar" id="bf-bar"></div>
+      <div class="source">Open-Meteo · 51.566N 3.978W</div>
+    </div>
+
+    <div class="panel">
+      <h2>Tide · Swansea</h2>
+      <div class="row"><span class="k">Now (above CD)</span><span class="v amber big" id="tide-now">—</span></div>
+      <div class="row"><span class="k">Next HW</span><span class="v" id="tide-hw">—</span></div>
+      <div class="row"><span class="k">Next LW</span><span class="v" id="tide-lw">—</span></div>
+      <div class="row"><span class="k">Range today</span><span class="v" id="tide-range">—</span></div>
+      <div class="row"><span class="k">Springs / Neaps</span><span class="v" id="tide-sn">—</span></div>
+      <svg id="tide-svg" viewBox="0 0 400 88" preserveAspectRatio="none"></svg>
+      <div class="source">Harmonic prediction · Swansea constituents</div>
+    </div>
+
+    <div class="panel">
+      <h2>Tawe Lock · Today</h2>
+      <div id="lock-panel">Loading…</div>
+      <div class="source">VHF Ch 18 · 01792 470310</div>
+    </div>
+
+    <div class="panel">
+      <h2>Astro</h2>
+      <div class="row"><span class="k">Moon phase</span><span class="v" id="moon-phase">—</span></div>
+      <div class="row"><span class="k">Illumination</span><span class="v" id="moon-illum">—</span></div>
+      <div class="row"><span class="k">Sunrise</span><span class="v" id="sunrise">—</span></div>
+      <div class="row"><span class="k">Sunset</span><span class="v" id="sunset">—</span></div>
+      <div class="row"><span class="k">Day length</span><span class="v" id="daylen">—</span></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <h2>7-Day Forecast · Bristol Channel</h2>
+    <div id="forecast-strip"></div>
+    <div class="source" style="margin-top:6px">Open-Meteo · dot = solo sail conditions for Nicholson 30</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════ SKIPPER ════════════════════════ -->
+<div id="skipper-tab" class="tab">
+
+  <div id="sk-bar">
+    <div id="sk-dot"></div>
+    <span id="sk-label">Signal K disconnected</span>
+    <div id="sk-live"></div>
+    <button class="sk-lnk" id="btn-sk-connect" onclick="connectSK()">Connect</button>
+    <span style="color:var(--border)">|</span>
+    <button class="sk-lnk" onclick="runSim()">Sim</button>
+    <span style="color:var(--border)">|</span>
+    <button class="sk-lnk" onclick="stopSK()">Stop</button>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Wind</h2>
+      <div class="compass-wrap">
+        <svg viewBox="-100 -100 200 200" width="154" height="154">
+          <circle cx="0" cy="0" r="90" fill="none" stroke="var(--border)" stroke-width="1"/>
+          <circle cx="0" cy="0" r="58" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 5"/>
+          <text x="0" y="-72" text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">0</text>
+          <text x="72" y="4"  text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">90</text>
+          <text x="0" y="80"  text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">180</text>
+          <text x="-72" y="4" text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">270</text>
+          <polygon id="awa-arrow" points="0,-78 -7,-58 7,-58" fill="var(--amber)" class="wind-arrow"/>
+        </svg>
+      </div>
+      <div class="row"><span class="k">AWA</span><span class="v amber big" id="inst-awa">—</span></div>
+      <div class="row"><span class="k">AWS</span><span class="v amber" id="inst-aws">—</span></div>
+      <div class="row"><span class="k">TWS</span><span class="v" id="inst-tws">—</span></div>
+      <div class="row"><span class="k">TWA</span><span class="v" id="inst-twa">—</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Boat</h2>
+      <div class="row"><span class="k">SOG</span><span class="v big" id="inst-sog">—</span></div>
+      <div class="row"><span class="k">STW</span><span class="v" id="inst-stw">—</span></div>
+      <div class="row"><span class="k">COG / HDG</span><span class="v" id="inst-cog">—</span></div>
+      <div class="row"><span class="k">Depth (BK)</span><span class="v" id="inst-depth">—</span></div>
+      <div class="row"><span class="k">Heel</span><span class="v" id="inst-heel">—</span></div>
+      <div class="row"><span class="k">VMG upwind</span><span class="v blue" id="inst-vmg">—</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Point of Sail</h2>
+      <div style="text-align:center;padding:10px 0">
+        <div class="v big amber" id="pos-name" style="font-family:var(--font-body);font-size:24px">—</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink3);margin-top:4px" id="pos-detail">—</div>
+      </div>
+      <div id="pos-advice" style="font-size:14px;color:var(--ink2);line-height:1.6"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Sail Plan</h2>
+      <div id="sail-plan" style="font-size:14px;color:var(--ink2);line-height:1.6">Loading…</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <h2>Trim Recommendations</h2>
+    <p style="font-size:12px;color:var(--ink3);font-family:var(--font-mono);margin-bottom:10px">Windex (masthead) installed — use it to confirm AWA and check for header/lift shifts. Combines with AWA instrument below.</p>
+    <div class="trim-grid">
+      <div>
+        <div class="trim-head">Mainsail (slab reefing)</div>
+        <div class="row"><span class="k">Reef state</span><span class="v amber" id="trim-reef">—</span></div>
+        <div class="row"><span class="k">Mainsheet</span><span class="v" id="trim-main">—</span></div>
+        <div class="row"><span class="k">Traveller</span><span class="v" id="trim-trav">—</span></div>
+        <div class="row"><span class="k">Outhaul</span><span class="v" id="trim-out">—</span></div>
+        <div class="row"><span class="k">Kicker / vang</span><span class="v" id="trim-kick">—</span></div>
+      </div>
+      <div>
+        <div class="trim-head">Genoa 150%</div>
+        <div class="row"><span class="k">Furl %</span><span class="v amber" id="trim-furl">—</span></div>
+        <div class="row"><span class="k">Sheet</span><span class="v" id="trim-jib">—</span></div>
+        <div class="row"><span class="k">Car position</span><span class="v" id="trim-car">—</span></div>
+        <div class="row"><span class="k">Halyard</span><span class="v" id="trim-hal">—</span></div>
+        <div class="row"><span class="k">Telltales</span><span class="v" id="trim-tell">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <h2>AI Skipper · Pre-departure Briefing</h2>
+    <div class="sk-btns">
+      <button class="sk-btn sk-btn-primary" onclick="askSkipper()">⊕ Ask the skipper</button>
+      <button class="sk-btn sk-btn-secondary" onclick="$('ai-output').innerHTML=''">✕ Clear</button>
+    </div>
+    <div id="ai-output"><p style="color:var(--ink3);font-style:italic;font-size:14px">Press <em>Ask the skipper</em> for a pre-departure briefing — tide windows, weather, sail plan and Bristol Channel watch points.</p></div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <h2>Watch Log</h2>
+    <div class="sk-log" id="sk-log"><div style="color:var(--ink3);font-size:11px;font-family:var(--font-mono)">Connect Signal K or run simulator.</div></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════ SOLO ════════════════════════ -->
+<div id="solo-tab" class="tab">
+<div class="grid">
+
+  <div class="panel">
+    <h2>Leaving the Berth · SYSAC Solo</h2>
+    <ol class="proc-list">
+      <li><strong>Engine.</strong> Warm 5 min in neutral. Check raw water cooling flow, VHF Ch 16, AIS on. Lifejacket clipped to jackstay before you leave the cockpit.</li>
+      <li><strong>Assess.</strong> Wind and tide — tide usually dominates at SYSAC. Plan to spring off against the dominant force.</li>
+      <li><strong>Single up.</strong> Midships spring, both ends on your cleats. Dab forward against it: stern walks out. Astern: bow walks out.</li>
+      <li><strong>Slip.</strong> Walk to bow, slip spring, step back aboard — no shore help needed. Slow ahead, rudder amidships.</li>
+      <li><strong>Wind pinning you on.</strong> Hold spring + engine 30 s longer than feels needed. Let the stern walk fully off before slipping.</li>
+      <li><strong>Clear.</strong> Tidy lines and fenders in open water, not in the channel.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <h2>Tawe Lock · Solo Checklist</h2>
+    <div class="check-item"><input type="checkbox" id="lk1"><label for="lk1">Call Tawe Lock VHF Ch 18, 10 min before. State: Ava, LOA 9.1 m, destination.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk2"><label for="lk2">Fenders both sides — port preferred (pontoon side in lock).</label></div>
+    <div class="check-item"><input type="checkbox" id="lk3"><label for="lk3">Bow and stern lines led to midships cleat — manage from one position.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk4"><label for="lk4">Engine warm, neutral. VHF on Ch 18.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk5"><label for="lk5">Wait at holding pontoon until traffic light green.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk6"><label for="lk6">Enter slow (1–2 kn). Step off with midships line first. Floating pontoon carries the boat — no bow/stern handling needed.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk7"><label for="lk7">Exit on green only. Thank lock keeper on Ch 18.</label></div>
+    <button class="sk-btn sk-btn-secondary" onclick="resetChecklist()" style="margin-top:10px;padding:5px 12px;font-size:10px">Reset</button>
+  </div>
+
+  <div class="panel">
+    <h2>Solo Hoist · Main (Slab Reefing)</h2>
+    <ol class="proc-list">
+      <li>Motor head-to-wind in open water past the breakwater. Engage tiller pilot or lash helm.</li>
+      <li>Topping lift snug. Main halyard clear, no overrides.</li>
+      <li>Hoist, tensioning the halyard fully — luff should be bar-tight with no scallops.</li>
+      <li>Sheet in, set kicker. Bear away, engine off, settle on course.</li>
+    </ol>
+    <h3 style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:12px 0 8px">Slab Reefing (jiffy reef)</h3>
+    <ol class="proc-list">
+      <li>Ease mainsheet and topping lift slightly to take load off the luff. Ease halyard until the luff cringle reaches the reefing hook (or clip the tack reefing line).</li>
+      <li>Haul the clew reefing line until the foot is bar-tight along the boom. Cleat it off firmly.</li>
+      <li>Re-tension the halyard fully. Tidy the bunt with the reef points — loosely, they are not load-bearing.</li>
+      <li>Kicker stays on throughout. Can be done solo in under 2 minutes once practised.</li>
+      <li>Shake the reef out in reverse: ease clew line first, hoist halyard, then release tack.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <h2>Genoa Solo · 150%</h2>
+    <ol class="proc-list">
+      <li>Both sheets led to cockpit winches before leaving the dock. Furling line clear on its clutch.</li>
+      <li>Bear off to a beam reach to unfurl — releases load on the furling drum.</li>
+      <li>Sheet from leeward winch, tail with self-tailer. Crank with handle locked in cleated position so both hands stay on it.</li>
+      <li>To reef: furl while bearing away slightly. Move genoa car aft one hole per ~10–15% furled — foot shortens, sheeting angle must follow.</li>
+      <li>Above 18 kn TWS: furl at least 20–30% before it gets lively.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <h2>Heaving-To · Solo Superpower</h2>
+    <p style="font-size:14px;color:var(--ink2);margin-bottom:10px">Use to reef, navigate, eat, or wait for the lock. Ava heaves-to beautifully up to F6.</p>
+    <ol class="proc-list">
+      <li>From close-hauled on starboard, tack <em>without</em> releasing the genoa sheet. Genoa backs.</li>
+      <li>Push tiller to leeward and lash it.</li>
+      <li>Ease mainsheet until the main is just drawing or luffing softly.</li>
+      <li>Ava sits 50–60° off the wind, ~1 kn forward + 1 kn leeway. The slick to windward calms the sea. Hands-off for 10+ minutes.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <h2>Reefing Thresholds · Nicholson 30 Solo</h2>
+    <table class="proc-table">
+      <tr><th>TWS (kn)</th><th>Main</th><th>Genoa</th><th>Note</th></tr>
+      <tr><td>0–8</td><td>Full</td><td>Full</td><td>Power up, outhaul off</td></tr>
+      <tr><td>9–15</td><td>Full</td><td>Full</td><td>Sweet spot</td></tr>
+      <tr><td>16–20</td><td>Full / 1 reef</td><td>10–20% furled</td><td>Reef if heel &gt;20° or strong weather helm</td></tr>
+      <tr><td>21–25</td><td>1 reef</td><td>30–40% furled</td><td>Solo: reef early</td></tr>
+      <tr><td>26–30</td><td>2 reefs</td><td>50% furled</td><td>F6, Bristol Ch. gets ugly</td></tr>
+      <tr><td>31–35</td><td>2–3 reefs</td><td>Furl to min / motor</td><td>Return to harbour</td></tr>
+      <tr><td>36+</td><td>Bare poles / motor</td><td>Furl completely</td><td>Solo: stay in</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px">Plan for the gust, not the mean. Weather helm before dangerous heel on a Nicholson 30 — reef the main first.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Bristol Channel Notes</h2>
+    <div class="row"><span class="k">Wind vs tide</span><span class="v" style="font-size:12px;text-align:right;max-width:55%">Ebb + westerly in Mumbles Roads: 1.5 m seas become 2.5 m walls</span></div>
+    <div class="row"><span class="k">Mixon Shoal</span><span class="v" style="font-size:12px">SE of Mumbles, dries on spring LW — round wide</span></div>
+    <div class="row"><span class="k">Tidal streams</span><span class="v" style="font-size:12px">Up to 3 kn neaps, 5 kn springs</span></div>
+    <div class="row"><span class="k">AIS traffic</span><span class="v" style="font-size:12px">Swansea Approach — give way early</span></div>
+    <div class="row"><span class="k">Tidal gate rule</span><span class="v" style="font-size:12px">Leave on last of flood; return on start of next</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>Anchoring · Solo</h2>
+    <p style="font-size:14px;color:var(--ink2);margin-bottom:10px">Rule of thumb for scope: 5:1 in calm, 7:1 in wind or swell, 10:1 in heavy weather. Scope = total chain + warp paid out ÷ depth at high water.</p>
+    <table class="proc-table">
+      <tr><th>Depth at anchor (m)</th><th>Scope 5:1</th><th>Scope 7:1</th><th>Minimum chain</th></tr>
+      <tr><td>2 m</td><td>10 m out</td><td>14 m out</td><td>10 m chain, then warp</td></tr>
+      <tr><td>3 m</td><td>15 m out</td><td>21 m out</td><td>15 m chain</td></tr>
+      <tr><td>5 m</td><td>25 m out</td><td>35 m out</td><td>25 m chain</td></tr>
+      <tr><td>8 m</td><td>40 m out</td><td>56 m out</td><td>40 m chain, then warp</td></tr>
+      <tr><td>10 m</td><td>50 m out</td><td>70 m out</td><td>40 m chain + 30 m warp</td></tr>
+      <tr><td>15 m</td><td>75 m out</td><td>105 m out</td><td>40 m chain + 65 m warp</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px">Always use depth at <strong>high water</strong> when calculating scope — if you anchor at LW in a 9 m tidal range, the depth can be 9 m greater at HW. In the Bristol Channel this matters enormously.</p>
+    <h3 style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:12px 0 8px">Solo Procedure</h3>
+    <ol class="proc-list">
+      <li><strong>Approach.</strong> Head slowly upwind or up-tide (whichever is stronger). Come to almost zero speed over the ground, not just through the water.</li>
+      <li><strong>Drop.</strong> Let go when the boat is just starting to make sternway. Don't throw — just release and let the chain run freely.</li>
+      <li><strong>Pay out scope.</strong> Let chain run as Ava drifts back. Control the rate with the windlass brake — never let the chain pile up on the anchor.</li>
+      <li><strong>Set.</strong> Once scope is out, snub the chain firmly. Put the engine astern at slow to medium revs for 30 seconds. Watch a transit — if fixed, the anchor has set.</li>
+      <li><strong>Shackle a snubber</strong> (length of rope/chain hook) to take the shock load off the windlass gipsy.</li>
+      <li><strong>Anchor ball / light.</strong> Day shape in the bow for daytime; anchor light (all-round white) at night. Required by COLREGS.</li>
+      <li><strong>Drag watch.</strong> Note two transits at right angles. Check every 20–30 min. On the Pi, OpenCPN's anchor watch alarm will alert if the boat moves more than your set radius.</li>
+    </ol>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px"><strong style="color:var(--ink)">Bristol Channel note:</strong> With 9–10 m spring tides, anchor where you won't be aground at LW. Check the charted depth <em>and</em> the tide state. In Oxwich Bay, Three Cliffs, or Pwll Du — all drying in patches — do this carefully.</p>
+  </div>
+
+  <div class="panel">
+    <h2>MOB · Solo</h2>
+    <p style="font-size:14px;color:var(--red);margin-bottom:10px;font-family:var(--font-mono)">If you go over solo without a tether, you will not get back aboard. Wear it. Clip on. Always.</p>
+    <ul style="padding-left:16px;font-size:14px;color:var(--ink2);line-height:1.9">
+      <li>Lifejacket with crotch strap and integrated AIS PLB</li>
+      <li>Tether to jackstay before leaving the cockpit — short (1 m) to mast, long (2 m) along deck</li>
+      <li>Engine kill cord on wrist when motoring</li>
+      <li>Shore contact before departure: ETA, route, vessel name, call-time</li>
+    </ul>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ════════════════════════ PASSAGE ════════════════════════ -->
+<div id="passage-tab" class="tab">
+  <div class="panel">
+    <h2>Passage Planner</h2>
+    <div id="passage-fields">
+      <div><label>From</label>
+        <select id="p-from">
+          <option value="swansea">Swansea (SYSAC)</option>
+          <option value="cardiff">Cardiff Bay</option>
+          <option value="barry">Barry</option>
+          <option value="penarth">Penarth</option>
+          <option value="portishead">Portishead</option>
+          <option value="ilfracombe">Ilfracombe</option>
+          <option value="milford">Milford Haven</option>
+          <option value="scilly">Isles of Scilly</option>
+        </select></div>
+      <div><label>To</label>
+        <select id="p-to">
+          <option value="scilly">Isles of Scilly</option>
+          <option value="swansea">Swansea (SYSAC)</option>
+          <option value="cardiff">Cardiff Bay</option>
+          <option value="barry">Barry</option>
+          <option value="penarth">Penarth</option>
+          <option value="ilfracombe">Ilfracombe</option>
+          <option value="milford">Milford Haven</option>
+          <option value="portishead">Portishead</option>
+        </select></div>
+      <div><label>Depart date</label><input type="date" id="p-date"></div>
+      <div><label>Depart time</label><input type="time" id="p-time" value="07:00"></div>
+    </div>
+    <div class="sk-btns">
+      <button class="sk-btn sk-btn-primary" onclick="planPassage()">⊕ Plan this passage</button>
+    </div>
+    <div id="passage-result" style="color:var(--ink3);font-style:italic;font-size:14px">Select route and departure, then press Plan.</div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <h2>Ava · Performance Reference</h2>
+    <div class="grid" style="margin-top:0">
+      <div>
+        <div class="row"><span class="k">Hull speed</span><span class="v">5.4 kn</span></div>
+        <div class="row"><span class="k">Passage speed</span><span class="v">4.5–5.0 kn</span></div>
+        <div class="row"><span class="k">Motor speed</span><span class="v">~4 kn</span></div>
+        <div class="row"><span class="k">Fuel range</span><span class="v">~80 nm</span></div>
+      </div>
+      <div>
+        <div class="row"><span class="k">Spring range Swansea</span><span class="v">~9.5 m</span></div>
+        <div class="row"><span class="k">Neap range Swansea</span><span class="v">~4.8 m</span></div>
+        <div class="row"><span class="k">Tidal max Bristol Ch.</span><span class="v">3–5 kn</span></div>
+        <div class="row"><span class="k">Lock window</span><span class="v">HW ±2.5 h</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════ SETTINGS ════════════════════════ -->
+<div id="settings-tab" class="tab">
+  <div class="panel" style="max-width:500px">
+
+    <h2>Anthropic API</h2>
+    <label for="set-key">API Key</label>
+    <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off">
+    <div class="set-note">Stored in browser localStorage. Sent only to api.anthropic.com when you use Ask the skipper.</div>
+    <label for="set-model">Model</label>
+    <select id="set-model">
+      <option value="claude-haiku-4-5">Haiku 4.5 — ~0.25p/briefing (recommended for daily use)</option>
+      <option value="claude-sonnet-4-6" selected>Sonnet 4.6 — ~0.7p/briefing (best balance)</option>
+      <option value="claude-opus-4-7">Opus 4.7 — ~1.2p/briefing (most capable)</option>
+    </select>
+    <button class="sk-btn sk-btn-primary" onclick="saveApi()">Save API settings</button>
+
+    <div class="divider"></div>
+    <h2 style="margin-bottom:10px">Signal K</h2>
+    <label for="set-sk-host">Pi IP address</label>
+    <input type="text" id="set-sk-host" placeholder="192.168.1.50">
+    <label for="set-sk-port">Port</label>
+    <input type="text" id="set-sk-port" placeholder="3000">
+    <label for="set-sk-auto">Auto-connect when opening Skipper tab</label>
+    <select id="set-sk-auto">
+      <option value="no">No</option>
+      <option value="yes">Yes — only works on Ava-Nav WiFi</option>
+    </select>
+    <button class="sk-btn sk-btn-secondary" onclick="saveSK()">Save Signal K</button>
+
+    <div class="divider"></div>
+    <h2 style="margin-bottom:10px">Chart / Navigation Link (⬡ Chart button)</h2>
+    <label for="set-nav-url">Navigation app URL</label>
+    <input type="text" id="set-nav-url" placeholder="http://192.168.1.50:8080">
+    <div class="set-note">Point this at your AvNav, OpenCPN web interface, or Signal K dashboard. The ⬡ Chart button in the header opens it in a new tab — one tap to switch to your chart plotter and back.</div>
+    <button class="sk-btn sk-btn-secondary" onclick="saveNavUrl()">Save</button>
+
+    <div class="divider"></div>
+    <h2 style="margin-bottom:10px">Hosting & iPad Setup</h2>
+    <div style="font-size:13px;color:var(--ink3);line-height:1.8">
+      <p style="margin-bottom:8px"><strong style="color:var(--ink)">GitHub Pages (HTTPS)</strong> — Weather, tide, lock and AI briefing all work. Signal K live data does <em>not</em> work (browser blocks HTTP WebSocket from an HTTPS page). Best for planning ashore.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--ink)">Pi on Ava-Nav WiFi (HTTP)</strong> — Everything works including Signal K live data. Serve this file with:<br>
+        <code style="font-family:var(--font-mono);font-size:11px;color:var(--ink2)">python3 -m http.server 8081</code><br>
+        Then access at <code style="font-family:var(--font-mono);font-size:11px;color:var(--ink2)">http://192.168.1.50:8081/ava-nav.html</code></p>
+      <p style="margin-bottom:8px"><strong style="color:var(--ink)">No split screen needed on iPad</strong> — In Safari, tap Share → <em>Add to Home Screen</em> for this page AND for your chart app URL. Both install as fullscreen apps. Switch between them via the iPad app switcher (swipe up from the bottom). Set the ⬡ Chart URL above so you can also jump directly from this app.</p>
+      <p><strong style="color:var(--ink)">Same file, two locations</strong> — Keep one copy on GitHub Pages for shore planning and one on the Pi for use afloat. They're identical.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+/* ================================================================
+   Ava · Nav  —  unified single-file navigation advisor
+   Nicholson 30 MkI · SYSAC Swansea · Bristol Channel
+   ================================================================ */
+
+// ── STATE ──────────────────────────────────────────────────────────
+const S = {
+  weather: null, marine: null,
+  skWs: null, simTimer: null, skData: {},
+  log: [],
+  apiKey:  localStorage.getItem('ava-api-key')  || '',
+  model:   localStorage.getItem('ava-model')    || 'claude-sonnet-4-6',
+  skHost:  localStorage.getItem('ava-sk-host')  || '192.168.1.50',
+  skPort:  localStorage.getItem('ava-sk-port')  || '3000',
+  skAuto:  localStorage.getItem('ava-sk-auto')  || 'no',
+  navUrl:  localStorage.getItem('ava-nav-url')  || 'http://192.168.1.50:8080',
+};
+
+// ── TAB NAVIGATION ─────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('visible'));
+  document.getElementById(name + '-tab').classList.add('visible');
+  document.querySelectorAll('nav button').forEach((b, i) => {
+    b.classList.toggle('active', ['almanac','skipper','solo','passage','settings'][i] === name);
+  });
+  if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
+  if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────
+function initSettings() {
+  $('set-key').value     = S.apiKey;
+  $('set-model').value   = S.model;
+  $('set-sk-host').value = S.skHost;
+  $('set-sk-port').value = S.skPort;
+  $('set-sk-auto').value = S.skAuto;
+  $('set-nav-url').value = S.navUrl;
+  $('chart-btn').href    = S.navUrl || '#';
+}
+function saveApi() {
+  S.apiKey = $('set-key').value.trim();
+  S.model  = $('set-model').value;
+  localStorage.setItem('ava-api-key', S.apiKey);
+  localStorage.setItem('ava-model', S.model);
+  alert('API settings saved.');
+}
+function saveSK() {
+  S.skHost = $('set-sk-host').value.trim() || '192.168.1.50';
+  S.skPort = $('set-sk-port').value.trim() || '3000';
+  S.skAuto = $('set-sk-auto').value;
+  localStorage.setItem('ava-sk-host', S.skHost);
+  localStorage.setItem('ava-sk-port', S.skPort);
+  localStorage.setItem('ava-sk-auto', S.skAuto);
+  alert('Signal K settings saved.');
+}
+function saveNavUrl() {
+  S.navUrl = $('set-nav-url').value.trim();
+  localStorage.setItem('ava-nav-url', S.navUrl);
+  $('chart-btn').href = S.navUrl || '#';
+  alert('Chart URL saved.');
+}
+
+// ── UTILITIES ──────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function set(id, val, cls) { const el=$(id); if(!el) return; el.textContent=val; if(cls!==undefined) el.className='v '+cls; }
+const fmt     = d => d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+const fmtDate = d => d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const deg2cpt = d => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
+const kph2kn  = k => (k/1.852).toFixed(1);
+const ms2kn   = v => v!=null ? (v*1.944).toFixed(1)+' kn' : '—';
+const ms2knv  = v => v!=null ? (v*1.944).toFixed(1) : null;
+const r2dg    = v => v!=null ? (v*180/Math.PI).toFixed(0)+'°' : '—';
+function bfScale(kn) { return [1,3,6,10,16,21,27,33,40,47,55,63].findIndex(v => kn<v); }
+
+// ── TIDES ──────────────────────────────────────────────────────────
+// Swansea harmonic constituents (amplitude m, phase deg, speed deg/hr)
+const CONSTS = [
+  {amp:4.29, ph:101.0, spd:28.9841042}, // M2
+  {amp:1.48, ph:129.3, spd:30.0000000}, // S2
+  {amp:0.86, ph:84.5,  spd:28.4397295}, // N2
+  {amp:0.14, ph:178.0, spd:15.0410686}, // K1
+  {amp:0.11, ph:148.0, spd:13.9430356}, // O1
+  {amp:0.24, ph:42.0,  spd:57.9682084}, // M4
+  {amp:0.14, ph:78.0,  spd:58.9841042}, // MS4
+];
+const MSL = 5.48; // mean sea level above chart datum, Swansea
+const EPOCH = Date.UTC(2025,0,1,0,0,0);
+
+function tideAt(ms) {
+  const h = (ms - EPOCH) / 3.6e6;
+  return MSL + CONSTS.reduce((s,c) => s + c.amp * Math.cos((c.spd*h - c.ph)*Math.PI/180), 0);
+}
+
+function findExtrema(fromMs, count) {
+  const step = 10*60*1000;
+  const out = [];
+  let h0 = tideAt(fromMs-step), h1 = tideAt(fromMs);
+  for (let t = fromMs; out.length < count; t += step) {
+    const h2 = tideAt(t+step);
+    if (h1 > h0 && h1 >= h2) out.push({type:'HW', t, h:h1});
+    else if (h1 < h0 && h1 <= h2) out.push({type:'LW', t, h:h1});
+    h0=h1; h1=h2;
+  }
+  return out;
+}
+
+function updateTide() {
+  const now = Date.now(), h = tideAt(now);
+  set('tide-now', h.toFixed(2)+' m', 'amber big');
+  const ex = findExtrema(now, 4);
+  const hw = ex.find(e=>e.type==='HW'), lw = ex.find(e=>e.type==='LW');
+  if (hw) set('tide-hw', fmt(new Date(hw.t))+'  '+hw.h.toFixed(2)+' m');
+  if (lw) set('tide-lw', fmt(new Date(lw.t))+'  '+lw.h.toFixed(2)+' m');
+  const midnight = new Date(); midnight.setHours(0,0,0,0);
+  const today = findExtrema(midnight.getTime(), 4);
+  const maxH = Math.max(...today.filter(e=>e.type==='HW').map(e=>e.h));
+  const minL = Math.min(...today.filter(e=>e.type==='LW').map(e=>e.h));
+  const range = maxH - minL;
+  if (isFinite(range)) {
+    set('tide-range', range.toFixed(2)+' m');
+    set('tide-sn', range>7.5?'Springs':range<5.0?'Neaps':'Mid', range>7.5?'amber':'blue');
+  }
+  drawTideGraph(now);
+}
+
+function drawTideGraph(now) {
+  const svg = $('tide-svg'); if (!svg) return;
+  const W=400, H=88, dur=12*3600*1000, start=now-2*3600*1000;
+  const pts=[]; for (let i=0;i<=120;i++) pts.push(tideAt(start+(i/120)*dur));
+  const mn=Math.min(...pts), mx=Math.max(...pts);
+  const py=v=>H-((v-mn)/(mx-mn))*(H-14)-7;
+  const xi=i=>(i/120)*W;
+  const nowX=(2/12)*W;
+  const path=pts.map((v,i)=>`${i?'L':'M'}${xi(i).toFixed(1)},${py(v).toFixed(1)}`).join('');
+  svg.innerHTML=`<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#5b9fcf" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#5b9fcf" stop-opacity="0.03"/>
+  </linearGradient></defs>
+  <path d="${path}L${W},${H}L0,${H}Z" fill="url(#tg)"/>
+  <path d="${path}" fill="none" stroke="#5b9fcf" stroke-width="1.5"/>
+  <line x1="${nowX}" y1="0" x2="${nowX}" y2="${H}" stroke="#d4a843" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+  <text x="${nowX+3}" y="10" fill="#d4a843" font-size="8" font-family="monospace" opacity="0.7">now</text>`;
+}
+
+// ── LOCK ───────────────────────────────────────────────────────────
+const LOCK_CLOSURES = [
+  {start:new Date('2026-03-01T22:00:00'), end:new Date('2026-03-23T07:00:00'), label:'Major maintenance'},
+  {start:new Date('2026-12-25T00:00:00'), end:new Date('2026-12-26T00:00:00'), label:'Christmas Day'},
+  // Add real 2026 closure dates from Swansea Marina when published
+];
+
+function updateLock() {
+  const now=new Date(), panel=$('lock-panel');
+  for (const cl of LOCK_CLOSURES) {
+    if (now>=cl.start && now<cl.end) {
+      panel.innerHTML=`<span class="lock-badge lock-closed">CLOSED – ${cl.label}</span><div class="lock-window">Reopens ${fmtDate(cl.end)} ${fmt(cl.end)}</div>`;
+      return;
+    }
+  }
+  const hwNow = tideAt(now.getTime());
+  if (hwNow < 1.5) {
+    panel.innerHTML=`<span class="lock-badge lock-closed">CLOSED – Low water (${hwNow.toFixed(1)} m)</span><div class="lock-window">Lock needs tide above 1.5 m above CD.</div>`;
+    return;
+  }
+  const ex = findExtrema(now.getTime(), 4);
+  const hw = ex.find(e=>e.type==='HW');
+  const windows = [];
+  if (hw) {
+    for (let off=-2.5*3.6e6; off<=2.5*3.6e6; off+=3.6e6) {
+      const outT=new Date(hw.t+off), inT=new Date(hw.t+off+30*60000);
+      if (tideAt(outT.getTime())>=1.5)
+        windows.push(`<strong>${fmt(outT)}</strong> out · <strong>${fmt(inT)}</strong> in`);
+    }
+  }
+  panel.innerHTML=`<span class="lock-badge lock-open">OPERATIONAL</span>
+    <div class="lock-window">${windows.join('<br>')||'No windows calculated — check Swansea Marina.'}<br><br>
+    <span style="color:var(--ink3);font-size:10px">VHF Ch 18 · 01792 470310 · Call 10 min before</span></div>`;
+}
+
+// ── MOON / SOLAR ───────────────────────────────────────────────────
+function moonPhase() {
+  const now=new Date(), known=new Date('2000-01-06T18:14:00Z'), cycle=29.530588861;
+  const age=(((now-known)/86400000%cycle)+cycle)%cycle;
+  const illum=Math.round(50*(1-Math.cos(2*Math.PI*age/cycle)));
+  const phases=[[0,'🌑 New'],[3.7,'🌒 Waxing Crescent'],[7.4,'🌓 First Quarter'],[11.1,'🌔 Waxing Gibbous'],[14.8,'🌕 Full'],[18.5,'🌖 Waning Gibbous'],[22.1,'🌗 Last Quarter'],[25.8,'🌘 Waning Crescent']];
+  const p=[...phases].reverse().find(x=>age>=x[0]);
+  set('moon-phase',p[1]); set('moon-illum',illum+'%');
+}
+
+function solarTimes() {
+  const lat=51.617, lng=-3.944, now=new Date();
+  const doy=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);
+  const B=(360/365)*(doy-81)*Math.PI/180;
+  const eq=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+  const ha=Math.acos(-Math.tan(lat*Math.PI/180)*Math.tan(23.45*Math.sin(B)*Math.PI/180))*180/Math.PI;
+  const tz=1; // BST — change to 0 for GMT (Oct–Mar)
+  const rise=new Date(); rise.setHours(0,0,0,0); rise.setMinutes(720-4*(lng+ha)-eq+tz*60);
+  const sset=new Date(); sset.setHours(0,0,0,0); sset.setMinutes(720-4*(lng-ha)-eq+tz*60);
+  set('sunrise',fmt(rise)); set('sunset',fmt(sset));
+  const dm=(sset-rise)/60000; set('daylen',`${Math.floor(dm/60)}h ${Math.round(dm%60)}m`);
+}
+
+// ── WEATHER ────────────────────────────────────────────────────────
+async function loadWeather() {
+  try {
+    const [atm,mar] = await Promise.all([
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=mph&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
+      fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London').then(r=>r.json()),
+    ]);
+    S.weather=atm; S.marine=mar;
+    const c=atm.current;
+    const windKn=parseFloat(kph2kn(c.wind_speed_10m));
+    const gustKn=parseFloat(kph2kn(c.wind_gusts_10m));
+    const waveH=mar.current?.wave_height ?? 0;
+    const bf=bfScale(windKn);
+    set('wind-now',`${windKn.toFixed(1)} kn  ${c.wind_direction_10m}° (${deg2cpt(c.wind_direction_10m)})`,'amber big');
+    set('gust-now',`${gustKn.toFixed(1)} kn`,gustKn>25?'red':'amber');
+    set('temp-now',`${c.temperature_2m.toFixed(0)}°C`);
+    const vis=c.visibility;
+    set('vis-now',vis>=5000?`Good (>${Math.round(vis/1000)} km)`:vis>=1000?`Moderate (${(vis/1000).toFixed(1)} km)`:`Poor (${vis} m)`,vis<1000?'red':'');
+    const hrs=atm.hourly.pressure_msl;
+    if (hrs?.length>=4) {
+      const diff=hrs[0]-hrs[3];
+      set('press-now',`${hrs[0].toFixed(0)} hPa  ${diff>1.5?'↑ Rising':diff<-1.5?'↓ Falling':'→ Steady'}`,diff<-3?'red':'');
+    }
+    if (waveH) set('wave-now',`${waveH.toFixed(1)} m  ${mar.current.wave_period?.toFixed(0)||'—'} s`,waveH>2?'red':waveH>1?'amber':'');
+    buildBfBar(bf);
+    updateGoNoGo(windKn,gustKn,waveH);
+    updateSailPlan(windKn,gustKn,bf);
+    buildForecast(atm.daily);
+    if (!S.skWs && !S.simTimer) {
+      set('inst-tws',windKn.toFixed(1)+' kn');
+      set('inst-twa',c.wind_direction_10m+'° ('+deg2cpt(c.wind_direction_10m)+')');
+    }
+  } catch(e) { console.error('Weather load failed',e); }
+}
+
+function buildBfBar(bf) {
+  const bar=$('bf-bar');
+  const cols=['#2d6a4f','#40916c','#74c69d','#95d5b2','#b7e4c7','#d4a843','#e07b39','#c05640','#8b2020','#5c0f0f','#3d0000','#1a0000'];
+  bar.innerHTML='';
+  for (let i=0;i<=12;i++) {
+    const d=document.createElement('div'); d.className='bf';
+    d.style.cssText=`height:${8+i*5}px;background:${i<=bf?cols[i]:'#1e221e'}`;
+    bar.appendChild(d);
+  }
+  bar.insertAdjacentHTML('beforeend',`<span style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-left:5px;align-self:flex-end">BF${bf}</span>`);
+}
+
+function updateGoNoGo(windKn,gustKn,waveH) {
+  const b=$('gonogo-banner');
+  let cls,icon,verdict,reason;
+  if (gustKn>30||waveH>2.5||windKn>25) {
+    cls='gonogo-no'; icon='✕'; verdict='Do not sail';
+    reason=`${gustKn>30?`Gusts ${gustKn.toFixed(1)} kn. `:''}${waveH>2.5?`Seas ${waveH.toFixed(1)} m. `:''}Conditions exceed Nicholson 30 solo envelope.`;
+  } else if (gustKn>20||waveH>1.5||windKn>18) {
+    cls='gonogo-caution'; icon='⚠'; verdict='Caution — check closely';
+    reason=`Wind ${windKn.toFixed(1)} kn F${bfScale(windKn)}, gusts ${gustKn.toFixed(1)} kn, seas ${waveH.toFixed(1)} m. Manageable — reef before departure.`;
+  } else {
+    cls='gonogo-go'; icon='✓'; verdict='Good to sail';
+    reason=`Wind ${windKn.toFixed(1)} kn F${bfScale(windKn)}, gusts ${gustKn.toFixed(1)} kn, seas ${waveH.toFixed(1)} m. Suitable for Nicholson 30 solo.`;
+  }
+  b.className=cls; $('gonogo-icon').textContent=icon;
+  $('gonogo-verdict').textContent=verdict; $('gonogo-reason').textContent=reason;
+}
+
+function updateSailPlan(windKn,gustKn,bf) {
+  const ref=gustKn;
+  let main,jib,note;
+  if (ref<9)    {main='Full main';      jib='Full 150% genoa';  note='Drifter conditions — power up, outhaul off.';}
+  else if (ref<16){main='Full main';    jib='Full 150% genoa';  note='Sweet spot for Ava — hull speed territory.';}
+  else if (ref<21){main='Full / 1 reef ready'; jib='0–20% furled'; note='Reef if heel >20° or weather helm builds.';}
+  else if (ref<26){main='1 reef';       jib='30–40% furled';    note='Reef before leaving the lock. Car aft one hole.';}
+  else if (ref<31){main='2 reefs';      jib='50–70% furled';    note='Solo limit. Short trip, clear bailouts only.';}
+  else           {main='3 reefs / bare poles'; jib='Furl completely'; note='Stay in or return to shelter immediately.';}
+  $('sail-plan').innerHTML=`
+    <div class="row"><span class="k">Main</span><span class="v amber">${main}</span></div>
+    <div class="row"><span class="k">Genoa 150%</span><span class="v amber">${jib}</span></div>
+    <div class="row"><span class="k">Based on</span><span class="v">${gustKn.toFixed(1)} kn gusts (BF${bf})</span></div>
+    <p style="margin-top:8px;font-size:13px;color:var(--ink3)">${note}</p>`;
+}
+
+function buildForecast(daily) {
+  const strip=$('forecast-strip'); strip.innerHTML='';
+  const icons={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',65:'⛈',80:'🌦',95:'⛈'};
+  for (let i=0;i<Math.min(daily.time.length,7);i++) {
+    const wKn=parseFloat(kph2kn(daily.wind_speed_10m_max[i]));
+    const col=wKn<15?'#5dba6e':wKn<22?'#d4a843':'#c0564e';
+    const d=document.createElement('div'); d.className='fc-day';
+    d.innerHTML=`<div class="fc-date">${new Date(daily.time[i]).toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})}</div>
+      <div class="fc-icon">${icons[daily.weather_code[i]]||'🌥'}</div>
+      <div class="fc-wind">${wKn.toFixed(0)} kn</div>
+      <div class="fc-temp">${daily.temperature_2m_max[i].toFixed(0)}° / ${daily.temperature_2m_min[i].toFixed(0)}°</div>
+      <span class="fc-dot" style="background:${col}"></span>`;
+    strip.appendChild(d);
+  }
+}
+
+// ── SIGNAL K ───────────────────────────────────────────────────────
+function connectSK() {
+  stopSK();
+  const url=`ws://${S.skHost}:${S.skPort}/signalk/v1/stream?subscribe=all`;
+  $('sk-label').textContent='Connecting…';
+  try {
+    const ws=new WebSocket(url); S.skWs=ws;
+    ws.onopen=()=>{
+      $('sk-dot').className='connected';
+      $('sk-label').textContent=`Live · ${S.skHost}`;
+      $('btn-sk-connect').textContent='Disconnect';
+      $('btn-sk-connect').onclick=stopSK;
+    };
+    ws.onmessage=e=>{
+      try {
+        const msg=JSON.parse(e.data); if (!msg.updates) return;
+        msg.updates.forEach(u=>u.values?.forEach(v=>{S.skData[v.path]=v.value;}));
+        renderSK();
+      } catch{}
+    };
+    ws.onerror=()=>{$('sk-dot').className='error';$('sk-label').textContent='Error';};
+    ws.onclose=()=>{$('sk-dot').className='';$('sk-label').textContent='Disconnected';S.skWs=null;};
+  } catch(e){$('sk-label').textContent='Failed: '+e.message;}
+}
+
+function stopSK() {
+  if (S.skWs){try{S.skWs.close();}catch{} S.skWs=null;}
+  if (S.simTimer){clearInterval(S.simTimer);S.simTimer=null;}
+  $('sk-dot').className=''; $('sk-label').textContent='Disconnected';
+  $('btn-sk-connect').textContent='Connect'; $('btn-sk-connect').onclick=connectSK;
+}
+
+function renderSK() {
+  const d=S.skData;
+  const aws=d['environment.wind.speedApparent'];
+  const awa=d['environment.wind.angleApparent'];
+  const tws=d['environment.wind.speedTrue'];
+  const twa=d['environment.wind.angleTrueWater']??d['environment.wind.directionTrue'];
+  const sog=d['navigation.speedOverGround'];
+  const stw=d['navigation.speedThroughWater'];
+  const cog=d['navigation.courseOverGroundTrue'];
+  const hdg=d['navigation.headingMagnetic']??d['navigation.headingTrue'];
+  const dep=d['environment.depth.belowKeel'];
+  const att=d['navigation.attitude'];
+  const heel=att?.roll!=null?att.roll*180/Math.PI:null;
+
+  if (aws!=null) set('inst-aws',ms2kn(aws),'amber');
+  if (awa!=null) {
+    const deg=awa*180/Math.PI;
+    set('inst-awa',`${Math.abs(deg).toFixed(0)}° ${deg<0?'P':'S'}`,'amber');
+    const arrow=$('awa-arrow'); if(arrow) arrow.setAttribute('transform',`rotate(${deg})`);
+  }
+  if (tws!=null) set('inst-tws',ms2kn(tws));
+  if (twa!=null) set('inst-twa',r2dg(twa));
+  if (sog!=null) set('inst-sog',ms2kn(sog),'big');
+  if (stw!=null) set('inst-stw',ms2kn(stw));
+  if (cog!=null&&hdg!=null) $('inst-cog').textContent=`${(cog*180/Math.PI).toFixed(0)}° / ${(hdg*180/Math.PI).toFixed(0)}°`;
+  if (dep!=null) set('inst-depth',dep.toFixed(1)+' m',dep<3?'red':'');
+  if (heel!=null) set('inst-heel',heel.toFixed(0)+'°',Math.abs(heel)>25?'red':'');
+  if (sog!=null&&twa!=null) {
+    const vmg=sog*1.944*Math.cos(twa); set('inst-vmg',`${vmg.toFixed(2)} kn ${vmg>0?'↑':'↓'}`,'blue');
+  }
+
+  const sogv=ms2knv(sog), twsv=ms2knv(tws);
+  $('sk-live').innerHTML=[sogv?`<span>SOG <span class="sk-lv">${sogv} kn</span></span>`:'',twsv?`<span>TWS <span class="sk-lv">${twsv} kn</span></span>`:''].join('');
+
+  const twaDeg=twa!=null?Math.abs(twa*180/Math.PI):null;
+  const twsKn=tws!=null?tws*1.944:null;
+  if (twaDeg!=null) updatePointOfSail(twaDeg,twsKn,heel);
+
+  if (dep!=null&&dep<1.5) skLog(`SHOAL ALARM: ${dep.toFixed(1)} m under keel`);
+  if (heel!=null&&Math.abs(heel)>25) skLog(`Heel ${heel.toFixed(0)}° — ease traveller, consider reefing`);
+}
+
+function updatePointOfSail(twa,twsKn,heel) {
+  let name,advice;
+  if (twa<30)       {name='In irons';    advice='Bear away — sails luffing. Fall off 10° and gather speed.';}
+  else if (twa<50)  {name='Close-hauled';advice='Sail to the telltales — inboard just lifting, outboard streaming. Watch the windex: a header means bear away or tack; a lift means point up.';}
+  else if (twa<80)  {name='Close reach'; advice='Ease sheets 10–15 cm. Power up. Outhaul on for flat sail. Windex should sit just inside close-hauled position.';}
+  else if (twa<110) {name='Beam reach';  advice='Fastest point of sail on Ava. Ease to the edge of luff. Windex at 90° — if it swings forward, the wind has shifted ahead.';}
+  else if (twa<150) {name='Broad reach'; advice='Sheets well eased. Watch for gybe — preventer on when sailing solo. Windex points well aft.';}
+  else if (twa<175) {name='Run';         advice='Goose-winged option. Solo: rig a preventer. Avoid dead downwind. Windex unreliable — watch the genoa luff for collapse.';}
+  else              {name='Dead downwind';advice='Bear up to broad reach. Solo DDW invites an accidental gybe. Windex pointing almost straight aft — any swing to leeward means a gybe is coming.';}
+  $('pos-name').textContent=name;
+  $('pos-detail').textContent=`TWA ${twa.toFixed(0)}°${twsKn?' · TWS '+twsKn.toFixed(0)+' kn':''}`;
+  $('pos-advice').innerHTML=`<p>${advice}</p>`;
+  if (twsKn!=null) setTrim(twsKn,twa,heel);
+}
+
+function setTrim(tws,twa,heel) {
+  let reef,furl;
+  if (tws<9)      {reef='Full · light air'; furl='0%';}
+  else if (tws<16){reef='Full';             furl='0%';}
+  else if (tws<21){reef=heel>20?'1 reef':'Full · reef ready'; furl=heel>20?'15%':'0–10%';}
+  else if (tws<26){reef='1 reef';           furl='30%';}
+  else if (tws<31){reef='2 reefs';           furl='50–70% furled';}
+  else            {reef='3 reefs / bare poles'; furl='Furl completely';}
+  set('trim-reef',reef); set('trim-furl',furl);
+
+  if (twa<50) {
+    set('trim-main','Hard in, traveller centre or above');
+    set('trim-trav','Up to weather in <15 kn; leeward in puffs');
+    set('trim-out','On hard — flat foot');      set('trim-kick','Snug — block leech twist');
+    set('trim-jib','Hard in, leech 4–6 cm off spreader');
+    set('trim-car','Forward — leech telltales streaming');
+    set('trim-hal','Tight — no luff scallops'); set('trim-tell','Both streaming aft');
+  } else if (twa<80) {
+    set('trim-main','Ease 10–20 cm');           set('trim-trav','Leeward');
+    set('trim-out','On — flat for power');       set('trim-kick','Snug');
+    set('trim-jib','Ease 10–15 cm');            set('trim-car','One hole aft');
+    set('trim-hal','Medium');                   set('trim-tell','Both streaming, outer just lifting');
+  } else if (twa<110) {
+    set('trim-main','Eased — boom to rail');     set('trim-trav','Fully leeward');
+    set('trim-out','Off — deep belly');          set('trim-kick','On to control twist');
+    set('trim-jib','Eased — leech open');        set('trim-car','Aft — open leech');
+    set('trim-hal','Eased');                    set('trim-tell','Outer streaming, inner curling OK');
+  } else if (twa<160) {
+    set('trim-main','Fully eased. Preventer ON'); set('trim-trav','Fully leeward');
+    set('trim-out','Off');                       set('trim-kick','On');
+    set('trim-jib','Full ease to leeward');      set('trim-car','Full aft');
+    set('trim-hal','Eased');                    set('trim-tell','Unreliable — watch sail shape');
+  } else {
+    set('trim-main','Goose-wing or drop. Preventer ESSENTIAL'); set('trim-trav','Fully leeward');
+    set('trim-out','Off');                       set('trim-kick','On');
+    set('trim-jib','Goose-winged to weather');   set('trim-car','Full aft');
+    set('trim-hal','Eased');                    set('trim-tell','Watch for collapse');
+  }
+}
+
+// ── SIMULATOR ──────────────────────────────────────────────────────
+function runSim() {
+  stopSK(); $('sk-dot').className='connected'; $('sk-label').textContent='Simulator running';
+  let t=0;
+  S.simTimer=setInterval(()=>{
+    t++;
+    const phase=(t%120)/120, tws=12+4*Math.sin(t/30);
+    const twa=(phase<.5?40+5*Math.sin(t/10):95+10*Math.sin(t/15));
+    const sog=(phase<.5?5.2+.3*Math.sin(t/8):6.4+.2*Math.sin(t/8));
+    const aws=Math.sqrt(tws*tws+sog*sog+2*tws*sog*Math.cos(twa*Math.PI/180));
+    const awa=Math.atan2(tws*Math.sin(twa*Math.PI/180),tws*Math.cos(twa*Math.PI/180)+sog);
+    S.skData['environment.wind.speedApparent']=aws/1.944;
+    S.skData['environment.wind.angleApparent']=awa;
+    S.skData['environment.wind.speedTrue']=tws/1.944;
+    S.skData['environment.wind.angleTrueWater']=twa*Math.PI/180;
+    S.skData['navigation.speedOverGround']=sog/1.944;
+    S.skData['navigation.speedThroughWater']=(sog-.1)/1.944;
+    S.skData['navigation.courseOverGroundTrue']=(240+20*Math.sin(t/40))*Math.PI/180;
+    S.skData['navigation.headingMagnetic']=(243+20*Math.sin(t/40))*Math.PI/180;
+    S.skData['environment.depth.belowKeel']=8+3*Math.sin(t/20);
+    S.skData['navigation.attitude']={roll:(phase<.5?15+4*Math.sin(t/12):8+3*Math.sin(t/12))*Math.PI/180};
+    renderSK();
+  },1000);
+}
+
+// ── WATCH LOG ──────────────────────────────────────────────────────
+function skLog(msg) {
+  const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  S.log.unshift({t,msg});
+  if (S.log.length>40) S.log.pop();
+  $('sk-log').innerHTML=S.log.map(e=>`<div class="sk-log-entry"><span class="sk-log-t">${e.t}</span>${e.msg}</div>`).join('');
+}
+
+// ── AI SKIPPER ─────────────────────────────────────────────────────
+async function askSkipper() {
+  if (!S.weather) await loadWeather();
+  const out=$('ai-output');
+  out.innerHTML='<div class="thinking">⊕ The skipper is thinking…</div>';
+
+  const c=S.weather?.current||{};
+  const windKn=c.wind_speed_10m?parseFloat(kph2kn(c.wind_speed_10m)).toFixed(1):'—';
+  const gustKn=c.wind_gusts_10m?parseFloat(kph2kn(c.wind_gusts_10m)).toFixed(1):'—';
+  const waveH=S.marine?.current?.wave_height?.toFixed(1)||'—';
+  const tideH=tideAt(Date.now()).toFixed(2);
+  const ex=findExtrema(Date.now(),4);
+  const hw=ex.find(e=>e.type==='HW'), lw=ex.find(e=>e.type==='LW');
+  const d=S.skData;
+  const liveStr=(S.skWs||S.simTimer)?`Live instruments: TWS ${ms2kn(d['environment.wind.speedTrue'])} TWA ${r2dg(d['environment.wind.angleTrueWater'])} SOG ${ms2kn(d['navigation.speedOverGround'])}`:'Not underway.';
+
+  const prompt=`You are the AI skipper advisor for *Ava*, a 1973 Nicholson 30 MkI sailing solo from SYSAC, Swansea, Bristol Channel, UK.
+
+VESSEL: Nicholson 30 MkI · LOA 30' · Disp 7,280 lb · Hull speed 5.4 kn · Beta B20 diesel
+SAILS: Slab (jiffy) reefing main (new sail being fitted this week — motor only until installed) · 150% genoa (furling) — only two sails aboard
+ELECTRONICS: Signal K / OpenPlotter Pi · Class B AIS · iPad Navionics
+
+CONDITIONS (${new Date().toLocaleString('en-GB')}):
+Wind: ${windKn} kn, gusts ${gustKn} kn, direction ${c.wind_direction_10m}° (${deg2cpt(c.wind_direction_10m||0)})
+Sea state: ${waveH} m · Tide: ${tideH} m above CD
+Next ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Next ${lw?`LW ${fmt(new Date(lw.t))} ${lw.h.toFixed(2)} m`:'—'}
+Visibility: ${c.visibility?(c.visibility/1000).toFixed(1)+' km':'—'} · Pressure: ${c.pressure_msl?.toFixed(0)||'—'} hPa
+${liveStr}
+
+Concise skipper's briefing under these exact headings — no preamble, max 350 words:
+**GO/NO-GO** — one sentence verdict
+**WIND & WEATHER** — assessment and watch points
+**TIDE & LOCK** — lock window and tidal strategy for Bristol Channel
+**SAIL PLAN** — specific sails and reef state for these conditions
+**WATCH POINTS** — top 3 things to monitor once underway
+**SAFETY** — one line on comms and safety`;
+
+  if (!S.apiKey) {
+    const wn=parseFloat(windKn), bf=bfScale(wn);
+    const go=wn<20?'✓ GOOD TO SAIL':wn<28?'⚠ CAUTION':'✕ DO NOT SAIL';
+    out.innerHTML=`<h4>Go / No-Go</h4><p>${go} — ${wn.toFixed(1)} kn (F${bf}), gusts ${gustKn} kn, seas ${waveH} m.</p>
+<h4>Tide & Lock</h4><p>Tide ${tideH} m above CD · ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Lock HW ±2.5 h, out on the hour, in on the half. VHF Ch 18.</p>
+<h4>Watch Points</h4><p>1. AIS traffic on Swansea Approach. 2. Monitor pressure trend every 30 min. 3. Tidal streams up to 3 kn — allow for set and drift.</p>
+<h4 style="color:var(--ink3)">No API key</h4><p style="color:var(--ink3);font-size:13px">Rule-based briefing only. Add Anthropic key in Settings for full AI briefings (~0.25p each on Haiku 4.5).</p>`;
+    return;
+  }
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:S.model,max_tokens:1024,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    out.innerHTML=mdToHtml(text);
+  } catch(e) {
+    out.innerHTML=`<p style="color:var(--red)">Error: ${e.message}</p>`;
+  }
+}
+
+function mdToHtml(md) {
+  return md
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^#{1,3} (.+)$/gm,'<h4>$1</h4>')
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+
+// ── PASSAGE PLANNER ────────────────────────────────────────────────
+const ROUTES = {
+  'swansea-scilly':     {dist:145,bearing:230,eta:29, notes:'Overnight passage. Leave HW −3h to carry tide W past Lundy. 4nm clearance W of Lundy. Watch Pendeen TSS and Seven Stones.'},
+  'swansea-ilfracombe': {dist:25, bearing:195,eta:5.5,notes:'Day sail. Leave HW −2h. Tidal stream sets SE across the channel. Ilfracombe dries partially — check their tides.'},
+  'swansea-cardiff':    {dist:38, bearing:115,eta:8,  notes:'Leave HW Swansea. Follow N shore. Cardiff Bay Barrage lock — VHF Ch 18.'},
+  'swansea-barry':      {dist:30, bearing:130,eta:6,  notes:'Barry Roads accessible most states. Barry Dock needs lock — check times.'},
+  'swansea-milford':    {dist:60, bearing:285,eta:12, notes:'Leave HW, head W into St Georges Channel. Major port — follow buoyed channel.'},
+  'swansea-portishead': {dist:60, bearing:135,eta:14, notes:'Leave HW −4h to arrive Bristol on the flood. Portishead lock — call ahead.'},
+  'swansea-penarth':    {dist:40, bearing:120,eta:9,  notes:'Cardiff Barrage lock required. VHF Ch 18. Strong ebb in the channel.'},
+};
+function getRoute(from,to){const k=`${from}-${to}`,r=`${to}-${from}`;return ROUTES[k]||ROUTES[r]||null;}
+
+async function planPassage() {
+  const from=$('p-from').value, to=$('p-to').value, out=$('passage-result');
+  if (from===to) {out.textContent='From and To must be different.'; return;}
+  const route=getRoute(from,to);
+  if (!route) {out.innerHTML=`<p style="color:var(--ink3)">No route data for this combination yet. Use AI Skipper for a custom briefing.</p>`; return;}
+  const depMs=($('p-date').value&&$('p-time').value)?new Date(`${$('p-date').value}T${$('p-time').value}`).getTime():Date.now();
+  const arrMs=depMs+route.eta*3.6e6;
+  const dep=new Date(depMs), arr=new Date(arrMs);
+  const ex=findExtrema(depMs,2);
+  const hw=ex.find(e=>e.type==='HW');
+  out.innerHTML=`<h4>Route · ${from} → ${to}</h4>
+    <div class="row"><span class="k">Distance</span><span class="v">~${route.dist} nm</span></div>
+    <div class="row"><span class="k">Bearing</span><span class="v">~${route.bearing}°</span></div>
+    <div class="row"><span class="k">ETA at 5 kn</span><span class="v">${route.eta} h</span></div>
+    <div class="row"><span class="k">Depart</span><span class="v">${fmtDate(dep)} ${fmt(dep)}</span></div>
+    <div class="row"><span class="k">Est. arrival</span><span class="v">${fmtDate(arr)} ${fmt(arr)}</span></div>
+    ${hw?`<div class="row"><span class="k">Next HW Swansea</span><span class="v">${fmt(new Date(hw.t))} · ${hw.h.toFixed(2)} m</span></div>`:''}
+    <p style="margin-top:10px;color:var(--ink2)">${route.notes}</p>`;
+
+  if (S.apiKey) {
+    out.innerHTML+='<div class="thinking">⊕ Getting AI passage briefing…</div>';
+    try {
+      const c=S.weather?.current||{};
+      const wKn=c.wind_speed_10m?parseFloat(kph2kn(c.wind_speed_10m)).toFixed(1):'—';
+      const pr=`Brief passage plan for *Ava*, Nicholson 30 from ${from} to ${to} (${route.dist} nm), departing ${fmtDate(dep)} ${fmt(dep)}. Wind ${wKn} kn. ${route.notes} Give 3 sentences: tidal strategy, key hazards, go/no-go note. Max 80 words.`;
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:S.model,max_tokens:300,messages:[{role:'user',content:pr}]})});
+      const data=await res.json();
+      const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      out.querySelector('.thinking')?.remove();
+      if (text) out.innerHTML+=`<h4>AI Briefing</h4><p>${text}</p>`;
+    } catch{out.querySelector('.thinking')?.remove();}
+  }
+}
+
+// ── CHECKLIST ──────────────────────────────────────────────────────
+function resetChecklist() {
+  document.querySelectorAll('.check-item input[type=checkbox]').forEach(cb=>{
+    cb.checked=false; cb.closest('.check-item')?.classList.remove('done');
+  });
+}
+document.addEventListener('change',e=>{
+  if (e.target.type==='checkbox') e.target.closest('.check-item')?.classList.toggle('done',e.target.checked);
+});
+
+// ── INIT ───────────────────────────────────────────────────────────
+function init() {
+  initSettings();
+  $('p-date').value=new Date().toISOString().split('T')[0];
+  loadWeather();
+  updateTide();
+  updateLock();
+  moonPhase();
+  solarTimes();
+  setInterval(()=>{updateTide();updateLock();},60000);
+  setInterval(loadWeather,15*60*1000);
+}
+init();
+</script>
+</body>
+</html>
