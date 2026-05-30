@@ -169,6 +169,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <button class="active" onclick="showTab('almanac')">☽ Almanac</button>
     <button onclick="showTab('skipper')">⊕ Skipper</button>
     <button onclick="showTab('solo')">⛵ Solo</button>
+    <button onclick="showTab('celest')">★ Celestial</button>
     <button onclick="showTab('passage')">⇝ Passage</button>
     <button onclick="showTab('settings')">⚙</button>
   </nav>
@@ -467,6 +468,207 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 </div>
 
 
+<!-- ════════════════════════ CELESTIAL ════════════════════════ -->
+<div id="celest-tab" class="tab">
+<div class="grid">
+
+  <div class="panel" style="grid-column:1/-1">
+    <h2>What is Celestial Navigation?</h2>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.8">Celestial navigation finds your position using the angles between celestial bodies (sun, moon, stars, planets) and the horizon, measured with a sextant. It requires no electronics and works anywhere on earth. For RYA Yachtmaster Offshore it is a syllabus requirement — and it is a genuine skill worth having as a backup to GPS on a passage like Swansea → Scilly.</p>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-top:8px">Start with the <strong style="color:var(--accent)">noon latitude sight</strong> — the simplest observation in celestial nav, requiring only a sextant and a watch. It gives you your latitude directly, with no sight reduction tables needed.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Equipment You Need</h2>
+    <div class="row"><span class="k">Sextant</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Any bubble or optical sextant — even a plastic Davis Mk 15 is fine to learn on</span></div>
+    <div class="row"><span class="k">Accurate watch</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">GPS time or radio-corrected — error of 1 second = 0.25 nm position error</span></div>
+    <div class="row"><span class="k">Nautical Almanac</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Current year — gives GHA and Dec of all bodies</span></div>
+    <div class="row"><span class="k">Sight reduction tables</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">HO 249 or AP3270 — or use the calculator on this page</span></div>
+    <div class="row"><span class="k">Chart / plotting sheet</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">To plot your lines of position</span></div>
+    <div class="row"><span class="k">Pencil, parallel rules, dividers</span><span class="v" style="font-size:12px">Standard nav tools</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>Key Terms</h2>
+    <div class="row"><span class="k">Hs</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Sextant altitude — the raw angle you read off the sextant</span></div>
+    <div class="row"><span class="k">Ha</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Apparent altitude — Hs corrected for index error and dip</span></div>
+    <div class="row"><span class="k">Ho</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Observed altitude — Ha corrected for refraction (and limb if sun/moon)</span></div>
+    <div class="row"><span class="k">Hc</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Calculated altitude — what the altitude should be from your assumed position</span></div>
+    <div class="row"><span class="k">GHA</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Greenwich Hour Angle — angular distance W of Greenwich; from the Almanac</span></div>
+    <div class="row"><span class="k">Dec</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Declination — celestial equivalent of latitude; from the Almanac</span></div>
+    <div class="row"><span class="k">LHA</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Local Hour Angle — GHA minus your longitude (W)</span></div>
+    <div class="row"><span class="k">Intercept</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Ho − Hc in minutes of arc = nautical miles towards/away from body</span></div>
+    <div class="row"><span class="k">Azimuth (Zn)</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">True bearing of the body — used to plot your line of position</span></div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- NOON SIGHT -->
+<div class="panel" style="margin-top:10px">
+  <h2>The Noon Sight · Latitude by Meridian Passage</h2>
+  <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:12px">At local noon the sun crosses your meridian (due south in the northern hemisphere) and reaches its highest point in the sky. At that exact moment, a single sextant reading gives you your latitude directly — no time needed, no sight reduction tables.</p>
+
+  <div class="grid" style="margin-top:0">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Procedure</div>
+      <ol class="proc-list">
+        <li><strong>Find local noon.</strong> From the Almanac, get today's GHA of the sun at 1200 UTC. Your longitude in time (divide degrees by 15 to get hours) subtracted from 1200 gives local apparent noon (LAN) — roughly 1200 + 20 min for Swansea (~4°W).</li>
+        <li><strong>Track the sun up.</strong> Start watching ~15 min before LAN. As the sun climbs, keep it on the horizon. It will slow, stop — that is meridian passage. Read off the maximum altitude (Hs).</li>
+        <li><strong>Apply corrections</strong> to get Ho (see calculator below).</li>
+        <li><strong>Calculate zenith distance (ZD).</strong> ZD = 90° − Ho. This is how far you are from the point directly below the sun.</li>
+        <li><strong>Get latitude.</strong> Latitude = Declination ± ZD.<br>
+          — If you are <em>north</em> of the sun's declination: Lat = Dec + ZD<br>
+          — If you are <em>south</em> of the sun's declination: Lat = Dec − ZD</li>
+      </ol>
+      <p style="font-size:12px;color:var(--ink3);margin-top:8px">At Swansea in summer, the sun's Dec is ~+20° to +23°N. Your latitude is ~51.6°N. The sun transits to the south of you, so ZD = Lat − Dec. Example: Ho = 62°, Dec = +21°N → ZD = 28°, Lat = 21 + 28 = <strong style="color:var(--amber)">49°N</strong>... until you correct for your real altitude. The calculator does this for you.</p>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Noon Sight Calculator</div>
+      <div style="font-size:11px;color:var(--ink3);font-family:var(--font-mono);margin-bottom:10px">Today's sun Dec (calculated): <span id="cel-dec" style="color:var(--amber)">—</span></div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Hs — sextant altitude (°  ′)</label>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="number" id="cel-hs-deg" placeholder="62" min="0" max="89" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+        <span style="align-self:center;color:var(--ink3)">°</span>
+        <input type="number" id="cel-hs-min" placeholder="24.5" min="0" max="59.9" step="0.1" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none">
+        <span style="align-self:center;color:var(--ink3)">′</span>
+      </div>
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Index Error (′) — on the arc = negative</label>
+      <input type="number" id="cel-ie" placeholder="0" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Height of Eye (m)</label>
+      <input type="number" id="cel-hoe" placeholder="2.5" value="2.5" min="0" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:10px">
+
+      <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:4px">Sun limb observed</label>
+      <select id="cel-limb" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:7px 9px;outline:none;margin-bottom:12px">
+        <option value="lower">Lower limb (+16.0′)</option>
+        <option value="upper">Upper limb (−16.0′)</option>
+      </select>
+
+      <button class="sk-btn sk-btn-primary" onclick="calcNoon()" style="width:100%">Calculate latitude</button>
+      <div id="cel-result" style="margin-top:12px;font-family:var(--font-mono);font-size:13px;line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SUN SIGHT LOP -->
+<div class="panel" style="margin-top:10px">
+  <h2>Sun Sight · Line of Position (LOP)</h2>
+  <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:10px">A time sight taken when the sun is not on the meridian gives a line of position — you are somewhere along that line. Two sights, or a morning sight + noon sight, give a fix.</p>
+  <div class="grid" style="margin-top:0">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Taking the Sight</div>
+      <ol class="proc-list">
+        <li>Note the exact GMT time to the second when you take the sight — this is critical. 1 second of error = 0.25 nm.</li>
+        <li>Measure Hs and apply corrections (IE, dip, refraction, semi-diameter) to get Ho.</li>
+        <li>From the Almanac, get GHA and Dec of the sun for that exact UTC time (interpolate for the minutes and seconds using the Increments and Corrections tables).</li>
+        <li>Calculate LHA = GHA + East longitude (or GHA − West longitude). Use your assumed position (AP) — nearest whole degree of latitude and longitude that makes LHA a whole number.</li>
+        <li>Enter HO 249 or AP3270 with your AP latitude, declination, and LHA to get Hc and Zn.</li>
+        <li>Intercept = Ho − Hc (in minutes). Positive = towards the body (Towards); negative = away.</li>
+        <li>Plot: from your AP, plot Zn. Mark intercept distance along it. Draw the LOP at 90° to the azimuth line through that point.</li>
+      </ol>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">The Running Fix</div>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:8px">Two observations of the same body at different times give a running fix — the standard technique on a passage.</p>
+      <ol class="proc-list">
+        <li>Morning sight (~0900–1000) — sun in the SE, bearing about 120°–140°. Plot LOP₁.</li>
+        <li>Advance LOP₁ along your course and speed to the time of the second sight.</li>
+        <li>Noon sight — take a meridian altitude. This gives your latitude directly (a horizontal LOP).</li>
+        <li>Where the advanced morning LOP crosses the noon latitude line = your noon position.</li>
+        <li>Afternoon sight (~1500) — sun in the SW. Cross with advanced noon latitude for a 3-LOP fix.</li>
+      </ol>
+      <p style="font-size:12px;color:var(--ink3);margin-top:8px">The morning/noon/afternoon three-LOP pattern is the classic ocean passage day. Repeat each day.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CORRECTIONS TABLE -->
+<div class="panel" style="margin-top:10px">
+  <h2>Altitude Corrections · Quick Reference</h2>
+  <div class="grid" style="margin-top:0">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Step by step: Hs → Ho</div>
+      <div class="row"><span class="k">1. Index error (IE)</span><span class="v" style="font-size:12px">On arc: subtract. Off arc: add.</span></div>
+      <div class="row"><span class="k">2. Dip</span><span class="v" style="font-size:12px">Always subtract. ≈ −1.76 × √(height of eye in m)′</span></div>
+      <div class="row"><span class="k">= Ha</span><span class="v amber" style="font-size:12px">Apparent altitude</span></div>
+      <div class="row"><span class="k">3. Refraction</span><span class="v" style="font-size:12px">Always subtract (bends light down). From tables or ≈ 1/(tan Ha)′</span></div>
+      <div class="row"><span class="k">4. Semi-diameter (sun/moon)</span><span class="v" style="font-size:12px">Lower limb: add ~16′. Upper limb: subtract ~16′.</span></div>
+      <div class="row"><span class="k">= Ho</span><span class="v amber" style="font-size:12px">Observed altitude</span></div>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Dip table (height of eye)</div>
+      <table class="proc-table">
+        <tr><th>Height (m)</th><th>Dip correction</th></tr>
+        <tr><td>1.0 m</td><td>−1.8′</td></tr>
+        <tr><td>1.5 m</td><td>−2.2′</td></tr>
+        <tr><td>2.0 m</td><td>−2.5′</td></tr>
+        <tr><td>2.5 m</td><td>−2.8′</td></tr>
+        <tr><td>3.0 m</td><td>−3.0′</td></tr>
+        <tr><td>4.0 m</td><td>−3.5′</td></tr>
+        <tr><td>5.0 m</td><td>−3.9′</td></tr>
+      </table>
+      <p style="font-size:11px;color:var(--ink3);margin-top:8px">Ava's cockpit eye height ≈ 2.0–2.5 m → dip correction ≈ −2.5′ to −2.8′</p>
+    </div>
+  </div>
+</div>
+
+<!-- STAR SIGHTS -->
+<div class="panel" style="margin-top:10px">
+  <h2>Star & Planet Sights</h2>
+  <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:10px">Stars and planets are observed at dawn and dusk during <strong style="color:var(--ink)">civil twilight</strong> — when the horizon is still visible but the sky is dark enough to see the body. The brief window is typically 20–30 minutes.</p>
+  <div class="grid" style="margin-top:0">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Best stars from UK waters</div>
+      <div class="row"><span class="k">Polaris</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Due north — altitude ≈ your latitude. Simplest star sight.</span></div>
+      <div class="row"><span class="k">Arcturus</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Bright orange, high in summer sky. Easy to identify.</span></div>
+      <div class="row"><span class="k">Vega</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Very bright, nearly overhead in summer from 51°N.</span></div>
+      <div class="row"><span class="k">Capella</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Bright, NE sky, year-round from UK.</span></div>
+      <div class="row"><span class="k">Sirius</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Brightest star in the sky — winter/spring from UK.</span></div>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Polaris latitude sight</div>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7">Polaris sits almost exactly above the North Pole. Its altitude above the horizon equals your latitude — within about 1°. A small correction (the <em>p</em> correction from the Almanac) refines it to within 1 mile.</p>
+      <ol class="proc-list" style="margin-top:8px">
+        <li>Observe Polaris at twilight. Note GMT time.</li>
+        <li>Apply IE, dip, refraction to get Ho.</li>
+        <li>From Almanac: get LHA Aries for your UTC time and approximate longitude.</li>
+        <li>Enter Polaris tables (inside back cover of Almanac) to get the <em>a</em>₀, <em>a</em>₁, <em>a</em>₂ corrections.</li>
+        <li>Latitude = Ho − 1° + a₀ + a₁ + a₂</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="panel" style="margin-top:10px">
+  <h2>Practice Plan · Getting Started</h2>
+  <div class="grid" style="margin-top:0">
+    <div>
+      <ol class="proc-list">
+        <li><strong>Week 1 — at home.</strong> Read Chapter 1–3 of Celestial Navigation by Tom Cunliffe (the standard RYA text). Get familiar with the Almanac layout.</li>
+        <li><strong>Week 2 — ashore.</strong> Practice noon sights on land with a known position. Compare your result to GPS. Aim for within 5 miles to start.</li>
+        <li><strong>Week 3 — on Ava.</strong> Take a noon sight on every passage. Cross-check with GPS — don't rely on it yet, just observe the error.</li>
+        <li><strong>Week 4.</strong> Add morning sights. Plot running fixes. Aim for GPS cross-checks within 10 miles.</li>
+        <li><strong>Yachtmaster level.</strong> Three-body star fix at dawn, accurate to 5 miles. One night passage where cel nav is your primary method.</li>
+      </ol>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Common mistakes</div>
+      <div class="row"><span class="k">Watch error</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Always record watch error at sight time — 4 seconds = 1 mile</span></div>
+      <div class="row"><span class="k">Wrong limb</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Note lower or upper limb — confusing them puts you 32′ out</span></div>
+      <div class="row"><span class="k">Rocking the sextant</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Swing the arc gently — the lowest point of the arc is the true altitude</span></div>
+      <div class="row"><span class="k">Forgetting dip</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Always apply dip — it is always a subtraction</span></div>
+      <div class="row"><span class="k">Dec sign error</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">N and S declination — getting it wrong flips your latitude by 2 × Dec</span></div>
+      <div class="row"><span class="k">Assumed position</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">AP must give whole-degree LHA — check this before entering tables</span></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /celest-tab -->
+
+
 <!-- ════════════════════════ PASSAGE ════════════════════════ -->
 <div id="passage-tab" class="tab">
   <div class="panel">
@@ -599,7 +801,7 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('visible'));
   document.getElementById(name + '-tab').classList.add('visible');
   document.querySelectorAll('nav button').forEach((b, i) => {
-    b.classList.toggle('active', ['almanac','skipper','solo','passage','settings'][i] === name);
+    b.classList.toggle('active', ['almanac','skipper','solo','celest','passage','settings'][i] === name);
   });
   if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
   if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
@@ -1162,10 +1364,67 @@ document.addEventListener('change',e=>{
   if (e.target.type==='checkbox') e.target.closest('.check-item')?.classList.toggle('done',e.target.checked);
 });
 
+// ── CELESTIAL ──────────────────────────────────────────────────────
+function sunDeclination(date) {
+  const doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const dec = 23.45 * Math.sin((360 / 365) * (doy - 81) * Math.PI / 180);
+  const ns = dec >= 0 ? 'N' : 'S';
+  return { val: dec, str: `${Math.abs(dec).toFixed(1)}° ${ns}` };
+}
+
+function calcNoon() {
+  const hsDeg = parseFloat($('cel-hs-deg').value) || 0;
+  const hsMin = parseFloat($('cel-hs-min').value) || 0;
+  const ie    = parseFloat($('cel-ie').value) || 0;
+  const hoe   = parseFloat($('cel-hoe').value) || 2.5;
+  const limb  = $('cel-limb').value;
+  const out   = $('cel-result');
+
+  const hs = hsDeg + hsMin / 60;
+  // IE: sign as entered (on arc = negative)
+  const ha_ie = hs + (ie / 60);
+  // Dip: always subtract, = 1.76 * sqrt(m) arcmin
+  const dip = 1.76 * Math.sqrt(hoe);
+  const ha = ha_ie - (dip / 60);
+  // Refraction (approx, degrees): 1/(tan(ha)) in arcmin
+  const refr = (1 / Math.tan(ha * Math.PI / 180)) / 60;
+  // Semi-diameter: lower limb +16.0', upper -16.0'
+  const sd = limb === 'lower' ? 16.0 / 60 : -16.0 / 60;
+  const ho = ha - refr + sd;
+  // Zenith distance
+  const zd = 90 - ho;
+  // Declination
+  const decObj = sunDeclination(new Date());
+  const dec = decObj.val;
+  // Latitude (sun transits S of observer in N hemisphere, N of declination)
+  // Lat = Dec + ZD if sun is S of observer (usual case for UK)
+  const lat = dec + zd;
+  const ns = lat >= 0 ? 'N' : 'S';
+
+  out.innerHTML = `
+    <div class="row"><span class="k">Hs</span><span class="v amber">${hs.toFixed(2)}°</span></div>
+    <div class="row"><span class="k">IE correction</span><span class="v">${ie >= 0 ? '+' : ''}${ie.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Dip correction</span><span class="v">−${dip.toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Ha (apparent altitude)</span><span class="v">${ha.toFixed(2)}°</span></div>
+    <div class="row"><span class="k">Refraction</span><span class="v">−${(refr * 60).toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Semi-diameter (${limb} limb)</span><span class="v">${sd > 0 ? '+' : ''}${(sd * 60).toFixed(1)}′</span></div>
+    <div class="row"><span class="k">Ho (observed altitude)</span><span class="v amber">${ho.toFixed(2)}°</span></div>
+    <div class="row"><span class="k">Zenith distance (90−Ho)</span><span class="v">${zd.toFixed(2)}°</span></div>
+    <div class="row"><span class="k">Sun declination today</span><span class="v">${decObj.str}</span></div>
+    <div class="row" style="border-top:1px solid var(--accent);margin-top:4px;padding-top:4px"><span class="k">Latitude</span><span class="v big amber">${Math.abs(lat).toFixed(1)}° ${ns}</span></div>`;
+}
+
+function initCelestial() {
+  const decObj = sunDeclination(new Date());
+  const el = $('cel-dec');
+  if (el) el.textContent = decObj.str;
+}
+
 // ── INIT ───────────────────────────────────────────────────────────
 function init() {
   initSettings();
   $('p-date').value=new Date().toISOString().split('T')[0];
+  initCelestial();
   loadWeather();
   updateTide();
   updateLock();
