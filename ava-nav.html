@@ -1170,7 +1170,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
         <div class="row"><span class="k">Spring range Swansea</span><span class="v">~9.5 m</span></div>
         <div class="row"><span class="k">Neap range Swansea</span><span class="v">~4.8 m</span></div>
         <div class="row"><span class="k">Tidal max Bristol Ch.</span><span class="v">3–5 kn</span></div>
-        <div class="row"><span class="k">Lock window</span><span class="v">HW ±2.5 h</span></div>
+        <div class="row"><span class="k">Lock hours</span><span class="v">07:00–21:00 · tide &gt;1.5 m</span></div>
       </div>
     </div>
   </div>
@@ -1906,106 +1906,41 @@ function hideTgCursor() {
 }
 
 // ── LOCK ───────────────────────────────────────────────────────────
-// Tawe Barrage Lock schedule (Swansea Marina published hours):
-//   Weekdays GMT:  07:00–19:00   Weekdays BST:  07:00–22:00
-//   Sat/Sun:       07:00–22:00 (both seasons)
-// Procedure: OUT on the hour · IN on the half hour
-// First slot ~07:10 · Last IN = close − 30 min
-
-const LOCK_CLOSURES = [
-  {start:new Date('2026-03-01T22:00:00'), end:new Date('2026-03-23T07:00:00'), label:'Major maintenance'},
-  {start:new Date('2026-12-25T00:00:00'), end:new Date('2026-12-26T00:00:00'), label:'Christmas Day'},
-];
-
-function isBST(date) {
-  const y = date.getFullYear();
-  const lsMar = new Date(y, 2, 31); lsMar.setDate(31 - lsMar.getDay());
-  const lsOct = new Date(y, 9, 31); lsOct.setDate(31 - lsOct.getDay());
-  return date >= lsMar && date < lsOct;
-}
-
-function getLockHours(date) {
-  const weekend = date.getDay() === 0 || date.getDay() === 6;
-  return { open: 7, close: (weekend || isBST(date)) ? 22 : 19 };
-}
-
-function updateLock() {
-  if (S.selectedDay === 0) {
-    const base = new Date(); base.setHours(0,0,0,0);
-    renderLockForDay(base.getTime(), base, true);
-  }
-}
-
 function renderLockForDay(dayMs, dayDate, isToday) {
   const panel = $('lock-panel'); if (!panel) return;
-  const now = Date.now();
 
-  for (const cl of LOCK_CLOSURES) {
-    if (dayDate >= cl.start && dayDate < cl.end) {
-      panel.innerHTML = `<span class="lock-badge lock-closed">CLOSED – ${cl.label}</span><div class="lock-window">Reopens ${fmtDate(cl.end)} ${fmt(cl.end)}</div>`;
-      return;
-    }
-  }
-
-  const { open, close } = getLockHours(dayDate);
-
-  // Build hourly OUT slots within operating hours, checking tide >= 1.5 m
-  const LOCK_MIN = 1.5;
-  const slots = [];
-  for (let h = open; h < close; h++) {
-    const outT = new Date(dayDate); outT.setHours(h, 0, 0, 0);
-    const inT  = new Date(dayDate); inT.setHours(h, 30, 0, 0);
-    const tOut = tideAt(outT.getTime()), tIn = tideAt(inT.getTime());
-    const tideLow = tOut < LOCK_MIN || tIn < LOCK_MIN;
-    slots.push({ outT, inT, past: outT.getTime() < now, tideLow, tOut, tIn });
-  }
-
-  const fmtSlot = s => {
-    if (s.tideLow) {
-      const worst = Math.min(s.tOut, s.tIn).toFixed(1);
-      return `<span style="${s.past?'opacity:0.38;':''}color:var(--ink3)"><strong>${fmt(s.outT)}</strong> ✕ ${worst} m</span>`;
-    }
-    return `<span style="${s.past?'opacity:0.38':''}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`;
-  };
-
-  let slotsHtml;
+  let statusBadge = '', statusLine = '';
   if (isToday) {
-    const past = slots.filter(s => s.past).slice(-1);
-    const upcoming = slots.filter(s => !s.past).slice(0, 5);
-    slotsHtml = [...past, ...upcoming].map(fmtSlot).join('<br>');
-    if (!slots.filter(s => !s.past).length)
-      slotsHtml = '<span style="color:var(--ink3)">No more slots today — reopens 07:00</span>';
+    const now = Date.now();
+    const nowH = new Date(now).getHours() + new Date(now).getMinutes() / 60;
+    const tide  = tideAt(now);
+    const inHours = nowH >= 7 && nowH < 21;
+    const tideOk  = tide >= 1.5;
+    const isOpen  = inHours && tideOk;
+    statusBadge = isOpen
+      ? `<span class="lock-badge lock-open">TAWE LOCK · OPEN</span>`
+      : `<span class="lock-badge lock-closed">TAWE LOCK · ${!inHours ? 'OUTSIDE HOURS' : 'TIDE TOO LOW'}</span>`;
+    const tideCol = tideOk ? 'var(--green)' : 'var(--red)';
+    statusLine = `<div class="row" style="margin-bottom:6px">
+      <span class="k">Tide now</span>
+      <span class="v" style="color:${tideCol}">${tide.toFixed(2)} m ${tideOk ? '✓' : '✗ below 1.5 m'}</span>
+    </div>`;
   } else {
-    // Future day: list available slots; group blocked periods into a summary line
-    const avail = slots.filter(s => !s.tideLow);
-    const blocked = slots.filter(s => s.tideLow);
-    if (!avail.length) {
-      slotsHtml = `<span style="color:var(--red)">No slots available — tide below 1.5 m throughout operating hours</span>`;
-    } else {
-      slotsHtml = avail.map(fmtSlot).join('<br>');
-      if (blocked.length) {
-        // Group consecutive blocked hours into ranges
-        const groups = [];
-        let gs = blocked[0], gp = blocked[0];
-        for (let i = 1; i < blocked.length; i++) {
-          if (blocked[i].outT.getHours() === gp.outT.getHours() + 1) { gp = blocked[i]; }
-          else { groups.push([gs, gp]); gs = blocked[i]; gp = blocked[i]; }
-        }
-        groups.push([gs, gp]);
-        const bStr = groups.map(([s, e]) =>
-          s === e ? fmt(s.outT) : `${fmt(s.outT)}–${fmt(e.outT)}`
-        ).join(', ');
-        slotsHtml += `<br><span style="color:var(--ink3);font-size:10px">⚠ Tide &lt; 1.5 m: ${bStr}</span>`;
-      }
-    }
+    statusBadge = `<span class="lock-badge lock-open">TAWE LOCK</span>`;
   }
 
-  const ph2 = `~${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
-  panel.innerHTML = `<span class="lock-badge lock-open">TAWE LOCK · ${ph2}</span>
-    <div class="lock-window">${slotsHtml}<br><br>
-    <span style="color:var(--ink3);font-size:10px">Be ready at berth ~:45 · first slot ~07:10 · out on hour · in on half<br>
-    Overnight away: inform Tawe Lockmaster &amp; Coastguard · holding buoys downstream of lock<br>
-    VHF Ch 18 · 'Tawe Lock' · call 10 min before · hours est. from Marina Lock schedule</span></div>`;
+  panel.innerHTML = `${statusBadge}
+    ${statusLine}
+    <div class="lock-window">
+      Opens <strong>07:00</strong> · Closes <strong>21:00</strong><br>
+      Closed when tide is <strong>1.5 m or below</strong><br><br>
+      <span style="color:var(--ink3);font-size:10px">
+        VHF Ch 18 · call sign 'Tawe Lock' · call 10 min before<br>
+        State: vessel name, LOA 9.1 m, destination<br>
+        Fenders both sides · port side preferred<br>
+        Overnight away: inform lockmaster &amp; Coastguard
+      </span>
+    </div>`;
 }
 
 // ── WORLDTIDES ─────────────────────────────────────────────────────
