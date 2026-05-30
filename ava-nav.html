@@ -1019,8 +1019,10 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <h2>Passage Planner</h2>
     <!-- shared port datalist -->
     <datalist id="port-list">
+      <!-- ── WALES ─────────────────────────────────────────────── -->
+      <!-- Swansea & Gower anchorages -->
       <option>Swansea (SYSAC)</option>
-      <!-- Gower anchorages -->
+      <option>Mumbles</option>
       <option>Limeslade Bay (anchorage)</option>
       <option>Langland Bay (anchorage)</option>
       <option>Caswell Bay (anchorage)</option>
@@ -1031,15 +1033,46 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <option>Port Eynon Bay (anchorage)</option>
       <option>Mewslade / Fall Bay (anchorage)</option>
       <option>Rhossili Bay (anchorage)</option>
-      <!-- Bristol Channel offshore -->
-      <option>Lundy Island (anchorage)</option>
-      <option>Mumbles</option>
-      <option>Porthcawl</option>
+      <!-- South Wales ports (east) -->
       <option>Port Talbot</option>
+      <option>Porthcawl</option>
       <option>Barry</option>
       <option>Penarth</option>
       <option>Cardiff Bay</option>
       <option>Newport</option>
+      <!-- Carmarthen Bay & South Pembrokeshire -->
+      <option>Tenby</option>
+      <option>Saundersfoot</option>
+      <option>Caldey Island (anchorage)</option>
+      <option>Lydstep Haven (anchorage)</option>
+      <option>Manorbier Bay (anchorage)</option>
+      <option>Freshwater East (anchorage)</option>
+      <option>Stackpole Quay / Barafundle (anchorage)</option>
+      <option>Broad Haven South (anchorage)</option>
+      <option>Angle Bay (anchorage)</option>
+      <option>Dale Roads (anchorage)</option>
+      <option>Milford Haven</option>
+      <option>Pembroke Dock</option>
+      <!-- Pembrokeshire Islands & North Coast -->
+      <option>Skomer Island (anchorage)</option>
+      <option>Little Haven (anchorage)</option>
+      <option>Broad Haven North (anchorage)</option>
+      <option>Solva (harbour)</option>
+      <option>Whitesands Bay (anchorage)</option>
+      <option>Porthgain (harbour)</option>
+      <option>Abereiddy Bay (anchorage)</option>
+      <option>Pwll Deri (anchorage)</option>
+      <option>Fishguard</option>
+      <option>Cwm yr Eglwys / Dinas Island (anchorage)</option>
+      <option>Newport Bay Pembrokeshire (anchorage)</option>
+      <!-- West & North Wales -->
+      <option>Aberaeron</option>
+      <option>Aberystwyth</option>
+      <option>Barmouth</option>
+      <option>Pwllheli</option>
+      <option>Holyhead</option>
+      <!-- ── BRISTOL CHANNEL / ENGLAND ──────────────────────────── -->
+      <option>Lundy Island (anchorage)</option>
       <option>Portishead</option>
       <option>Clevedon</option>
       <option>Weston-super-Mare</option>
@@ -1049,6 +1082,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <option>Lynmouth</option>
       <option>Ilfracombe</option>
       <option>Appledore / Bideford</option>
+      <!-- ── SOUTH-WEST ENGLAND ─────────────────────────────────── -->
       <option>Padstow</option>
       <option>Newquay</option>
       <option>St Ives</option>
@@ -1059,16 +1093,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <option>Plymouth</option>
       <option>Dartmouth</option>
       <option>Salcombe</option>
-      <option>Tenby</option>
-      <option>Saundersfoot</option>
-      <option>Milford Haven</option>
-      <option>Pembroke Dock</option>
-      <option>Fishguard</option>
-      <option>Aberaeron</option>
-      <option>Aberystwyth</option>
-      <option>Barmouth</option>
-      <option>Pwllheli</option>
-      <option>Holyhead</option>
+      <!-- ── IRELAND ─────────────────────────────────────────────── -->
       <option>Dunmore East</option>
       <option>Crosshaven / Cork</option>
       <option>Kinsale</option>
@@ -1981,6 +2006,26 @@ const PORT_ALIASES = {
   'crosshaven / cork':'cork','crosshaven':'cork','cork':'cork',
   'kinsale':'kinsale',
   'baltimore':'baltimore',
+  // Carmarthen Bay / South Pembrokeshire anchorages
+  'caldey island (anchorage)':'caldey','caldey island':'caldey','caldey':'caldey',
+  'lydstep haven (anchorage)':'lydstep','lydstep haven':'lydstep','lydstep':'lydstep',
+  'manorbier bay (anchorage)':'manorbier','manorbier bay':'manorbier','manorbier':'manorbier',
+  'freshwater east (anchorage)':'freshwatereast','freshwater east':'freshwatereast',
+  'stackpole quay / barafundle (anchorage)':'stackpole','stackpole quay / barafundle':'stackpole','stackpole quay':'stackpole','stackpole':'stackpole','barafundle':'stackpole','barafundle bay':'stackpole',
+  'broad haven south (anchorage)':'broadhavensouth','broad haven south':'broadhavensouth',
+  'angle bay (anchorage)':'angle','angle bay':'angle','angle':'angle',
+  'dale roads (anchorage)':'dale','dale roads':'dale','dale':'dale',
+  // Pembrokeshire islands & north coast anchorages
+  'skomer island (anchorage)':'skomer','skomer island':'skomer','skomer':'skomer',
+  'little haven (anchorage)':'littlehaven','little haven':'littlehaven',
+  'broad haven north (anchorage)':'broadhavennorth','broad haven north':'broadhavennorth',
+  'solva (harbour)':'solva','solva harbour':'solva','solva':'solva',
+  'whitesands bay (anchorage)':'whitesands','whitesands bay':'whitesands','whitesands':'whitesands',
+  'porthgain (harbour)':'porthgain','porthgain harbour':'porthgain','porthgain':'porthgain',
+  'abereiddy bay (anchorage)':'abereiddy','abereiddy bay':'abereiddy','abereiddy':'abereiddy',
+  'pwll deri (anchorage)':'pwllderi','pwll deri':'pwllderi',
+  'cwm yr eglwys / dinas island (anchorage)':'cwmyreglwys','cwm yr eglwys / dinas island':'cwmyreglwys','cwm yr eglwys':'cwmyreglwys','dinas island':'cwmyreglwys',
+  'newport bay pembrokeshire (anchorage)':'newportpembs','newport bay pembrokeshire':'newportpembs','newport pembrokeshire':'newportpembs','newport (pembrokeshire)':'newportpembs',
   // Gower anchorages
   'limeslade bay (anchorage)':'limeslade','limeslade bay':'limeslade','limeslade':'limeslade',
   'langland bay (anchorage)':'langland','langland bay':'langland','langland':'langland',
@@ -2009,7 +2054,27 @@ const ROUTES = {
   'swansea-mewslade':    {dist:15, bearing:232,eta:3,   notes:'Mewslade Bay and adjacent Fall Bay are very small and only suitable in calm or light-wind conditions — no real shelter from S or W. Rocky approach: identify the bay entrance carefully from the S. 3–4m in the centre. More of a fine-weather lunch stop than an overnight anchorage. No facilities. Dramatic limestone headlands.'},
   'swansea-rhossili':    {dist:18, bearing:238,eta:3.6, notes:'Only approach in very settled, calm conditions — completely exposed to SW Atlantic swell and W wind. 3nm long sandy beach; anchor in 5–7m off the centre in a N wind. Worm\'s Head at the S end has a strong tide race when wind-against-tide — cross HW slack. Shipwreck of the Helvetia (1887) on the beach. No facilities nearby. A special anchorage in the right conditions.'},
   // ── BRISTOL CHANNEL OFFSHORE ──────────────────────────────────────
-  'swansea-lundy':       {dist:52, bearing:198,eta:10.5,notes:'Overnight or long day passage to the granite island at the mouth of the Bristol Channel. Main anchorage off the SE corner (Landing Beach) in W and NW winds; Lundy Roads off the E side in light conditions. Strong tides — plan arrival at slack water. Via Bull Point (N Devon coast) with 2nm clearance. Moorings available — phone Lundy Shore Office ahead (day moorings £20). Grey seals, puffins (spring/summer). No fuel on the island. Exposed in E winds.'},
+  'swansea-lundy':          {dist:52, bearing:198,eta:10.5,notes:'Overnight or long day passage to the granite island at the mouth of the Bristol Channel. Main anchorage off the SE corner (Landing Beach) in W and NW winds; Lundy Roads off the E side in light conditions. Strong tides — plan arrival at slack water. Via Bull Point (N Devon coast) with 2nm clearance. Moorings available — phone Lundy Shore Office ahead (day moorings £20). Grey seals, puffins (spring/summer). No fuel on the island. Exposed in E winds.'},
+  // ── CARMARTHEN BAY / SOUTH PEMBROKESHIRE ANCHORAGES ───────────────
+  'swansea-caldey':         {dist:43, bearing:248,eta:8.5, notes:'Caldey Island lies 1nm S of Tenby. Main anchorage E of the island (off the beach) in W and NW winds — sand, 3–5m. W anchorage off Priory Bay in E winds. Caldey Sound between island and mainland — cross near slack, spring rate 3 kn. Cistercian monastery open to visitors by boat (summer). Grey seals on the rocks. Land by dinghy. No fuel. One of the finest anchorages on this coast.'},
+  'swansea-lydstep':        {dist:48, bearing:252,eta:9.5, notes:'Lydstep Haven is one of the best anchorages in S Pembrokeshire — a sheltered bay carved into the limestone cliffs. Enter from the S keeping clear of the headlands. Sand, 4–6m, good holding. Best in N, NE and NW winds. Exposed to S and SE. Lydstep Point to the W has submerged rocks — approach from due S. Caves in the limestone cliffs at LW. No facilities.'},
+  'swansea-manorbier':      {dist:50, bearing:255,eta:10,  notes:'Sandy bay beneath the Norman Manorbier Castle — one of the most scenic anchorages in Wales. Good in N and NW winds. Approach from the SW, clear of the rocky headlands at each end. Sand, 3–5m at LW. Manorbier Point to the S has rocks — keep 0.3nm off. Short walk to the castle (open to visitors) and village pub. Watch for the beach in S winds.'},
+  'swansea-freshwatereast': {dist:53, bearing:260,eta:10.5,notes:'Sandy bay with good holding in 4–5m. Best in NW and N winds. Approach from S, keeping clear of both headlands. Freshwater East Point to the E. Exposed to E and SE. Limited facilities — walk to the village. Good beach, less visited than the western Pembrokeshire bays.'},
+  'swansea-stackpole':      {dist:56, bearing:265,eta:11,  notes:'Stackpole Quay is a tiny National Trust stone quay — anchor in Stackpole Bay to the N, sand 3–5m, best in N and NW winds. Land by dinghy at the quay steps. Walk to Barafundle Bay (often voted one of the finest beaches in Wales) round the headland — 15 min. St Govan\'s Head 2nm S has a strong tide race when wind-against-tide — give 1nm clearance. No facilities at the quay.'},
+  'swansea-broadhavensouth':{dist:59, bearing:268,eta:11.8,notes:'Sheltered sandy bay near Bosherston. Good in NW and N winds. Approach from SW. Sand, 4–6m. Walk inland to Bosherston Lily Ponds (stunning in June). St Govan\'s Chapel perched on the cliff to the S. Exposed to SE. Ministry of Defence Castlemartin ranges to the E — check NOTAM/red-flag status before entering the area.'},
+  'swansea-angle':          {dist:63, bearing:280,eta:12.5,notes:'Angle Bay is inside the eastern arm of Milford Haven — very sheltered from all directions except E. Mud, good holding, 3–6m. Enter Milford Haven following the buoyed deep-water channel; Angle Bay is to starboard. Attractive village with a pub. Watch for commercial tanker and LNG carrier traffic in the Haven — give way and keep to the sides of the channel.'},
+  'swansea-dale':           {dist:65, bearing:283,eta:13,  notes:'Classic Pembrokeshire anchorage inside the W arm of Milford Haven. Excellent shelter from N, NE and E. Sand, 5–8m, very good holding. Dale village with a pub and chandlery. West Blockhouse Point to the SW. Dale can be uncomfortable in a strong SW but is usually calm inside. Dale Sailing provides services. Good base for exploring the Haven.'},
+  // ── PEMBROKESHIRE ISLANDS & NORTH COAST ANCHORAGES ────────────────
+  'swansea-skomer':         {dist:73, bearing:292,eta:14.5,notes:'Skomer Island is a National Nature Reserve — no landing without a Wildlife Trust of Wales permit (book ahead). Anchor in North Haven (E side) in W and NW winds, 5–8m sand. South Haven in N winds. Extraordinary wildlife: puffins (Apr–Jul), Manx shearwaters, razorbills, grey seals. Strong tides in Jack Sound (between island and mainland) — do not transit Jack Sound without slack water and local pilotage knowledge. Approach via the N of the island to avoid Jack Sound.'},
+  'swansea-littlehaven':    {dist:70, bearing:293,eta:14,  notes:'Charming drying harbour — only accessible HW ±2h. Anchor off the village in N Haven (Broad Haven) to the N if arriving on a falling tide. Sand, good holding when floated. S-facing — best in N and NW winds. Exposed to S and SW. Village pub (The Swan) right on the harbour. Very pretty stone buildings.'},
+  'swansea-broadhavennorth':{dist:68, bearing:293,eta:13.5,notes:'Large sandy bay — plenty of room to swing. Good holding in 4–6m. Best in N, NE and E winds. Exposed to W and SW — not in a westerly. Approach from SW keeping clear of Borough Head rocks to the SW. Village with shop and amenities. Often a good stopping point before pushing on to Little Haven or Solva.'},
+  'swansea-solva':          {dist:80, bearing:305,eta:16,  notes:'One of the most spectacular harbours in Wales — a drowned glacial valley with a completely hidden entrance. Dries completely; enter HW ±2h strictly. Narrow entrance with rocks on both sides — follow the leading line carefully; take the time to study the pilot book before entry. Very sheltered once inside. Village with a pub, café, chandlery and provisions. Overnight passage from Swansea — plan for HW arrival (~1130 BST on springs).'},
+  'swansea-whitesands':     {dist:84, bearing:310,eta:16.8,notes:'Large open bay NW of St David\'s Head. Anchor in 4–6m, sand. Best in E and SE winds. Exposed to N, NW and W — Atlantic swell runs in readily. St David\'s Head to the N has strong tidal streams. Ramsey Sound (between mainland and Ramsey Island) has violent tidal races — do not enter without slack-water timing and local pilotage. Good surf beach; St David\'s city is 2 miles away.'},
+  'swansea-porthgain':      {dist:88, bearing:315,eta:17.5,notes:'Unusual small deep-water harbour — former slate and roadstone export port, industrial hoppers still standing. Anchor off the entrance or berth alongside in the harbour (limited space, contact harbourmaster). Rock and sand, 4–6m. Best in S and SE winds; exposed to N and NW. The Sloop Inn is legendary on the Pembrokeshire coast. Approach from SW — Pen Morfa and Ynys Barry rocks to the E.'},
+  'swansea-abereiddy':      {dist:87, bearing:318,eta:17.4,notes:'Small bay with a striking black sand beach and flooded slate quarry (the Blue Lagoon). Anchor off the beach in 3–5m, sand. Best in E and SE winds; exposed to N and W. Old stone cottages ruined by a storm in 1859. No facilities. The Blue Lagoon is used for cliff-jumping — watch for swimmers. Approach from W keeping clear of the rocky outcrops.'},
+  'swansea-pwllderi':       {dist:92, bearing:320,eta:18.4,notes:'Remote anchorage below dramatic cliff scenery — Pembrokeshire at its wildest. Good shelter in E and SE winds; exposed to W, N and SW. Rock and sand bottom, 4–6m. Strumble Head lighthouse 2nm to the NW — strong tidal streams off the headland; pass 1nm off in strong winds. No facilities. One of the most dramatic anchorages on the Welsh coast.'},
+  'swansea-cwmyreglwys':    {dist:100,bearing:330,eta:20,  notes:'Sheltered cove on the W side of the Dinas Island peninsula. Anchor in 3–5m, rock and sand. Ruined 12th-century church of St Brynach right on the shore. Best in E and NE winds — the peninsula provides good shelter. Exposed to N and W. Dinas Island can be walked round (2 miles). No facilities. Very peaceful; Pembrokeshire Coastal Path runs past.'},
+  'swansea-newportpembs':   {dist:98, bearing:332,eta:19.5,notes:'Newport Bay offers a sheltered anchorage off the town, or explore up the Nevern estuary (dries). Sand, 4–6m offshore. Best in W and SW winds; exposed to N. Newport Parrog drying quay ashore. Market town with good shops, pubs and provisions. Two-day passage from Swansea — consider stopping at Fishguard or Pwll Deri overnight. Newport Bar (estuary entrance) can be rough in NW winds.'},
   // ── HARBOURS ──────────────────────────────────────────────────────
   'swansea-porthcawl':  {dist:12, bearing:130,eta:2.5, notes:'Leave HW. Nash Sands lie 2nm to the south — pass north of them. Porthcawl breakwater harbour dries in places; check tides for berthing.'},
   'swansea-porttalbot': {dist:7,  bearing:120,eta:1.5, notes:'Short hop east. Tidal basin with lock — call Port Talbot on VHF Ch 14. Limited yacht facilities.'},
