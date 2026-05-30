@@ -238,7 +238,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <div class="row"><span class="k">Range today</span><span class="v" id="tide-range">—</span></div>
       <div class="row"><span class="k">Springs / Neaps</span><span class="v" id="tide-sn">—</span></div>
       <svg id="tide-svg" viewBox="0 0 400 88" preserveAspectRatio="none"></svg>
-      <div class="source">Harmonic prediction · Swansea constituents</div>
+      <div class="source" id="tide-src">Harmonic model (inaccurate — add WorldTides key in Settings)</div>
     </div>
 
     <div class="panel">
@@ -1266,6 +1266,13 @@ WantedBy=multi-user.target</pre>
 <div id="settings-tab" class="tab">
   <div class="panel" style="max-width:500px">
 
+    <h2>Tide Data — WorldTides</h2>
+    <label for="set-wt-key">WorldTides API Key</label>
+    <input type="password" id="set-wt-key" placeholder="Get a free key at worldtides.info" autocomplete="off">
+    <div class="set-note">Free tier: 1000 requests/month — more than enough. Data is cached for 12 hours so most days use 1–2 requests. Provides official UK tide predictions for Swansea (HW/LW times, heights, hourly curve). Without a key the app falls back to an inaccurate harmonic estimate.</div>
+    <button class="sk-btn sk-btn-primary" onclick="saveWtKey()">Save &amp; fetch tides</button>
+
+    <div class="divider"></div>
     <h2>Anthropic API</h2>
     <label for="set-key">API Key</label>
     <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off">
@@ -1333,6 +1340,8 @@ const S = {
   navUrl:    localStorage.getItem('ava-nav-url')    || 'http://192.168.1.50:8080',
   adminUrl:  localStorage.getItem('ava-admin-url')  || 'http://192.168.1.50:8082',
   selectedDay: 0,
+  wtKey:   localStorage.getItem('ava-wt-key')   || '',
+  tideData: null,
 };
 
 // ── THEME ──────────────────────────────────────────────────────────
@@ -1416,6 +1425,7 @@ function saveAdminUrl() {
 
 // ── SETTINGS ───────────────────────────────────────────────────────
 function initSettings() {
+  $('set-wt-key').value  = S.wtKey;
   $('set-key').value     = S.apiKey;
   $('set-model').value   = S.model;
   $('set-sk-host').value = S.skHost;
@@ -1423,6 +1433,14 @@ function initSettings() {
   $('set-sk-auto').value = S.skAuto;
   $('set-nav-url').value = S.navUrl;
   $('chart-btn').href    = S.navUrl || '#';
+}
+function saveWtKey() {
+  S.wtKey = $('set-wt-key').value.trim();
+  localStorage.setItem('ava-wt-key', S.wtKey);
+  localStorage.removeItem('ava-tide-cache'); // force fresh fetch
+  S.tideData = null;
+  loadTides();
+  alert('WorldTides key saved — fetching tide data…');
 }
 function saveApi() {
   S.apiKey = $('set-key').value.trim();
@@ -1473,17 +1491,35 @@ const CONSTS = [
 const MSL = 5.48; // mean sea level above chart datum, Swansea
 const EPOCH = Date.UTC(2025,0,1,0,0,0);
 
-function tideAt(ms) {
+function harmonicTideAt(ms) {
   const h = (ms - EPOCH) / 3.6e6;
   return MSL + CONSTS.reduce((s,c) => s + c.amp * Math.cos((c.spd*h - c.ph)*Math.PI/180), 0);
 }
 
+function tideAt(ms) {
+  const h = S.tideData?.heights;
+  if (!h?.length) return harmonicTideAt(ms);
+  const secs = ms / 1000;
+  const i = h.findIndex(x => x.dt >= secs);
+  if (i <= 0) return i === 0 ? h[0].height : harmonicTideAt(ms);
+  if (i >= h.length) return harmonicTideAt(ms);
+  const frac = (secs - h[i-1].dt) / (h[i].dt - h[i-1].dt);
+  return h[i-1].height + frac * (h[i].height - h[i-1].height);
+}
+
 function findExtrema(fromMs, count) {
+  if (S.tideData?.extremes?.length) {
+    const fromSec = fromMs / 1000;
+    return S.tideData.extremes
+      .filter(e => e.dt >= fromSec)
+      .slice(0, count)
+      .map(e => ({type: e.type === 'High' ? 'HW' : 'LW', t: e.dt*1000, h: e.height}));
+  }
   const step = 10*60*1000;
   const out = [];
-  let h0 = tideAt(fromMs-step), h1 = tideAt(fromMs);
+  let h0 = harmonicTideAt(fromMs-step), h1 = harmonicTideAt(fromMs);
   for (let t = fromMs; out.length < count; t += step) {
-    const h2 = tideAt(t+step);
+    const h2 = harmonicTideAt(t+step);
     if (h1 > h0 && h1 >= h2) out.push({type:'HW', t, h:h1});
     else if (h1 < h0 && h1 <= h2) out.push({type:'LW', t, h:h1});
     h0=h1; h1=h2;
@@ -1700,6 +1736,55 @@ function renderLockForDay(dayMs, dayDate, isToday) {
     <span style="color:var(--ink3);font-size:10px">Be ready at berth ~:45 · first slot ~07:10 · out on hour · in on half<br>
     Overnight away: inform Tawe Lockmaster &amp; Coastguard · holding buoys downstream of lock<br>
     VHF Ch 18 · 'Tawe Lock' · call 10 min before · hours est. from Marina Lock schedule</span></div>`;
+}
+
+// ── WORLDTIDES ─────────────────────────────────────────────────────
+async function loadTides() {
+  if (!S.wtKey) { updateTideSrc(); return; }
+  // Use cache if < 12 h old and covers the next 6 days
+  try {
+    const cached = JSON.parse(localStorage.getItem('ava-tide-cache') || 'null');
+    if (cached?.fetchedAt > Date.now() - 12*3600000) {
+      const lastEx = cached.extremes?.[cached.extremes.length-1];
+      if (lastEx && lastEx.dt*1000 > Date.now() + 6*86400000) {
+        S.tideData = cached; updateTideSrc(); renderDayView(S.selectedDay); return;
+      }
+    }
+  } catch(_) {}
+  const start = Math.floor(Date.now()/1000);
+  try {
+    const r = await fetch(
+      `https://www.worldtides.info/api/v3?extremes&heights&datum=CD` +
+      `&lat=51.617&lon=-3.944&key=${encodeURIComponent(S.wtKey)}` +
+      `&start=${start}&length=691200&step=3600`
+    );
+    const d = await r.json();
+    if (d.status && d.status !== 200) throw new Error(d.error || `WorldTides error ${d.status}`);
+    const data = {extremes: d.extremes, heights: d.heights, fetchedAt: Date.now()};
+    S.tideData = data;
+    localStorage.setItem('ava-tide-cache', JSON.stringify(data));
+    updateTideSrc(); renderDayView(S.selectedDay);
+  } catch(e) {
+    console.warn('WorldTides fetch failed:', e);
+    // Fall back to stale cache if any
+    try {
+      const cached = JSON.parse(localStorage.getItem('ava-tide-cache') || 'null');
+      if (cached) { S.tideData = cached; updateTideSrc(); renderDayView(S.selectedDay); }
+    } catch(_) {}
+    updateTideSrc();
+  }
+}
+
+function updateTideSrc() {
+  const el = $('tide-src'); if (!el) return;
+  if (S.tideData) {
+    const age = Math.round((Date.now() - S.tideData.fetchedAt) / 3600000);
+    el.textContent = `WorldTides · Swansea · fetched ${age < 1 ? 'just now' : age+'h ago'}`;
+  } else if (S.wtKey) {
+    el.textContent = 'WorldTides · fetch failed — using harmonic estimate';
+  } else {
+    el.textContent = 'Harmonic model (inaccurate) — add WorldTides key in Settings';
+  }
 }
 
 // ── MOON / SOLAR ───────────────────────────────────────────────────
@@ -2714,9 +2799,11 @@ function init() {
   initSettings();
   $('p-date').value=new Date().toISOString().split('T')[0];
   initCelestial();
+  loadTides();
   loadWeather();
   renderDayView(0);
   setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
+  setInterval(loadTides, 12*3600000);
   setInterval(loadWeather,15*60*1000);
 }
 init();
