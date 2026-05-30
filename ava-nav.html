@@ -87,6 +87,12 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 .lock-window { font-size: 12px; color: var(--ink2); line-height: 1.8; }
 .lock-window strong { color: var(--amber); font-weight: normal; }
 
+/* ── DAY PICKER ── */
+#day-picker { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 10px; padding: 2px 0 4px; -webkit-overflow-scrolling: touch; }
+.dp-btn { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: var(--r); border: 1px solid var(--border); background: var(--bg2); color: var(--ink2); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.dp-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.dp-btn:hover:not(.active) { background: var(--bg3); }
+
 /* ── FORECAST ── */
 #forecast-strip { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; margin-top: 6px; -webkit-overflow-scrolling: touch; }
 .fc-day { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; min-width: 74px; text-align: center; flex-shrink: 0; }
@@ -209,9 +215,11 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     </div>
   </div>
 
+  <div id="day-picker"></div>
+
   <div class="grid">
     <div class="panel">
-      <h2>Conditions · Swansea Bay</h2>
+      <h2 id="cond-heading">Conditions · Swansea Bay</h2>
       <div class="row"><span class="k">Wind</span><span class="v amber big" id="wind-now">—</span></div>
       <div class="row"><span class="k">Gusts</span><span class="v amber" id="gust-now">—</span></div>
       <div class="row"><span class="k">Sea state (Hs)</span><span class="v" id="wave-now">—</span></div>
@@ -224,7 +232,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
     <div class="panel">
       <h2>Tide · Swansea</h2>
-      <div class="row"><span class="k">Now (above CD)</span><span class="v amber big" id="tide-now">—</span></div>
+      <div class="row" id="tide-now-row"><span class="k">Now (above CD)</span><span class="v amber big" id="tide-now">—</span></div>
       <div class="row"><span class="k">Next HW</span><span class="v" id="tide-hw">—</span></div>
       <div class="row"><span class="k">Next LW</span><span class="v" id="tide-lw">—</span></div>
       <div class="row"><span class="k">Range today</span><span class="v" id="tide-range">—</span></div>
@@ -234,7 +242,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     </div>
 
     <div class="panel">
-      <h2>Tawe Lock · Today</h2>
+      <h2 id="lock-heading">Tawe Lock · Today</h2>
       <div id="lock-panel">Loading…</div>
       <div class="source">VHF Ch 18 · 01792 470310</div>
     </div>
@@ -1324,6 +1332,7 @@ const S = {
   skAuto:  localStorage.getItem('ava-sk-auto')  || 'no',
   navUrl:    localStorage.getItem('ava-nav-url')    || 'http://192.168.1.50:8080',
   adminUrl:  localStorage.getItem('ava-admin-url')  || 'http://192.168.1.50:8082',
+  selectedDay: 0,
 };
 
 // ── THEME ──────────────────────────────────────────────────────────
@@ -1482,42 +1491,106 @@ function findExtrema(fromMs, count) {
   return out;
 }
 
-function updateTide() {
-  const now = Date.now(), h = tideAt(now);
-  set('tide-now', h.toFixed(2)+' m', 'amber big');
-  const ex = findExtrema(now, 4);
-  const hw = ex.find(e=>e.type==='HW'), lw = ex.find(e=>e.type==='LW');
-  if (hw) set('tide-hw', fmt(new Date(hw.t))+'  '+hw.h.toFixed(2)+' m');
-  if (lw) set('tide-lw', fmt(new Date(lw.t))+'  '+lw.h.toFixed(2)+' m');
-  const midnight = new Date(); midnight.setHours(0,0,0,0);
-  const today = findExtrema(midnight.getTime(), 4);
-  const maxH = Math.max(...today.filter(e=>e.type==='HW').map(e=>e.h));
-  const minL = Math.min(...today.filter(e=>e.type==='LW').map(e=>e.h));
-  const range = maxH - minL;
-  if (isFinite(range)) {
-    set('tide-range', range.toFixed(2)+' m');
-    set('tide-sn', range>7.5?'Springs':range<5.0?'Neaps':'Mid', range>7.5?'amber':'blue');
+// ── DAY PICKER ─────────────────────────────────────────────────────
+function buildDayPicker(days) {
+  const p = $('day-picker'); if (!p) return;
+  p.innerHTML = '';
+  for (let i = 0; i < Math.min(days.length, 7); i++) {
+    const d = new Date(days[i]);
+    const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric'});
+    const btn = document.createElement('button');
+    btn.className = 'dp-btn' + (i === S.selectedDay ? ' active' : '');
+    btn.textContent = label;
+    const idx = i;
+    btn.onclick = () => selectDay(idx);
+    p.appendChild(btn);
   }
-  drawTideGraph(now);
 }
 
-function drawTideGraph(now) {
+function selectDay(offset) {
+  S.selectedDay = offset;
+  document.querySelectorAll('.dp-btn').forEach((b, i) => b.classList.toggle('active', i === offset));
+  renderDayView(offset);
+}
+
+function renderDayView(offset) {
+  const base = new Date(); base.setHours(0, 0, 0, 0);
+  base.setDate(base.getDate() + offset);
+  const dayMs = base.getTime();
+  const isToday = offset === 0;
+
+  const dayLabel = isToday ? 'Today' : offset === 1 ? 'Tomorrow'
+    : base.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+
+  const ch = $('cond-heading');
+  if (ch) ch.textContent = isToday ? 'Conditions · Swansea Bay' : `Forecast · ${dayLabel}`;
+  const lh = $('lock-heading');
+  if (lh) lh.textContent = `Tawe Lock · ${dayLabel}`;
+
+  // Tide panel
+  const nowRow = $('tide-now-row');
+  if (nowRow) nowRow.style.display = isToday ? '' : 'none';
+  if (isToday) {
+    const h = tideAt(Date.now());
+    set('tide-now', h.toFixed(2) + ' m', 'amber big');
+  }
+  const extrema = findExtrema(dayMs, 8).filter(e => e.t < dayMs + 86400000);
+  const hws = extrema.filter(e => e.type === 'HW');
+  const lws = extrema.filter(e => e.type === 'LW');
+  const hwStr = hws.map(e => `${fmt(new Date(e.t))}  ${e.h.toFixed(2)} m`).join('   ·   ') || '—';
+  const lwStr = lws.map(e => `${fmt(new Date(e.t))}  ${e.h.toFixed(2)} m`).join('   ·   ') || '—';
+  set('tide-hw', hwStr); set('tide-lw', lwStr);
+  const maxH = hws.length ? Math.max(...hws.map(e => e.h)) : NaN;
+  const minL = lws.length ? Math.min(...lws.map(e => e.h)) : NaN;
+  const range = maxH - minL;
+  if (isFinite(range)) {
+    set('tide-range', range.toFixed(2) + ' m');
+    set('tide-sn', range > 7.5 ? 'Springs' : range < 5.0 ? 'Neaps' : 'Mid', range > 7.5 ? 'amber' : 'blue');
+  }
+  drawTideGraph(dayMs, isToday ? Date.now() : null);
+
+  // Lock panel
+  renderLockForDay(dayMs, base);
+
+  // Weather
+  renderWeatherForDay(offset);
+
+  // Astro
+  renderAstroForDay(base);
+}
+
+function updateTide() {
+  if (S.selectedDay === 0) renderDayView(0);
+}
+
+function drawTideGraph(dayMs, nowMs) {
   const svg = $('tide-svg'); if (!svg) return;
-  const W=400, H=88, dur=12*3600*1000, start=now-2*3600*1000;
-  const pts=[]; for (let i=0;i<=120;i++) pts.push(tideAt(start+(i/120)*dur));
-  const mn=Math.min(...pts), mx=Math.max(...pts);
-  const py=v=>H-((v-mn)/(mx-mn))*(H-14)-7;
-  const xi=i=>(i/120)*W;
-  const nowX=(2/12)*W;
-  const path=pts.map((v,i)=>`${i?'L':'M'}${xi(i).toFixed(1)},${py(v).toFixed(1)}`).join('');
-  svg.innerHTML=`<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+  const W = 400, H = 88, dur = 86400000;
+  const pts = []; for (let i = 0; i <= 144; i++) pts.push(tideAt(dayMs + (i/144)*dur));
+  const mn = Math.min(...pts), mx = Math.max(...pts);
+  const py = v => H - ((v-mn)/(mx-mn))*(H-14) - 7;
+  const xi = i => (i/144)*W;
+  const path = pts.map((v,i) => `${i?'L':'M'}${xi(i).toFixed(1)},${py(v).toFixed(1)}`).join('');
+  let nowLine = '';
+  if (nowMs !== null) {
+    const nowX = ((nowMs - dayMs) / dur) * W;
+    if (nowX >= 0 && nowX <= W)
+      nowLine = `<line x1="${nowX.toFixed(1)}" y1="0" x2="${nowX.toFixed(1)}" y2="${H}" stroke="#d4a843" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+  <text x="${(nowX+3).toFixed(1)}" y="10" fill="#d4a843" font-size="8" font-family="monospace" opacity="0.7">now</text>`;
+  }
+  // Hour tick marks at 06:00, 12:00, 18:00
+  const ticks = [6,12,18].map(h => {
+    const x = (h/24)*W;
+    return `<line x1="${x}" y1="${H-8}" x2="${x}" y2="${H}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
+  <text x="${x}" y="${H-10}" fill="var(--ink3)" font-size="7" font-family="monospace" text-anchor="middle" opacity="0.7">${h.toString().padStart(2,'0')}:00</text>`;
+  }).join('');
+  svg.innerHTML = `<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#5b9fcf" stop-opacity="0.35"/>
     <stop offset="100%" stop-color="#5b9fcf" stop-opacity="0.03"/>
   </linearGradient></defs>
   <path d="${path}L${W},${H}L0,${H}Z" fill="url(#tg)"/>
   <path d="${path}" fill="none" stroke="#5b9fcf" stroke-width="1.5"/>
-  <line x1="${nowX}" y1="0" x2="${nowX}" y2="${H}" stroke="#d4a843" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
-  <text x="${nowX+3}" y="10" fill="#d4a843" font-size="8" font-family="monospace" opacity="0.7">now</text>`;
+  ${ticks}${nowLine}`;
 }
 
 // ── LOCK ───────────────────────────────────────────────────────────
@@ -1528,54 +1601,87 @@ const LOCK_CLOSURES = [
 ];
 
 function updateLock() {
-  const now=new Date(), panel=$('lock-panel');
+  if (S.selectedDay === 0) {
+    const base = new Date(); base.setHours(0,0,0,0);
+    renderLockForDay(base.getTime(), base);
+  }
+}
+
+function renderLockForDay(dayMs, dayDate) {
+  const panel = $('lock-panel'); if (!panel) return;
   for (const cl of LOCK_CLOSURES) {
-    if (now>=cl.start && now<cl.end) {
-      panel.innerHTML=`<span class="lock-badge lock-closed">CLOSED – ${cl.label}</span><div class="lock-window">Reopens ${fmtDate(cl.end)} ${fmt(cl.end)}</div>`;
+    if (dayDate >= cl.start && dayDate < cl.end) {
+      panel.innerHTML = `<span class="lock-badge lock-closed">CLOSED – ${cl.label}</span><div class="lock-window">Reopens ${fmtDate(cl.end)} ${fmt(cl.end)}</div>`;
       return;
     }
   }
-  const hwNow = tideAt(now.getTime());
-  if (hwNow < 1.5) {
-    panel.innerHTML=`<span class="lock-badge lock-closed">CLOSED – Low water (${hwNow.toFixed(1)} m)</span><div class="lock-window">Lock needs tide above 1.5 m above CD.</div>`;
-    return;
-  }
-  const ex = findExtrema(now.getTime(), 4);
-  const hw = ex.find(e=>e.type==='HW');
+  const extrema = findExtrema(dayMs, 8).filter(e => e.t < dayMs + 86400000);
+  const hws = extrema.filter(e => e.type === 'HW');
   const windows = [];
-  if (hw) {
-    for (let off=-2.5*3.6e6; off<=2.5*3.6e6; off+=3.6e6) {
-      const outT=new Date(hw.t+off), inT=new Date(hw.t+off+30*60000);
-      if (tideAt(outT.getTime())>=1.5)
+  for (const hw of hws) {
+    for (let off = -2.5*3.6e6; off <= 2.5*3.6e6; off += 3.6e6) {
+      const outT = new Date(hw.t + off), inT = new Date(hw.t + off + 30*60000);
+      if (outT.getTime() >= dayMs && outT.getTime() < dayMs + 86400000 && tideAt(outT.getTime()) >= 1.5)
         windows.push(`<strong>${fmt(outT)}</strong> out · <strong>${fmt(inT)}</strong> in`);
     }
   }
-  panel.innerHTML=`<span class="lock-badge lock-open">OPERATIONAL</span>
-    <div class="lock-window">${windows.join('<br>')||'No windows calculated — check Swansea Marina.'}<br><br>
+  if (!windows.length && tideAt(dayMs + 43200000) < 1.5) {
+    panel.innerHTML = `<span class="lock-badge lock-closed">CHECK TIDES</span><div class="lock-window">Low neap — some windows may be below 1.5 m. Call marina.</div>`;
+    return;
+  }
+  panel.innerHTML = `<span class="lock-badge lock-open">OPERATIONAL</span>
+    <div class="lock-window">${windows.join('<br>') || 'No windows — check Swansea Marina.'}<br><br>
     <span style="color:var(--ink3);font-size:10px">VHF Ch 18 · 01792 470310 · Call 10 min before</span></div>`;
 }
 
 // ── MOON / SOLAR ───────────────────────────────────────────────────
-function moonPhase() {
-  const now=new Date(), known=new Date('2000-01-06T18:14:00Z'), cycle=29.530588861;
-  const age=(((now-known)/86400000%cycle)+cycle)%cycle;
-  const illum=Math.round(50*(1-Math.cos(2*Math.PI*age/cycle)));
-  const phases=[[0,'🌑 New'],[3.7,'🌒 Waxing Crescent'],[7.4,'🌓 First Quarter'],[11.1,'🌔 Waxing Gibbous'],[14.8,'🌕 Full'],[18.5,'🌖 Waning Gibbous'],[22.1,'🌗 Last Quarter'],[25.8,'🌘 Waning Crescent']];
-  const p=[...phases].reverse().find(x=>age>=x[0]);
-  set('moon-phase',p[1]); set('moon-illum',illum+'%');
+function moonPhase() { renderAstroForDay(new Date()); }
+function solarTimes() {}
+
+function renderAstroForDay(date) {
+  const lat = 51.617, lng = -3.944;
+  const doy = Math.floor((date - new Date(date.getFullYear(),0,0)) / 86400000);
+  const B = (360/365)*(doy-81)*Math.PI/180;
+  const eq = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
+  const ha = Math.acos(-Math.tan(lat*Math.PI/180)*Math.tan(23.45*Math.sin(B)*Math.PI/180))*180/Math.PI;
+  const tz = date.getTimezoneOffset() < 0 ? -date.getTimezoneOffset()/60 : 1;
+  const rise = new Date(date); rise.setHours(0,0,0,0); rise.setMinutes(720 - 4*(lng+ha) - eq + tz*60);
+  const sset = new Date(date); sset.setHours(0,0,0,0); sset.setMinutes(720 - 4*(lng-ha) - eq + tz*60);
+  set('sunrise', fmt(rise)); set('sunset', fmt(sset));
+  const dm = (sset - rise) / 60000;
+  set('daylen', `${Math.floor(dm/60)}h ${Math.round(dm%60)}m`);
+  const known = new Date('2000-01-06T18:14:00Z'), cycle = 29.530588861;
+  const age = (((date - known)/86400000 % cycle) + cycle) % cycle;
+  const illum = Math.round(50*(1-Math.cos(2*Math.PI*age/cycle)));
+  const phases = [[0,'🌑 New'],[3.7,'🌒 Waxing Crescent'],[7.4,'🌓 First Quarter'],[11.1,'🌔 Waxing Gibbous'],[14.8,'🌕 Full'],[18.5,'🌖 Waning Gibbous'],[22.1,'🌗 Last Quarter'],[25.8,'🌘 Waning Crescent']];
+  const p = [...phases].reverse().find(x => age >= x[0]);
+  set('moon-phase', p[1]); set('moon-illum', illum + '%');
 }
 
-function solarTimes() {
-  const lat=51.617, lng=-3.944, now=new Date();
-  const doy=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);
-  const B=(360/365)*(doy-81)*Math.PI/180;
-  const eq=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
-  const ha=Math.acos(-Math.tan(lat*Math.PI/180)*Math.tan(23.45*Math.sin(B)*Math.PI/180))*180/Math.PI;
-  const tz=1; // BST — change to 0 for GMT (Oct–Mar)
-  const rise=new Date(); rise.setHours(0,0,0,0); rise.setMinutes(720-4*(lng+ha)-eq+tz*60);
-  const sset=new Date(); sset.setHours(0,0,0,0); sset.setMinutes(720-4*(lng-ha)-eq+tz*60);
-  set('sunrise',fmt(rise)); set('sunset',fmt(sset));
-  const dm=(sset-rise)/60000; set('daylen',`${Math.floor(dm/60)}h ${Math.round(dm%60)}m`);
+function renderWeatherForDay(offset) {
+  if (!S.weather) return;
+  if (offset === 0) return; // current conditions already rendered by loadWeather
+  const d = S.weather.daily;
+  if (!d || !d.time[offset]) return;
+  const wKn = parseFloat(kph2kn(d.wind_speed_10m_max[offset]));
+  const gKn = parseFloat(kph2kn(d.wind_gusts_10m_max[offset]));
+  const dir = d.wind_direction_10m_dominant[offset];
+  const bf = bfScale(wKn);
+  const wicons = {0:'☀',1:'🌤',2:'⛅',3:'☁',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'⛈',71:'🌨',80:'🌦',81:'🌧',95:'⛈'};
+  const icon = wicons[d.weather_code[offset]] || '🌥';
+  set('wind-now', `${wKn.toFixed(1)} kn max  ${dir}° (${deg2cpt(dir)})`, 'amber big');
+  set('gust-now', `${gKn.toFixed(1)} kn max`, gKn > 25 ? 'red' : 'amber');
+  set('temp-now', `${d.temperature_2m_max[offset].toFixed(0)}° / ${d.temperature_2m_min[offset].toFixed(0)}°C`);
+  set('vis-now', `${icon}  ${wCodeDesc(d.weather_code[offset])}`);
+  set('press-now', '—');
+  set('wave-now', '—');
+  buildBfBar(bf);
+  updateGoNoGo(wKn, gKn, 0);
+}
+
+function wCodeDesc(c) {
+  const m = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',80:'Showers',81:'Heavy showers',95:'Thunderstorm'};
+  return m[c] || 'Mixed';
 }
 
 // ── WEATHER ────────────────────────────────────────────────────────
@@ -1606,10 +1712,13 @@ async function loadWeather() {
     updateGoNoGo(windKn,gustKn,waveH);
     updateSailPlan(windKn,gustKn,bf);
     buildForecast(atm.daily);
+    buildDayPicker(atm.daily.time);
     if (!S.skWs && !S.simTimer) {
       set('inst-tws',windKn.toFixed(1)+' kn');
       set('inst-twa',c.wind_direction_10m+'° ('+deg2cpt(c.wind_direction_10m)+')');
     }
+    // Re-render the selected day if the user had switched away from Today
+    if (S.selectedDay !== 0) renderDayView(S.selectedDay);
   } catch(e) { console.error('Weather load failed',e); }
 }
 
@@ -2538,11 +2647,8 @@ function init() {
   $('p-date').value=new Date().toISOString().split('T')[0];
   initCelestial();
   loadWeather();
-  updateTide();
-  updateLock();
-  moonPhase();
-  solarTimes();
-  setInterval(()=>{updateTide();updateLock();},60000);
+  renderDayView(0);
+  setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
   setInterval(loadWeather,15*60*1000);
 }
 init();
