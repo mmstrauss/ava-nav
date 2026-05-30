@@ -1360,6 +1360,68 @@ function renderSK() {
 
   if (dep!=null&&dep<1.5) skLog(`SHOAL ALARM: ${dep.toFixed(1)} m under keel`);
   if (heel!=null&&Math.abs(heel)>25) skLog(`Heel ${heel.toFixed(0)}° — ease traveller, consider reefing`);
+
+  // ── Systems tab live data ────────────────────────────────────────
+  const battV   = d['electrical.batteries.house.voltage'];
+  const battA   = d['electrical.batteries.house.current'];
+  const battSoc = d['electrical.batteries.house.stateOfCharge'];
+  const battTtr = d['electrical.batteries.house.capacity.timeRemaining'];
+  const solVp   = d['electrical.solar.0.panelVoltage'];
+  const solIp   = d['electrical.solar.0.panelCurrent'];
+  const solIout = d['electrical.solar.0.chargingCurrent'];
+  const solMode = d['electrical.solar.0.controllerMode'];
+  const solYld  = d['electrical.solar.0.yieldToday'];
+  const shoreV  = d['electrical.chargers.0.voltage'];
+  const shoreA  = d['electrical.chargers.0.current'];
+  const shoreM  = d['electrical.chargers.0.mode'];
+  const fuel    = d['tanks.fuel.0.currentLevel'];
+  const water   = d['tanks.freshWater.0.currentLevel'];
+  const bilge   = d['bilge.0.pump.state'];
+  const bilgeHW = d['bilge.0.highWaterAlarm'];
+  const bilgeN  = d['bilge.0.pump.runCount'];
+
+  if (battV!=null)   { const v=battV.toFixed(2); set('sys-batt-v',v+' V', battV<11.8?'red':battV<12.2?'amber':''); }
+  if (battA!=null)   set('sys-batt-a',(battA>0?'+':'')+battA.toFixed(1)+' A', battA>0?'green':'');
+  if (battSoc!=null) {
+    const pct=Math.round(battSoc*100);
+    set('sys-batt-soc',pct+'%', pct<30?'red':pct<50?'amber':'green');
+    const bar=$('sys-batt-bar');
+    if(bar){ bar.style.width=pct+'%'; bar.style.background=pct<30?'var(--red)':pct<50?'var(--amber)':'var(--green)'; }
+  }
+  if (battTtr!=null) { const h=Math.floor(battTtr/3600),m=Math.round((battTtr%3600)/60); set('sys-batt-ttr',`${h}h ${m}m`); }
+  if (battV!=null&&battA!=null) set('sys-batt-w',(battV*Math.abs(battA)).toFixed(0)+' W');
+
+  if (solVp!=null)   set('sys-sol-vpanel', solVp.toFixed(1)+' V');
+  if (solIp!=null)   set('sys-sol-ipanel', solIp.toFixed(1)+' A');
+  if (solIout!=null) set('sys-sol-iout',   solIout.toFixed(1)+' A', solIout>0?'green':'');
+  if (solMode!=null) set('sys-sol-state',  solMode);
+  if (solYld!=null)  set('sys-sol-yield',  (solYld/3600).toFixed(2)+' Ah');
+
+  if (shoreV!=null||shoreA!=null) {
+    set('sys-shore-state', (shoreV??0)>10?'Connected ✓':'Disconnected', (shoreV??0)>10?'green':'');
+    if(shoreV!=null) set('sys-shore-v', shoreV.toFixed(1)+' V');
+    if(shoreA!=null) set('sys-shore-a', shoreA.toFixed(1)+' A');
+    if(shoreM!=null) set('sys-shore-mode', shoreM);
+  }
+
+  if (fuel!=null) {
+    const pct=Math.round(fuel*100);
+    set('sys-fuel-pct', pct+'%', pct<20?'red':pct<40?'amber':'');
+    set('sys-fuel-vol', Math.round(fuel*45)+' L of 45 L');
+    const fb=$('sys-fuel-bar'); if(fb){ fb.style.width=pct+'%'; fb.style.background=pct<20?'var(--red)':'var(--amber)'; }
+    if(pct<20) skLog('LOW FUEL: '+pct+'% remaining');
+  }
+  if (water!=null) {
+    const pct=Math.round(water*100);
+    set('sys-water-pct', pct+'%', pct<20?'red':'');
+    set('sys-water-vol', Math.round(water*55)+' L of 55 L');
+    const wb=$('sys-water-bar'); if(wb){ wb.style.width=pct+'%'; }
+  }
+
+  if (bilge!=null)   set('sys-bilge-pump',  bilge?'RUNNING':'Off', bilge?'red':'green');
+  if (bilgeHW!=null) set('sys-bilge-alarm', bilgeHW?'HIGH WATER ⚠':'OK', bilgeHW?'red':'green');
+  if (bilgeN!=null)  set('sys-bilge-count', bilgeN+' cycles');
+  if (bilge)         skLog('BILGE PUMP running');
 }
 
 function updatePointOfSail(twa,twsKn,heel) {
@@ -1438,6 +1500,20 @@ function runSim() {
     S.skData['navigation.headingMagnetic']=(243+20*Math.sin(t/40))*Math.PI/180;
     S.skData['environment.depth.belowKeel']=8+3*Math.sin(t/20);
     S.skData['navigation.attitude']={roll:(phase<.5?15+4*Math.sin(t/12):8+3*Math.sin(t/12))*Math.PI/180};
+    // Systems sim: slowly discharge battery while sailing, solar partially compensating
+    const socBase=0.72+0.05*Math.sin(t/200);
+    S.skData['electrical.batteries.house.voltage']=12.0+socBase*0.8+0.05*Math.sin(t/7);
+    S.skData['electrical.batteries.house.current']=-4.2+1.5*Math.sin(t/40);
+    S.skData['electrical.batteries.house.stateOfCharge']=socBase;
+    S.skData['electrical.batteries.house.capacity.timeRemaining']=socBase*3600*50/5;
+    S.skData['electrical.solar.0.panelVoltage']=18.5+1.5*Math.sin(t/60);
+    S.skData['electrical.solar.0.chargingCurrent']=1.2+0.8*Math.abs(Math.sin(t/30));
+    S.skData['electrical.solar.0.controllerMode']='Bulk';
+    S.skData['electrical.solar.0.yieldToday']=(t*0.3)*3600;
+    S.skData['tanks.fuel.0.currentLevel']=0.65+0.02*Math.sin(t/100);
+    S.skData['tanks.freshWater.0.currentLevel']=0.80+0.01*Math.sin(t/80);
+    S.skData['bilge.0.pump.state']=false;
+    S.skData['bilge.0.highWaterAlarm']=false;
     renderSK();
   },1000);
 }
