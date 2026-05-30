@@ -96,12 +96,18 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
 /* ── FORECAST ── */
 #forecast-strip { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; margin-top: 6px; -webkit-overflow-scrolling: touch; }
-.fc-day { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; min-width: 74px; text-align: center; flex-shrink: 0; }
+.fc-day { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; min-width: 74px; text-align: center; flex-shrink: 0; cursor: pointer; transition: border-color .15s, background .15s; }
+.fc-day:hover { border-color: var(--blue); background: rgba(91,159,207,.09); }
+.fc-day.fc-active { border-color: var(--blue); background: rgba(91,159,207,.18); }
 .fc-date { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); letter-spacing: .08em; }
 .fc-icon { font-size: 19px; margin: 3px 0; }
 .fc-wind { font-family: var(--font-mono); font-size: 11px; color: var(--amber); }
+.fc-gust { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); margin-top: 1px; }
 .fc-temp { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); margin-top: 2px; }
 .fc-dot  { display: block; width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; }
+#hourly-wind-wrap { margin-top: 7px; }
+#hourly-wind-label { color: var(--ink3); }
+#hourly-wind-svg { width: 100%; height: 40px; display: block; }
 
 /* ── BEAUFORT BAR ── */
 .bf-bar { display: flex; gap: 2px; align-items: flex-end; margin-top: 8px; }
@@ -229,6 +235,10 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <div class="row"><span class="k">Pressure / trend</span><span class="v" id="press-now">—</span></div>
       <div class="row"><span class="k">Air temp</span><span class="v" id="temp-now">—</span></div>
       <div class="bf-bar" id="bf-bar"></div>
+      <div id="hourly-wind-wrap" style="display:none">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink3);margin-bottom:3px;letter-spacing:.06em">HOURLY WIND · <span id="hourly-wind-label"></span></div>
+        <svg id="hourly-wind-svg" viewBox="0 0 240 40" preserveAspectRatio="none"></svg>
+      </div>
       <div class="source">Open-Meteo · 51.566N 3.978W</div>
     </div>
 
@@ -1693,6 +1703,7 @@ function buildDayPicker(days) {
 function selectDay(offset) {
   S.selectedDay = offset;
   document.querySelectorAll('.dp-btn').forEach((b, i) => b.classList.toggle('active', i === offset));
+  highlightForecastDay(offset);
   renderDayView(offset);
 }
 
@@ -2047,7 +2058,10 @@ function renderAstroForDay(date) {
 
 function renderWeatherForDay(offset) {
   if (!S.weather) return;
-  if (offset === 0) return; // current conditions already rendered by loadWeather
+  if (offset === 0) {
+    const wrap = $('hourly-wind-wrap'); if (wrap) wrap.style.display = 'none';
+    return; // today: already rendered live by loadWeather
+  }
   const d = S.weather.daily;
   if (!d || !d.time[offset]) return;
   const wKn = parseFloat(kph2kn(d.wind_speed_10m_max[offset]));
@@ -2064,6 +2078,45 @@ function renderWeatherForDay(offset) {
   set('wave-now', '—');
   buildBfBar(bf);
   updateGoNoGo(wKn, gKn, 0);
+  updateSailPlan(wKn, gKn, bf);
+  drawHourlyWind(offset);
+}
+
+function drawHourlyWind(offset) {
+  const wrap = $('hourly-wind-wrap');
+  const svg = $('hourly-wind-svg');
+  const h = S.weather?.hourly;
+  if (!wrap || !svg || !h?.wind_speed_10m) return;
+  const W = 240, H = 40;
+  const s0 = offset * 24;
+  const speeds = Array.from({length:24}, (_,i) => parseFloat(kph2kn(h.wind_speed_10m[s0+i] || 0)));
+  const gusts  = Array.from({length:24}, (_,i) => parseFloat(kph2kn(h.wind_gusts_10m[s0+i]  || 0)));
+  const dirs   = Array.from({length:24}, (_,i) => h.wind_direction_10m[s0+i] || 0);
+  const mx = Math.max(...gusts, 20);
+  const bw = W / 24;
+  let bars = '';
+  for (let i = 0; i < 24; i++) {
+    const gh = ((gusts[i]  / mx) * H).toFixed(1);
+    const sh = ((speeds[i] / mx) * H).toFixed(1);
+    const col = speeds[i] < 15 ? '#5dba6e' : speeds[i] < 22 ? '#d4a843' : '#c0564e';
+    const x = (i * bw).toFixed(1);
+    const bwInner = (bw - 0.8).toFixed(1);
+    bars += `<rect x="${x}" y="${(H - gh)}" width="${bwInner}" height="${gh}" fill="${col}" opacity="0.22"/>`;
+    bars += `<rect x="${x}" y="${(H - sh)}" width="${bwInner}" height="${sh}" fill="${col}"/>`;
+  }
+  // Tick marks at 06, 12, 18
+  const ticks = [6,12,18].map(hr => {
+    const x = ((hr/24)*W).toFixed(1);
+    return `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#444" stroke-width="0.6"/>
+<text x="${x}" y="${H-1}" fill="#777" font-size="6.5" font-family="monospace" text-anchor="middle">${hr.toString().padStart(2,'0')}</text>`;
+  }).join('');
+  // Max gust label
+  const maxGust = Math.max(...gusts);
+  const maxLabel = `<text x="${W-1}" y="7" fill="#888" font-size="6.5" font-family="monospace" text-anchor="end">↑${maxGust.toFixed(0)} kn</text>`;
+  svg.innerHTML = bars + ticks + maxLabel;
+  const dayDate = new Date(S.weather.daily.time[offset]);
+  $('hourly-wind-label').textContent = dayDate.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'});
+  wrap.style.display = '';
 }
 
 function wCodeDesc(c) {
@@ -2075,7 +2128,7 @@ function wCodeDesc(c) {
 async function loadWeather() {
   try {
     const [atm,mar] = await Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=mph&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=mph&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
       fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London').then(r=>r.json()),
     ]);
     S.weather=atm; S.marine=mar;
@@ -2159,15 +2212,24 @@ function buildForecast(daily) {
   const icons={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',65:'⛈',80:'🌦',95:'⛈'};
   for (let i=0;i<Math.min(daily.time.length,7);i++) {
     const wKn=parseFloat(kph2kn(daily.wind_speed_10m_max[i]));
+    const gKn=parseFloat(kph2kn(daily.wind_gusts_10m_max[i]));
     const col=wKn<15?'#5dba6e':wKn<22?'#d4a843':'#c0564e';
     const d=document.createElement('div'); d.className='fc-day';
+    d.dataset.offset=i;
+    d.onclick=()=>selectDay(i);
     d.innerHTML=`<div class="fc-date">${new Date(daily.time[i]).toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})}</div>
       <div class="fc-icon">${icons[daily.weather_code[i]]||'🌥'}</div>
       <div class="fc-wind">${wKn.toFixed(0)} kn</div>
+      <div class="fc-gust">↑${gKn.toFixed(0)} kn</div>
       <div class="fc-temp">${daily.temperature_2m_max[i].toFixed(0)}° / ${daily.temperature_2m_min[i].toFixed(0)}°</div>
       <span class="fc-dot" style="background:${col}"></span>`;
     strip.appendChild(d);
   }
+  highlightForecastDay(S.selectedDay);
+}
+
+function highlightForecastDay(offset) {
+  document.querySelectorAll('.fc-day').forEach((el, i) => el.classList.toggle('fc-active', i === offset));
 }
 
 // ── SIGNAL K ───────────────────────────────────────────────────────
