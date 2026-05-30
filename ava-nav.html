@@ -196,6 +196,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <button onclick="showTab('systems')">⚡ Systems</button>
     <button onclick="showTab('passage')">⇝ Passage</button>
     <button onclick="showTab('admin')">⬆ Admin</button>
+    <button onclick="showTab('hydro')">⚓ Hydro</button>
     <button onclick="showTab('settings')">⚙</button>
   </nav>
   <button id="theme-btn" onclick="cycleTheme()" title="Switch theme" style="background:none;border:1px solid var(--border);border-radius:var(--r);color:var(--ink3);font-size:15px;width:32px;height:32px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0">◑</button>
@@ -1263,6 +1264,150 @@ WantedBy=multi-user.target</pre>
   </div>
 </div><!-- /admin-tab -->
 
+<!-- ══════════════════════ HYDROGRAPHIC SURVEYING ══════════════════════ -->
+<div id="hydro-tab" class="tab">
+
+  <div class="panel">
+    <h2>Hydrographic Surveying — Amateur Bathymetry</h2>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.7;margin-bottom:10px">As an amateur sailor you can map the seafloor while simply sailing — logging your onboard sonar depth readings paired with GPS coordinates. Your data fills gaps in global charts and can be uploaded to crowd-sourced platforms or official scientific databases.</p>
+    <div class="row"><span class="k">Your key advantage</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">OpenPlotter + Signal K on the Pi already collect depth + position — you just need to log and upload it</span></div>
+    <div class="row"><span class="k">Tidal correction</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">WorldTides data in this app provides the tidal height needed to reduce raw depths to Chart Datum</span></div>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+
+    <div class="panel">
+      <h2>① Crowd-Sourced Charting</h2>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:8px">Upload your sonar logs to global platforms that build community charts:</p>
+      <div class="row"><span class="k">Navionics SonarChart</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Most popular. Boating app or chartplotter auto-uploads logs → high-def contours available to all</span></div>
+      <div class="row"><span class="k">C-MAP Genesis</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Upload sonar log files → personalised bathymetric maps you can download back</span></div>
+      <div class="row"><span class="k">IHO DCDB</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Official UN/IHO crowdsourced database. Upload CSV (time, lat, lon, depth). Free, open, permanent</span></div>
+      <div class="source">navionics.com · cmap.com · dcdb.info</div>
+    </div>
+
+    <div class="panel">
+      <h2>② DIY — Keep Your Raw Data</h2>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:8px">Log NMEA depth + GPS to a file and process it yourself into contour charts:</p>
+      <div class="row"><span class="k">Logger</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Signal K on your Pi already receives depth &amp; position — just need to record it to CSV</span></div>
+      <div class="row"><span class="k">Format</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">NMEA 0183: $SDDBT (depth) + $GPRMC (position). Or use Signal K REST/WebSocket directly</span></div>
+      <div class="row"><span class="k">Processing</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">QGIS (free) — import CSV, run IDW or Kriging interpolation, generate contour lines &amp; 3D terrain</span></div>
+      <div class="row"><span class="k">Tidal reduction</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Subtract WorldTides height from raw depth to normalise to Chart Datum</span></div>
+      <div class="source">qgis.org · signal-k.org</div>
+    </div>
+
+    <div class="panel">
+      <h2>③ Download Existing Data</h2>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:8px">Study the seabed before sailing new areas — free official datasets:</p>
+      <div class="row"><span class="k">EMODnet</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Best for European waters. High-resolution digital terrain model. Free viewer &amp; download</span></div>
+      <div class="row"><span class="k">GEBCO</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Global gridded bathymetry. Select a region and download depth matrix — Bristol Channel included</span></div>
+      <div class="row"><span class="k">UKHO Marine Data Portal</span><span class="v" style="font-size:11px;text-align:right;max-width:55%">Official UK surveys. ADMIRALTY Marine Data Portal — best resolution for UK coastal waters</span></div>
+      <div class="source">emodnet.ec.europa.eu · gebco.net · datahub.admiralty.co.uk</div>
+    </div>
+
+  </div>
+
+  <!-- YOUR SETUP -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Your Setup — Recommended DIY Workflow (Pi + Signal K)</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:10px">This is the simplest path for Ava given your existing OpenPlotter installation. Signal K already receives your depth and GPS — you just need to log it and apply tidal correction.</p>
+
+    <h4 style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:10px 0 6px">What you need to buy</h4>
+    <table class="proc-table">
+      <tr><td>Depth transducer + sounder</td><td>If not already fitted. Must output NMEA 0183. Budget option: any NMEA 0183 single-beam transducer (Airmar, Triducer) wired to a simple display/black box with NMEA out. ~£80–150 secondhand.</td></tr>
+      <tr><td>NMEA 0183 → USB adapter</td><td>If your sounder isn't already wired into OpenPlotter. Actisense USB-Serial or similar. ~£25–40. OpenPlotter supports these natively.</td></tr>
+      <tr><td>Nothing else</td><td>Pi, Signal K, GPS (via OpenPlotter) and internet connectivity already in place.</td></tr>
+    </table>
+
+    <h4 style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px">Step-by-step logging on your Pi</h4>
+    <table class="proc-table">
+      <tr><td>1</td><td>Wire transducer NMEA 0183 TX into Pi USB adapter. In OpenPlotter → Signal K, add the serial connection. Verify <code>environment.depth.belowSurface</code> appears in Signal K data browser.</td></tr>
+      <tr><td>2</td><td>Run the Python logger below on the Pi. It polls Signal K every 5 seconds and writes a CSV: <code>time, lat, lon, depth_raw, tide_height, depth_cd</code></td></tr>
+      <tr><td>3</td><td>When back ashore, open the CSV in QGIS. Import as a delimited text layer using the lat/lon columns. Run <em>Interpolation → IDW</em> to generate a bathymetric surface. Export as contour lines.</td></tr>
+      <tr><td>4</td><td>Upload the CSV to IHO DCDB (dcdb.info) or import into Navionics SonarChart via their desktop tool. Your data improves charts for everyone.</td></tr>
+    </table>
+
+    <h4 style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px">Tidal correction formula</h4>
+    <div class="row"><span class="k">Depth below CD</span><span class="v amber">= (sounder reading) − (tide height above CD) + (transducer offset)</span></div>
+    <div class="row"><span class="k">Transducer offset</span><span class="v">Distance from waterline to transducer face — typically 0.3–0.6 m on a long-keel boat like Ava</span></div>
+    <div class="row"><span class="k">Tide height</span><span class="v">Use WorldTides data loaded in this app — same datum as UK charts (CD)</span></div>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px">Example: sounder reads 4.2 m, tide is 3.8 m above CD, transducer is 0.5 m below waterline → depth below CD = 4.2 − 3.8 + 0.5 = <strong style="color:var(--amber)">0.9 m</strong>. That's what appears on a chart.</p>
+
+    <h4 style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px">Pi logger script — save as bath_log.py and run before departing</h4>
+    <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-size:11px;overflow-x:auto;line-height:1.6">#!/usr/bin/env python3
+"""Bathymetric logger — reads Signal K, writes tidal-corrected CSV.
+Usage:  python3 bath_log.py [signalk_host] [worldtides_key]
+Output: bath_YYYYMMDD_HHMMSS.csv  (time, lat, lon, depth_raw, tide_m, depth_cd)
+"""
+import requests, datetime, time, csv, sys, math
+
+SK_HOST = sys.argv[1] if len(sys.argv) > 1 else '192.168.1.50:3000'
+WT_KEY  = sys.argv[2] if len(sys.argv) > 2 else ''
+LAT, LON = 51.617, -3.944   # updated live from Signal K
+XDUCER_OFFSET = 0.5          # metres: transducer depth below waterline — MEASURE ON AVA
+INTERVAL = 5                 # seconds between readings
+
+SK_BASE  = f'http://{SK_HOST}/signalk/v1/api/vessels/self'
+WT_BASE  = 'https://www.worldtides.info/api/v3'
+
+def sk_get(path):
+    try:
+        r = requests.get(f'{SK_BASE}/{path}', timeout=3)
+        return r.json().get('value') if r.ok else None
+    except: return None
+
+def tide_height_now(lat, lon, key):
+    if not key: return None
+    try:
+        t = int(time.time())
+        r = requests.get(f'{WT_BASE}?heights&datum=CD&lat={lat}&lon={lon}&key={key}&start={t}&length=3600&step=600', timeout=5)
+        d = r.json()
+        if d.get('status') != 200 or not d.get('heights'): return None
+        return d['heights'][0]['height']   # nearest height
+    except: return None
+
+fname = f"bath_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+print(f"Logging to {fname}  (Ctrl-C to stop)")
+
+with open(fname, 'w', newline='') as f:
+    w = csv.writer(f)
+    w.writerow(['utc_time','lat','lon','depth_raw_m','tide_cd_m','depth_cd_m','notes'])
+    last_tide_t, last_tide_h = 0, None
+    while True:
+        try:
+            pos  = sk_get('navigation/position')
+            dep  = sk_get('environment/depth/belowSurface')
+            if pos: LAT, LON = pos.get('latitude', LAT), pos.get('longitude', LON)
+            if dep is None:
+                print('  no depth signal'); time.sleep(INTERVAL); continue
+            # Refresh tidal height every 10 minutes
+            if time.time() - last_tide_t > 600:
+                h = tide_height_now(LAT, LON, WT_KEY)
+                if h is not None: last_tide_h = h; last_tide_t = time.time()
+            tide = last_tide_h
+            depth_cd = round(dep - (tide or 0) + XDUCER_OFFSET, 2) if tide is not None else ''
+            row = [datetime.datetime.utcnow().isoformat()+'Z', round(LAT,6), round(LON,6),
+                   round(dep,2), round(tide,2) if tide else '', depth_cd,
+                   '' if tide else 'no_tide_correction']
+            w.writerow(row); f.flush()
+            print(f"  {row[0]}  depth_raw={dep:.1f}m  tide={tide:.2f}m  depth_cd={depth_cd}")
+        except KeyboardInterrupt:
+            print(f"\nSaved {fname}"); break
+        except Exception as e:
+            print(f"  error: {e}")
+        time.sleep(INTERVAL)</pre>
+
+    <h4 style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px">Key reminders</h4>
+    <table class="proc-table">
+      <tr><td>Measure transducer offset</td><td>Before logging, measure the exact distance from the waterline to the transducer face. Update <code>XDUCER_OFFSET</code> in the script. Even 10 cm matters for shallow water charting.</td></tr>
+      <tr><td>Speed over ground</td><td>Slow down for better data. At &lt; 4 kn the sonar beam has more time to resolve the bottom accurately. Faster speeds cause streaking artefacts.</td></tr>
+      <tr><td>Log track spacing</td><td>For useful charts, run parallel lines &lt; 20 m apart. In shallow anchorages, zigzag the whole bay. One pass gives a single line — not a surface.</td></tr>
+      <tr><td>Barometric correction</td><td>Low pressure (below 990 hPa) raises sea level ~1 cm per hPa. At 960 hPa that's 40 cm — worth correcting for precise surveying. Pressure shown in Conditions panel.</td></tr>
+      <tr><td>IHO DCDB upload format</td><td>CSV columns: <code>unique_id, time (ISO 8601), lon, lat, depth (positive metres)</code>. Upload at dcdb.info — account required (free). Your data is attributed to you.</td></tr>
+    </table>
+  </div>
+
+</div><!-- /hydro-tab -->
+
 <div id="settings-tab" class="tab">
   <div class="panel" style="max-width:500px">
 
@@ -1362,7 +1507,7 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('visible'));
   document.getElementById(name + '-tab').classList.add('visible');
   document.querySelectorAll('nav button').forEach((b, i) => {
-    b.classList.toggle('active', ['almanac','skipper','solo','celest','systems','passage','admin','settings'][i] === name);
+    b.classList.toggle('active', ['almanac','skipper','solo','celest','systems','passage','admin','hydro','settings'][i] === name);
   });
   if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
   if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
