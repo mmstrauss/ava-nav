@@ -18,6 +18,23 @@
   --r: 6px;
   --font-body: 'Crimson Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --row-border: #1e221e;
+}
+/* ── LIGHT THEME ── */
+html[data-theme="light"] {
+  --ink:    #1a1814; --ink2:   #4a4540; --ink3:   #888078;
+  --bg:     #f0ede6; --bg2:    #e8e5de; --bg3:    #dedad2;
+  --border: #c8c4bc; --amber:  #a06800; --green:  #2a7a3c;
+  --red:    #b83028; --blue:   #2060a0; --accent: #8a6018;
+  --row-border: #d0ccc4;
+}
+/* ── RED NIGHT THEME (preserves night vision) ── */
+html[data-theme="night"] {
+  --ink:    #ff5555; --ink2:   #cc3333; --ink3:   #883322;
+  --bg:     #080000; --bg2:    #100000; --bg3:    #180000;
+  --border: #2a0000; --amber:  #cc2200; --green:  #882200;
+  --red:    #ff2200; --blue:   #cc2211; --accent: #ff4433;
+  --row-border: #1c0000;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; }
@@ -43,7 +60,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 /* ── PANELS ── */
 .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; }
 .panel h2 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
-.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #1e221e; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--row-border); }
 .row:last-child { border-bottom: none; }
 .k { color: var(--ink3); font-size: 13px; }
 .v { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
@@ -101,9 +118,9 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
 /* ── SIGNAL K BAR ── */
 #sk-bar { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 10px; font-family: var(--font-mono); font-size: 11px; }
-#sk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
-#sk-dot.connected { background: var(--green); box-shadow: 0 0 5px var(--green); }
-#sk-dot.error { background: var(--red); }
+#sk-dot, .sk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
+#sk-dot.connected, .sk-dot.connected { background: var(--green); box-shadow: 0 0 5px var(--green); }
+#sk-dot.error, .sk-dot.error { background: var(--red); }
 #sk-label { color: var(--ink3); flex: 1; min-width: 0; }
 #sk-live { display: flex; gap: 10px; }
 .sk-lv { color: var(--amber); }
@@ -172,8 +189,10 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <button onclick="showTab('celest')">★ Celestial</button>
     <button onclick="showTab('systems')">⚡ Systems</button>
     <button onclick="showTab('passage')">⇝ Passage</button>
+    <button onclick="showTab('admin')">⬆ Admin</button>
     <button onclick="showTab('settings')">⚙</button>
   </nav>
+  <button id="theme-btn" onclick="cycleTheme()" title="Switch theme" style="background:none;border:1px solid var(--border);border-radius:var(--r);color:var(--ink3);font-size:15px;width:32px;height:32px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0">◑</button>
   <a id="chart-btn" href="#" target="_blank" class="chart-btn">⬡ Chart</a>
 </header>
 
@@ -938,6 +957,92 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
 
 <!-- ════════════════════════ SETTINGS ════════════════════════ -->
+<div id="admin-tab" class="tab">
+  <div class="panel" style="max-width:560px">
+
+    <h2>Update Ava·Nav</h2>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:14px">Pulls the latest version from GitHub directly on the Pi — no terminal needed. Requires <code style="font-family:var(--font-mono)">ava-admin.py</code> to be running on the Pi.</p>
+
+    <!-- Server status row -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <span id="admin-dot" class="sk-dot"></span>
+      <span id="admin-status" style="font-family:var(--font-mono);font-size:12px;color:var(--ink3)">Not checked</span>
+      <button class="sk-btn sk-btn-secondary" style="margin-left:auto;padding:4px 12px;font-size:12px" onclick="adminPing()">Ping</button>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="sk-btn sk-btn-primary" style="flex:1;min-width:120px" onclick="adminPull()">⬆ Pull latest</button>
+      <button class="sk-btn sk-btn-secondary" style="flex:1;min-width:100px" onclick="adminGitLog()">⊟ Git log</button>
+      <button class="sk-btn sk-btn-secondary" style="flex:1;min-width:100px" onclick="adminGitStatus()">⊠ Status</button>
+    </div>
+
+    <!-- Reload notice (shown after a pull that changes something) -->
+    <div id="admin-reload-notice" style="display:none;background:var(--accent);color:#000;border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:13px">
+      Updates downloaded. <button onclick="location.reload()" style="background:#000;color:#fff;border:none;border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;margin-left:8px">Reload page now</button>
+    </div>
+
+    <!-- Output area -->
+    <pre id="admin-out" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-family:var(--font-mono);font-size:11px;color:var(--ink2);white-space:pre-wrap;word-break:break-word;min-height:80px;margin:0 0 16px">—</pre>
+
+    <div class="divider"></div>
+
+    <!-- Admin server URL -->
+    <h2 style="margin-bottom:10px">Admin server URL</h2>
+    <label for="admin-url-input" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:5px">Address of ava-admin.py on the Pi</label>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <input type="text" id="admin-url-input" placeholder="http://192.168.1.50:8082" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:8px 11px;outline:none">
+      <button class="sk-btn sk-btn-secondary" onclick="saveAdminUrl()" style="white-space:nowrap">Save</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:16px">Stored in browser localStorage. Default port is 8082.</div>
+
+    <div class="divider"></div>
+
+    <!-- Setup instructions -->
+    <h2 style="margin-bottom:10px">Setup on the Pi</h2>
+    <div style="font-size:13px;color:var(--ink2);line-height:1.9">
+      <p style="margin-bottom:10px">After cloning the repo, run the admin server once to test it, then add it to autostart.</p>
+
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">1 · Run manually (test it works)</div>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:14px">cd ~/ava-nav
+python3 ava-admin.py</pre>
+
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">2 · Auto-start with systemd (runs on every boot)</div>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:8px">sudo nano /etc/systemd/system/ava-admin.service</pre>
+      <p style="margin-bottom:6px">Paste this into the file:</p>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:14px">[Unit]
+Description=Ava-Nav admin server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/ava-nav/ava-admin.py
+WorkingDirectory=/home/pi/ava-nav
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target</pre>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:14px">sudo systemctl enable ava-admin
+sudo systemctl start ava-admin</pre>
+
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">3 · Same for the file server (if not already done)</div>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:6px">sudo nano /etc/systemd/system/ava-nav.service</pre>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto">[Unit]
+Description=Ava-Nav file server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -m http.server 8081
+WorkingDirectory=/home/pi/ava-nav
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target</pre>
+    </div>
+  </div>
+</div><!-- /admin-tab -->
+
 <div id="settings-tab" class="tab">
   <div class="panel" style="max-width:500px">
 
@@ -1005,18 +1110,86 @@ const S = {
   skHost:  localStorage.getItem('ava-sk-host')  || '192.168.1.50',
   skPort:  localStorage.getItem('ava-sk-port')  || '3000',
   skAuto:  localStorage.getItem('ava-sk-auto')  || 'no',
-  navUrl:  localStorage.getItem('ava-nav-url')  || 'http://192.168.1.50:8080',
+  navUrl:    localStorage.getItem('ava-nav-url')    || 'http://192.168.1.50:8080',
+  adminUrl:  localStorage.getItem('ava-admin-url')  || 'http://192.168.1.50:8082',
 };
+
+// ── THEME ──────────────────────────────────────────────────────────
+const THEMES = ['dark','light','night'];
+const THEME_ICONS = {dark:'◑', light:'☀', night:'☽'};
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t === 'dark' ? '' : t;
+  const btn = $('theme-btn'); if(btn) btn.textContent = THEME_ICONS[t];
+  localStorage.setItem('ava-theme', t);
+}
+function cycleTheme() {
+  const cur = localStorage.getItem('ava-theme') || 'dark';
+  applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+}
 
 // ── TAB NAVIGATION ─────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('visible'));
   document.getElementById(name + '-tab').classList.add('visible');
   document.querySelectorAll('nav button').forEach((b, i) => {
-    b.classList.toggle('active', ['almanac','skipper','solo','celest','systems','passage','settings'][i] === name);
+    b.classList.toggle('active', ['almanac','skipper','solo','celest','systems','passage','admin','settings'][i] === name);
   });
   if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
   if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
+  if (name === 'admin') initAdmin();
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────────
+function initAdmin() {
+  $('admin-url-input').value = S.adminUrl;
+  adminPing();
+  adminGitLog();
+}
+
+async function adminFetch(method, path) {
+  try {
+    const r = await fetch(S.adminUrl + path, {method, signal: AbortSignal.timeout(8000)});
+    if (!r.ok) return {ok: false, error: `HTTP ${r.status}`};
+    return await r.json();
+  } catch(e) { return {ok: false, error: e.message}; }
+}
+
+async function adminPing() {
+  const dot = $('admin-dot'), lbl = $('admin-status');
+  dot.className = 'sk-dot'; lbl.textContent = 'Checking…';
+  const r = await adminFetch('GET', '/health');
+  if (r.ok) { dot.className = 'sk-dot connected'; lbl.textContent = 'Admin server online · ' + S.adminUrl; }
+  else       { dot.className = 'sk-dot error';     lbl.textContent = 'Offline — is ava-admin.py running?'; }
+}
+
+async function adminPull() {
+  $('admin-out').textContent = 'Running git pull…';
+  $('admin-reload-notice').style.display = 'none';
+  const r = await adminFetch('POST', '/pull');
+  if (!r.ok) { $('admin-out').textContent = 'Error: ' + r.error; return; }
+  const out = (r.stdout + r.stderr).trim() || '(no output)';
+  $('admin-out').textContent = out;
+  if (/Updating|Fast-forward|files changed/.test(out)) {
+    $('admin-reload-notice').style.display = 'block';
+  }
+}
+
+async function adminGitLog() {
+  $('admin-out').textContent = 'Loading log…';
+  const r = await adminFetch('GET', '/log');
+  $('admin-out').textContent = r.ok ? (r.stdout.trim() || 'No commits yet') : 'Error: ' + r.error;
+}
+
+async function adminGitStatus() {
+  $('admin-out').textContent = 'Checking status…';
+  const r = await adminFetch('GET', '/status');
+  $('admin-out').textContent = r.ok ? (r.stdout.trim() || 'Working tree clean') : 'Error: ' + r.error;
+}
+
+function saveAdminUrl() {
+  S.adminUrl = $('admin-url-input').value.trim();
+  localStorage.setItem('ava-admin-url', S.adminUrl);
+  adminPing();
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────
@@ -1710,6 +1883,7 @@ function initCelestial() {
 
 // ── INIT ───────────────────────────────────────────────────────────
 function init() {
+  applyTheme(localStorage.getItem('ava-theme') || 'dark');
   initSettings();
   $('p-date').value=new Date().toISOString().split('T')[0];
   initCelestial();
