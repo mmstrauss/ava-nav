@@ -170,6 +170,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <button onclick="showTab('skipper')">⊕ Skipper</button>
     <button onclick="showTab('solo')">⛵ Solo</button>
     <button onclick="showTab('celest')">★ Celestial</button>
+    <button onclick="showTab('systems')">⚡ Systems</button>
     <button onclick="showTab('passage')">⇝ Passage</button>
     <button onclick="showTab('settings')">⚙</button>
   </nav>
@@ -669,6 +670,217 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 </div><!-- /celest-tab -->
 
 
+<!-- ════════════════════════ SYSTEMS ════════════════════════ -->
+<div id="systems-tab" class="tab">
+
+  <!-- Live status dashboard -->
+  <div class="grid">
+
+    <div class="panel">
+      <h2>House Battery</h2>
+      <div class="row"><span class="k">Voltage</span><span class="v amber big" id="sys-batt-v">—</span></div>
+      <div class="row"><span class="k">Current</span><span class="v" id="sys-batt-a">—</span></div>
+      <div class="row"><span class="k">State of charge</span><span class="v" id="sys-batt-soc">—</span></div>
+      <div class="row"><span class="k">Time remaining</span><span class="v" id="sys-batt-ttr">—</span></div>
+      <div class="row"><span class="k">Power</span><span class="v" id="sys-batt-w">—</span></div>
+      <div style="margin-top:10px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-bottom:4px">State of charge</div>
+        <div style="background:var(--bg3);border-radius:3px;height:10px;overflow:hidden;border:1px solid var(--border)">
+          <div id="sys-batt-bar" style="height:100%;width:0%;background:var(--green);transition:width .5s;border-radius:3px"></div>
+        </div>
+      </div>
+      <div class="source">Signal K · electrical.batteries.house</div>
+    </div>
+
+    <div class="panel">
+      <h2>Solar</h2>
+      <div class="row"><span class="k">Panel voltage</span><span class="v amber" id="sys-sol-vpanel">—</span></div>
+      <div class="row"><span class="k">Panel current</span><span class="v" id="sys-sol-ipanel">—</span></div>
+      <div class="row"><span class="k">Charge current</span><span class="v green" id="sys-sol-iout">—</span></div>
+      <div class="row"><span class="k">Charge state</span><span class="v" id="sys-sol-state">—</span></div>
+      <div class="row"><span class="k">Yield today</span><span class="v" id="sys-sol-yield">—</span></div>
+      <div class="source">Signal K · electrical.solar.0 (Victron MPPT)</div>
+    </div>
+
+    <div class="panel">
+      <h2>Shore Power / Charger</h2>
+      <div class="row"><span class="k">Shore power</span><span class="v" id="sys-shore-state">—</span></div>
+      <div class="row"><span class="k">Charger voltage</span><span class="v" id="sys-shore-v">—</span></div>
+      <div class="row"><span class="k">Charger current</span><span class="v" id="sys-shore-a">—</span></div>
+      <div class="row"><span class="k">Charge mode</span><span class="v" id="sys-shore-mode">—</span></div>
+      <div class="source">Signal K · electrical.chargers.0 (Victron Blue Smart)</div>
+    </div>
+
+    <div class="panel">
+      <h2>Fuel Tank · Diesel</h2>
+      <div class="row"><span class="k">Level</span><span class="v amber big" id="sys-fuel-pct">—</span></div>
+      <div class="row"><span class="k">Volume remaining</span><span class="v" id="sys-fuel-vol">—</span></div>
+      <div style="margin-top:10px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-bottom:4px">Tank level</div>
+        <div style="background:var(--bg3);border-radius:3px;height:10px;overflow:hidden;border:1px solid var(--border)">
+          <div id="sys-fuel-bar" style="height:100%;width:0%;background:var(--amber);transition:width .5s;border-radius:3px"></div>
+        </div>
+      </div>
+      <div class="source">Signal K · tanks.fuel.0.currentLevel</div>
+    </div>
+
+    <div class="panel">
+      <h2>Fresh Water Tank</h2>
+      <div class="row"><span class="k">Level</span><span class="v blue big" id="sys-water-pct">—</span></div>
+      <div class="row"><span class="k">Volume remaining</span><span class="v" id="sys-water-vol">—</span></div>
+      <div style="margin-top:10px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-bottom:4px">Tank level</div>
+        <div style="background:var(--bg3);border-radius:3px;height:10px;overflow:hidden;border:1px solid var(--border)">
+          <div id="sys-water-bar" style="height:100%;width:0%;background:var(--blue);transition:width .5s;border-radius:3px"></div>
+        </div>
+      </div>
+      <div class="source">Signal K · tanks.freshWater.0.currentLevel</div>
+    </div>
+
+    <div class="panel">
+      <h2>Bilge</h2>
+      <div class="row"><span class="k">Pump status</span><span class="v" id="sys-bilge-pump">—</span></div>
+      <div class="row"><span class="k">High water alarm</span><span class="v" id="sys-bilge-alarm">—</span></div>
+      <div class="row"><span class="k">Pump run count</span><span class="v" id="sys-bilge-count">—</span></div>
+      <div class="source">Signal K · bilge.0.pump · Pi GPIO float switch</div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;padding:8px 0 4px">
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">Live data requires Signal K connected (Skipper tab) · dashes = instrument not yet installed</span>
+  </div>
+
+  <!-- Equipment recommendations -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Recommended Equipment · Pi-Compatible</h2>
+    <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:12px">Everything below integrates with OpenPlotter / Signal K via USB or GPIO. The Victron ecosystem is the right choice for a small boat — it is the most widely supported in Signal K and the equipment talks to each other over VE.Direct / VE.Bus automatically.</p>
+
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Tier 1 — Buy first (essential monitoring)</div>
+    <table class="proc-table" style="margin-bottom:16px">
+      <tr><th>Item</th><th>Model</th><th>Approx cost</th><th>Pi connection</th></tr>
+      <tr><td>Battery monitor</td><td>Victron SmartShunt 500A</td><td>~£85</td><td>VE.Direct → USB (cable £15)</td></tr>
+      <tr><td>Diesel sender</td><td>Wema Standard 0–190Ω</td><td>~£35</td><td>GPIO via MCP3008 ADC (£8)</td></tr>
+      <tr><td>Water sender</td><td>Wema Standard 0–190Ω</td><td>~£35</td><td>GPIO via same MCP3008</td></tr>
+      <tr><td>ADC chip</td><td>MCP3008 + GPIO breakout hat</td><td>~£10</td><td>SPI on Pi GPIO</td></tr>
+    </table>
+
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Tier 2 — Solar integration (Allpowers panels)</div>
+    <table class="proc-table" style="margin-bottom:16px">
+      <tr><th>Item</th><th>Model</th><th>Approx cost</th><th>Pi connection</th></tr>
+      <tr><td>MPPT solar controller</td><td>Victron SmartSolar MPPT 75/15</td><td>~£85</td><td>VE.Direct → USB (same cable as SmartShunt)</td></tr>
+      <tr><td>MC4 adapter cable</td><td>MC4 to bare wire for Allpowers panels</td><td>~£8</td><td>Connects Allpowers panel to MPPT input</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px">The Allpowers panels use MC4 connectors — a short MC4 → screw terminal cable connects them straight to the Victron MPPT. The MPPT handles charging automatically and the SmartShunt measures what goes in and out of the battery. The Pi reads both via a single VE.Direct USB hub.</p>
+
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Tier 3 — Shore power (at the berth)</div>
+    <table class="proc-table" style="margin-bottom:16px">
+      <tr><th>Item</th><th>Model</th><th>Approx cost</th><th>Pi connection</th></tr>
+      <tr><td>Smart charger</td><td>Victron Blue Smart IP22 12/20</td><td>~£130</td><td>Bluetooth → VictronConnect app (iPad)</td></tr>
+      <tr><td>Shore power inlet</td><td>16A marina inlet + 10m cable</td><td>~£60</td><td>Wired to charger input</td></tr>
+      <tr><td>Shore power detector</td><td>Simple AC voltage relay to Pi GPIO</td><td>~£10</td><td>GPIO pin — high when shore power on</td></tr>
+    </table>
+
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Tier 4 — Additional sensors (good to have)</div>
+    <table class="proc-table">
+      <tr><th>Item</th><th>Model</th><th>Approx cost</th><th>Pi connection</th></tr>
+      <tr><td>Bilge float switch</td><td>Any normally-open float switch</td><td>~£10</td><td>GPIO pin with pull-up resistor</td></tr>
+      <tr><td>Engine room temp</td><td>DS18B20 waterproof probe</td><td>~£6</td><td>1-Wire on Pi GPIO</td></tr>
+      <tr><td>Battery temp</td><td>DS18B20 × 2 (house + starter)</td><td>~£12</td><td>Same 1-Wire bus, daisy-chained</td></tr>
+    </table>
+  </div>
+
+  <!-- Wiring overview -->
+  <div class="panel" style="margin-top:10px">
+    <h2>System Architecture · How It Connects</h2>
+    <div class="grid" style="margin-top:0">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Power flow</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink2);line-height:2.2">
+          Allpowers solar panels<br>
+          <span style="color:var(--ink3)">↓ MC4 cable</span><br>
+          Victron SmartSolar MPPT 75/15<br>
+          <span style="color:var(--ink3)">↓ charge current</span><br>
+          House battery (via SmartShunt)<br>
+          <span style="color:var(--ink3)">↕ also fed from shore via</span><br>
+          Victron Blue Smart charger (16A inlet)<br>
+          <span style="color:var(--ink3)">↓ 12V distribution</span><br>
+          Nav station · Pi · instruments · lights
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Data flow to Pi</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink2);line-height:2.2">
+          SmartShunt VE.Direct<br>
+          <span style="color:var(--ink3)">↓</span><br>
+          SmartSolar MPPT VE.Direct<br>
+          <span style="color:var(--ink3)">↓ both via VE.Direct USB cables</span><br>
+          Raspberry Pi USB ports<br>
+          <span style="color:var(--ink3)">↓ OpenPlotter Signal K plugin</span><br>
+          Signal K server (port 3000)<br>
+          <span style="color:var(--ink3)">↓ WebSocket</span><br>
+          Ava · Nav (this app) · iPad
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Tank senders to Pi</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink2);line-height:2.2">
+          Wema sender in diesel tank<br>
+          Wema sender in water tank<br>
+          <span style="color:var(--ink3)">↓ resistive output (0–190Ω)</span><br>
+          MCP3008 ADC chip (SPI)<br>
+          <span style="color:var(--ink3)">↓ GPIO pins on Pi</span><br>
+          OpenPlotter AnalogInput plugin<br>
+          <span style="color:var(--ink3)">↓ maps voltage → % full</span><br>
+          Signal K tanks.fuel / tanks.freshWater
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signal K setup -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Signal K Setup on the Pi</h2>
+    <div class="grid" style="margin-top:0">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Plugins to install</div>
+        <div class="row"><span class="k">Victron devices</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">@signalk/signalk-venus-plugin or signalk-victron-ve-direct</span></div>
+        <div class="row"><span class="k">Tank gauges</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">signalk-tank-gauges (visual dashboard in SK admin)</span></div>
+        <div class="row"><span class="k">Analog inputs</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">signalk-raspberry-pi-ais or openplotter-pypilot plugin handles GPIO</span></div>
+        <div class="row"><span class="k">Alarms</span><span class="v" style="font-size:12px;text-align:right;max-width:60%">Built-in SK notification system — set thresholds for bilge, low battery, low fuel</span></div>
+        <p style="font-size:12px;color:var(--ink3);margin-top:8px">Install via Signal K admin → Appstore → search each name. OpenPlotter has a dedicated Victron page in its UI that handles much of this automatically.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Signal K paths used here</div>
+        <div class="row"><span class="k">Battery voltage</span><span class="v" style="font-size:11px">electrical.batteries.house.voltage</span></div>
+        <div class="row"><span class="k">Battery current</span><span class="v" style="font-size:11px">electrical.batteries.house.current</span></div>
+        <div class="row"><span class="k">State of charge</span><span class="v" style="font-size:11px">electrical.batteries.house.stateOfCharge</span></div>
+        <div class="row"><span class="k">Time to empty</span><span class="v" style="font-size:11px">electrical.batteries.house.capacity.timeRemaining</span></div>
+        <div class="row"><span class="k">Solar panel V</span><span class="v" style="font-size:11px">electrical.solar.0.panelVoltage</span></div>
+        <div class="row"><span class="k">Solar charge A</span><span class="v" style="font-size:11px">electrical.solar.0.chargingCurrent</span></div>
+        <div class="row"><span class="k">Diesel level</span><span class="v" style="font-size:11px">tanks.fuel.0.currentLevel (0–1)</span></div>
+        <div class="row"><span class="k">Water level</span><span class="v" style="font-size:11px">tanks.freshWater.0.currentLevel (0–1)</span></div>
+        <div class="row"><span class="k">Bilge pump</span><span class="v" style="font-size:11px">bilge.0.pump.state</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What to buy first -->
+  <div class="panel" style="margin-top:10px">
+    <h2>What to Buy First</h2>
+    <ol class="proc-list">
+      <li><strong>Victron SmartShunt 500A (~£85)</strong> — fit this immediately. It wires in-line with your negative battery cable and gives you real-time SOC%, voltage, current and estimated run time. One VE.Direct USB cable connects it to the Pi. This is the single most useful instrument you can add.</li>
+      <li><strong>Victron SmartSolar MPPT 75/15 (~£85)</strong> — replace any existing charge controller with this. Connects your Allpowers panels via MC4, charges the battery optimally, and reports solar yield to the Pi via a second VE.Direct cable. The SmartShunt and MPPT talk to each other and show a combined system state in the VictronConnect app on your iPad.</li>
+      <li><strong>Wema tank senders + MCP3008 ADC (~£80 total)</strong> — one sender per tank. The ADC chip is a tiny board that connects to the Pi's SPI GPIO pins and converts the sender's resistance to a percentage. OpenPlotter's plugin maps it to Signal K automatically.</li>
+      <li><strong>Victron Blue Smart IP22 12/20 charger (~£130)</strong> — for shore power at SYSAC. Bluetooth monitoring from the iPad via VictronConnect. No Pi connection needed — it reports directly to the app.</li>
+      <li><strong>Float switch for bilge (~£10)</strong> — wire directly to a Pi GPIO pin. A pull-up resistor and two lines of Python in OpenPlotter gives you a bilge alarm that appears in Signal K.</li>
+    </ol>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px"><strong style="color:var(--ink)">Total Tier 1+2:</strong> ~£300–320. Gives you full battery, solar, and tank monitoring all visible in this app and in the VictronConnect iPad app simultaneously.</p>
+  </div>
+
+</div><!-- /systems-tab -->
+
+
 <!-- ════════════════════════ PASSAGE ════════════════════════ -->
 <div id="passage-tab" class="tab">
   <div class="panel">
@@ -801,7 +1013,7 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('visible'));
   document.getElementById(name + '-tab').classList.add('visible');
   document.querySelectorAll('nav button').forEach((b, i) => {
-    b.classList.toggle('active', ['almanac','skipper','solo','celest','passage','settings'][i] === name);
+    b.classList.toggle('active', ['almanac','skipper','solo','celest','systems','passage','settings'][i] === name);
   });
   if (['almanac','skipper'].includes(name) && !S.weather) loadWeather();
   if (name === 'skipper' && S.skAuto === 'yes' && !S.skWs && !S.simTimer) connectSK();
