@@ -249,6 +249,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <div class="row"><span class="k">Next LW</span><span class="v" id="tide-lw">—</span></div>
       <div class="row"><span class="k">Range today</span><span class="v" id="tide-range">—</span></div>
       <div class="row"><span class="k">Springs / Neaps</span><span class="v" id="tide-sn">—</span></div>
+      <div class="row"><span class="k">Ava keel depth</span><span class="v">1.52 m draft · 2.0 m min safe</span></div>
       <svg id="tide-svg" viewBox="0 0 400 88" preserveAspectRatio="none"></svg>
       <div id="tide-probe"></div>
       <div class="source" id="tide-src">Harmonic model (inaccurate — add WorldTides key in Settings)</div>
@@ -1882,10 +1883,17 @@ function drawTideGraph(dayMs, nowMs) {
     fills = `<path d="${fillD}" fill="url(#tg-hi)"/>`;
   }
 
-  // Lock threshold line
+  // Lock threshold line (1.5 m)
   const lockLine = lockInRange
     ? `<line x1="0" y1="${lockY.toFixed(1)}" x2="${W}" y2="${lockY.toFixed(1)}" stroke="#ff9800" stroke-width="1.2" stroke-dasharray="5,3"/>
-  <text x="3" y="${Math.max(lockY - 3, PT + 1).toFixed(1)}" fill="#ff9800" font-size="8" font-family="monospace" font-weight="bold">1.5m</text>`
+  <text x="3" y="${Math.max(lockY - 3, PT + 1).toFixed(1)}" fill="#ff9800" font-size="8" font-family="monospace" font-weight="bold">lock 1.5m</text>`
+    : '';
+
+  // Ava minimum safe depth line (1.52 m draft + safety margin = 2.0 m)
+  const avaY = py(2.0);
+  const avaLine = (avaY >= 0 && avaY <= H)
+    ? `<line x1="0" y1="${avaY.toFixed(1)}" x2="${W}" y2="${avaY.toFixed(1)}" stroke="#66bb6a" stroke-width="1.2" stroke-dasharray="6,3"/>
+  <text x="${W - 2}" y="${Math.max(avaY - 3, PT + 1).toFixed(1)}" fill="#66bb6a" font-size="8" font-family="monospace" text-anchor="end" font-weight="bold">Ava min 2.0m</text>`
     : '';
 
   // HW / LW annotations across the 36 h window
@@ -1947,7 +1955,7 @@ function drawTideGraph(dayMs, nowMs) {
   svg.innerHTML = `<defs>${defs}</defs>
   ${fills}
   <path d="${path}" fill="none" stroke="#29b6f6" stroke-width="2.5"/>
-  ${lockLine}${boundary}${ticks.join('')}${extremeLabels}${nowLine}
+  ${lockLine}${avaLine}${boundary}${ticks.join('')}${extremeLabels}${nowLine}
   <line id="tg-cursor" x1="-1" y1="0" x2="-1" y2="${H}" stroke="#fff" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
   <circle id="tg-dot" cx="-10" cy="-10" r="4.5" fill="#fff" stroke="#29b6f6" stroke-width="1.5"/>`;
 
@@ -1964,14 +1972,15 @@ function tgProbe(e) {
   const probeMs = dayMs + frac * dur;
   const height = tideAt(probeMs);
   const timeStr = new Date(probeMs).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  const sailOk = height >= 2.0;
   const lockOk = height >= 1.5;
-  const col = lockOk ? '#29b6f6' : '#ff9800';
-  const lockTxt = lockOk ? ' · lock ✓' : ' · lock ✗';
+  const col = sailOk ? '#66bb6a' : lockOk ? '#ff9800' : '#c0564e';
+  const status = sailOk ? '✓ safe for Ava' : lockOk ? '⚠ lock ok · too shallow for Ava' : '✗ lock closed · too shallow';
   const isNext = probeMs >= dayMs + 86400000;
   const dayPfx = isNext ? new Date(probeMs).toLocaleDateString('en-GB', {weekday:'short'}) + ' ' : '';
   const probe = $('tide-probe');
   probe.style.color = col;
-  probe.textContent = `${dayPfx}${timeStr} → ${height.toFixed(2)} m${lockTxt}`;
+  probe.textContent = `${dayPfx}${timeStr} → ${height.toFixed(2)} m · ${status}`;
   // Move cursor line and dot
   const x = (frac * W).toFixed(1);
   const PT = 20, PB = 18;
