@@ -78,7 +78,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 .gonogo-no   { background: rgba(192,86,78,.08); border-color: rgba(192,86,78,.3); }
 
 /* ── TIDE SVG ── */
-#tide-svg { width: 100%; height: 88px; margin-top: 10px; cursor: crosshair; }
+#tide-svg { width: 100%; height: 120px; margin-top: 10px; cursor: crosshair; }
 #tide-probe { font-family: var(--font-mono); font-size: 11px; color: var(--ink2); min-height: 16px; margin-top: 4px; text-align: center; letter-spacing: .04em; }
 
 /* ── LOCK ── */
@@ -1751,42 +1751,86 @@ const _tg = { dayMs: 0, mn: 0, mx: 1, H: 88, W: 400, dur: 86400000 };
 
 function drawTideGraph(dayMs, nowMs) {
   const svg = $('tide-svg'); if (!svg) return;
-  const W = 400, H = 88, dur = 86400000;
-  const pts = []; for (let i = 0; i <= 144; i++) pts.push(tideAt(dayMs + (i/144)*dur));
+  const W = 400, H = 120, dur = 86400000;
+  const STEPS = 288;
+  const pts = []; for (let i = 0; i <= STEPS; i++) pts.push(tideAt(dayMs + (i/STEPS)*dur));
   const mn = Math.min(...pts), mx = Math.max(...pts);
   Object.assign(_tg, { dayMs, mn, mx, H, W, dur });
-  const py = v => H - ((v-mn)/(mx-mn))*(H-14) - 7;
-  const xi = i => (i/144)*W;
-  const path = pts.map((v,i) => `${i?'L':'M'}${xi(i).toFixed(1)},${py(v).toFixed(1)}`).join('');
+  const PT = 14, PB = 16; // top / bottom padding
+  const py = v => H - PB - ((v - mn) / (mx - mn)) * (H - PT - PB);
+  const path = pts.map((v,i) => `${i?'L':'M'}${((i/STEPS)*W).toFixed(1)},${py(v).toFixed(1)}`).join('');
+  const fillD = `${path}L${W},${H}L0,${H}Z`;
+
+  // Two-zone fill: blue above 1.5 m lock threshold, amber below
+  const lockY = py(1.5);
+  const lockInRange = lockY >= PT && lockY <= H - PB;
+  let defs = `
+    <linearGradient id="tg-hi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#29b6f6" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#0277bd" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="tg-lo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff9800" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#e65100" stop-opacity="0.15"/>
+    </linearGradient>`;
+  let fills = '';
+  if (lockInRange) {
+    defs += `
+    <clipPath id="clip-hi"><rect x="0" y="0" width="${W}" height="${lockY.toFixed(1)}"/></clipPath>
+    <clipPath id="clip-lo"><rect x="0" y="${lockY.toFixed(1)}" width="${W}" height="${H}"/></clipPath>`;
+    fills = `<path d="${fillD}" fill="url(#tg-hi)" clip-path="url(#clip-hi)"/>
+  <path d="${fillD}" fill="url(#tg-lo)" clip-path="url(#clip-lo)"/>`;
+  } else {
+    fills = `<path d="${fillD}" fill="url(#tg-hi)"/>`;
+  }
+
+  // Lock threshold line
+  const lockLine = lockInRange
+    ? `<line x1="0" y1="${lockY.toFixed(1)}" x2="${W}" y2="${lockY.toFixed(1)}" stroke="#ff9800" stroke-width="1.2" stroke-dasharray="5,3"/>
+  <text x="3" y="${Math.max(lockY - 3, PT).toFixed(1)}" fill="#ff9800" font-size="8" font-family="monospace" font-weight="bold">1.5m lock</text>`
+    : '';
+
+  // HW / LW dot + label annotations for this day
+  const dayExtremes = findExtrema(dayMs, 8).filter(e => e.t >= dayMs && e.t < dayMs + dur);
+  const extremeLabels = dayExtremes.map(e => {
+    const x = ((e.t - dayMs) / dur) * W;
+    const y = py(e.h);
+    const isHW = e.type === 'HW';
+    const col = isHW ? '#29b6f6' : '#ff9800';
+    const labelY = isHW ? Math.max(y - 5, PT) : Math.min(y + 12, H - 2);
+    const timeStr = new Date(e.t).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${col}" stroke="#111" stroke-width="0.8"/>
+  <text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" fill="${col}" font-size="8" font-family="monospace" text-anchor="middle" font-weight="bold">${e.h.toFixed(1)}m</text>
+  <text x="${x.toFixed(1)}" y="${(labelY + (isHW ? -9 : 9)).toFixed(1)}" fill="${col}" font-size="7" font-family="monospace" text-anchor="middle" opacity="0.8">${timeStr}</text>`;
+  }).join('');
+
+  // Hour tick marks
+  const ticks = [6,12,18].map(h => {
+    const x = (h/24)*W;
+    return `<line x1="${x}" y1="${H-PB}" x2="${x}" y2="${H}" stroke="#888" stroke-width="1"/>
+  <text x="${x}" y="${H-PB-3}" fill="#aaa" font-size="8" font-family="monospace" text-anchor="middle">${h.toString().padStart(2,'0')}:00</text>`;
+  }).join('');
+
+  // Now line
   let nowLine = '';
   if (nowMs !== null) {
     const nowX = ((nowMs - dayMs) / dur) * W;
-    if (nowX >= 0 && nowX <= W)
-      nowLine = `<line x1="${nowX.toFixed(1)}" y1="0" x2="${nowX.toFixed(1)}" y2="${H}" stroke="#d4a843" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
-  <text x="${(nowX+3).toFixed(1)}" y="10" fill="#d4a843" font-size="8" font-family="monospace" opacity="0.7">now</text>`;
+    if (nowX >= 0 && nowX <= W) {
+      const labelX = nowX > W - 30 ? nowX - 3 : nowX + 3;
+      const anchor = nowX > W - 30 ? 'end' : 'start';
+      nowLine = `<line x1="${nowX.toFixed(1)}" y1="0" x2="${nowX.toFixed(1)}" y2="${H}" stroke="#ffcc02" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="${labelX.toFixed(1)}" y="${PT-2}" fill="#ffcc02" font-size="8" font-family="monospace" font-weight="bold" text-anchor="${anchor}">now</text>`;
+    }
   }
-  // Hour tick marks at 06:00, 12:00, 18:00
-  const ticks = [6,12,18].map(h => {
-    const x = (h/24)*W;
-    return `<line x1="${x}" y1="${H-8}" x2="${x}" y2="${H}" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
-  <text x="${x}" y="${H-10}" fill="var(--ink3)" font-size="7" font-family="monospace" text-anchor="middle" opacity="0.7">${h.toString().padStart(2,'0')}:00</text>`;
-  }).join('');
-  // 1.5 m lock threshold line
-  const lockY = py(1.5);
-  const lockLine = (lockY >= 0 && lockY <= H)
-    ? `<line x1="0" y1="${lockY.toFixed(1)}" x2="${W}" y2="${lockY.toFixed(1)}" stroke="#d4a843" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
-  <text x="2" y="${Math.max(lockY - 2, 7).toFixed(1)}" fill="#d4a843" font-size="7" font-family="monospace" opacity="0.6">1.5m lock</text>`
-    : '';
-  svg.innerHTML = `<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#5b9fcf" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#5b9fcf" stop-opacity="0.03"/>
-  </linearGradient></defs>
-  <path d="${path}L${W},${H}L0,${H}Z" fill="url(#tg)"/>
-  <path d="${path}" fill="none" stroke="#5b9fcf" stroke-width="1.5"/>
-  ${lockLine}${ticks}${nowLine}
-  <line id="tg-cursor" x1="-1" y1="0" x2="-1" y2="${H}" stroke="#fff" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>
-  <circle id="tg-dot" cx="-10" cy="-10" r="3" fill="#5b9fcf" stroke="#fff" stroke-width="1"/>`;
-  // Wire up tap/click interaction
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = `<defs>${defs}</defs>
+  ${fills}
+  <path d="${path}" fill="none" stroke="#29b6f6" stroke-width="2.2"/>
+  ${lockLine}${ticks}${extremeLabels}${nowLine}
+  <line id="tg-cursor" x1="-1" y1="0" x2="-1" y2="${H}" stroke="#fff" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
+  <circle id="tg-dot" cx="-10" cy="-10" r="4" fill="#fff" stroke="#29b6f6" stroke-width="1.5"/>`;
+
   svg.addEventListener('click', tgProbe);
   svg.addEventListener('mousemove', tgProbe);
   svg.addEventListener('mouseleave', () => { $('tide-probe').textContent = ''; hideTgCursor(); });
@@ -1801,11 +1845,15 @@ function tgProbe(e) {
   const height = tideAt(probeMs);
   const timeStr = new Date(probeMs).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
   const lockOk = height >= 1.5;
+  const col = lockOk ? '#29b6f6' : '#ff9800';
   const lockTxt = lockOk ? ' · lock ✓' : ' · lock ✗';
-  $('tide-probe').textContent = `${timeStr} → ${height.toFixed(2)} m${lockTxt}`;
+  const probe = $('tide-probe');
+  probe.style.color = col;
+  probe.textContent = `${timeStr} → ${height.toFixed(2)} m${lockTxt}`;
   // Move cursor line and dot
   const x = (frac * W).toFixed(1);
-  const py = v => H - ((v-mn)/(mx-mn))*(H-14) - 7;
+  const PT = 14, PB = 16;
+  const py = v => H - PB - ((v - mn) / (mx - mn)) * (H - PT - PB);
   const dotY = py(height).toFixed(1);
   const cursor = svg.querySelector('#tg-cursor');
   const dot = svg.querySelector('#tg-dot');
