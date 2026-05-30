@@ -1017,36 +1017,66 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 <div id="passage-tab" class="tab">
   <div class="panel">
     <h2>Passage Planner</h2>
+    <!-- shared port datalist -->
+    <datalist id="port-list">
+      <option>Swansea (SYSAC)</option>
+      <option>Mumbles</option>
+      <option>Porthcawl</option>
+      <option>Port Talbot</option>
+      <option>Barry</option>
+      <option>Penarth</option>
+      <option>Cardiff Bay</option>
+      <option>Newport</option>
+      <option>Portishead</option>
+      <option>Clevedon</option>
+      <option>Weston-super-Mare</option>
+      <option>Burnham-on-Sea</option>
+      <option>Watchet</option>
+      <option>Minehead</option>
+      <option>Lynmouth</option>
+      <option>Ilfracombe</option>
+      <option>Appledore / Bideford</option>
+      <option>Padstow</option>
+      <option>Newquay</option>
+      <option>St Ives</option>
+      <option>Penzance / Newlyn</option>
+      <option>Isles of Scilly</option>
+      <option>Falmouth</option>
+      <option>Fowey</option>
+      <option>Plymouth</option>
+      <option>Dartmouth</option>
+      <option>Salcombe</option>
+      <option>Tenby</option>
+      <option>Saundersfoot</option>
+      <option>Milford Haven</option>
+      <option>Pembroke Dock</option>
+      <option>Fishguard</option>
+      <option>Aberaeron</option>
+      <option>Aberystwyth</option>
+      <option>Barmouth</option>
+      <option>Pwllheli</option>
+      <option>Holyhead</option>
+      <option>Dunmore East</option>
+      <option>Crosshaven / Cork</option>
+      <option>Kinsale</option>
+      <option>Baltimore</option>
+    </datalist>
+
     <div id="passage-fields">
       <div><label>From</label>
-        <select id="p-from">
-          <option value="swansea">Swansea (SYSAC)</option>
-          <option value="cardiff">Cardiff Bay</option>
-          <option value="barry">Barry</option>
-          <option value="penarth">Penarth</option>
-          <option value="portishead">Portishead</option>
-          <option value="ilfracombe">Ilfracombe</option>
-          <option value="milford">Milford Haven</option>
-          <option value="scilly">Isles of Scilly</option>
-        </select></div>
+        <input type="text" id="p-from" list="port-list" placeholder="Type or select a port…" autocomplete="off" value="Swansea (SYSAC)"></div>
       <div><label>To</label>
-        <select id="p-to">
-          <option value="scilly">Isles of Scilly</option>
-          <option value="swansea">Swansea (SYSAC)</option>
-          <option value="cardiff">Cardiff Bay</option>
-          <option value="barry">Barry</option>
-          <option value="penarth">Penarth</option>
-          <option value="ilfracombe">Ilfracombe</option>
-          <option value="milford">Milford Haven</option>
-          <option value="portishead">Portishead</option>
-        </select></div>
+        <input type="text" id="p-to" list="port-list" placeholder="Type or select a port…" autocomplete="off"></div>
       <div><label>Depart date</label><input type="date" id="p-date"></div>
       <div><label>Depart time</label><input type="time" id="p-time" value="07:00"></div>
+      <div id="p-cust-row" style="display:none"><label>Distance (nm) — optional</label><input type="number" id="p-cust-dist" placeholder="e.g. 45" min="1" max="2000"></div>
+      <div id="p-cust-bear-row" style="display:none"><label>Bearing (°T) — optional</label><input type="number" id="p-cust-bear" placeholder="e.g. 220" min="0" max="359"></div>
     </div>
     <div class="sk-btns">
       <button class="sk-btn sk-btn-primary" onclick="planPassage()">⊕ Plan this passage</button>
+      <button class="sk-btn sk-btn-secondary" onclick="passageUseLivePos()" title="Fill From with current GPS position from Signal K">⊕ Use live position</button>
     </div>
-    <div id="passage-result" style="color:var(--ink3);font-style:italic;font-size:14px">Select route and departure, then press Plan.</div>
+    <div id="passage-result" style="color:var(--ink3);font-style:italic;font-size:14px">Enter departure and destination, then press Plan.</div>
   </div>
 
   <div class="panel" style="margin-top:10px">
@@ -1799,6 +1829,7 @@ function runSim() {
     S.skData['navigation.headingMagnetic']=(243+20*Math.sin(t/40))*Math.PI/180;
     S.skData['environment.depth.belowKeel']=8+3*Math.sin(t/20);
     S.skData['navigation.attitude']={roll:(phase<.5?15+4*Math.sin(t/12):8+3*Math.sin(t/12))*Math.PI/180};
+    S.skData['navigation.position']={latitude:51.568+0.001*Math.sin(t/120),longitude:-3.981+0.002*Math.sin(t/90)};
     // Systems sim: slowly discharge battery while sailing, solar partially compensating
     const socBase=0.72+0.05*Math.sin(t/200);
     S.skData['electrical.batteries.house.voltage']=12.0+socBase*0.8+0.05*Math.sin(t/7);
@@ -1896,53 +1927,149 @@ function mdToHtml(md) {
 }
 
 // ── PASSAGE PLANNER ────────────────────────────────────────────────
-const ROUTES = {
-  'swansea-scilly':     {dist:145,bearing:230,eta:29, notes:'Overnight passage. Leave HW −3h to carry tide W past Lundy. 4nm clearance W of Lundy. Watch Pendeen TSS and Seven Stones.'},
-  'swansea-ilfracombe': {dist:25, bearing:195,eta:5.5,notes:'Day sail. Leave HW −2h. Tidal stream sets SE across the channel. Ilfracombe dries partially — check their tides.'},
-  'swansea-cardiff':    {dist:38, bearing:115,eta:8,  notes:'Leave HW Swansea. Follow N shore. Cardiff Bay Barrage lock — VHF Ch 18.'},
-  'swansea-barry':      {dist:30, bearing:130,eta:6,  notes:'Barry Roads accessible most states. Barry Dock needs lock — check times.'},
-  'swansea-milford':    {dist:60, bearing:285,eta:12, notes:'Leave HW, head W into St Georges Channel. Major port — follow buoyed channel.'},
-  'swansea-portishead': {dist:60, bearing:135,eta:14, notes:'Leave HW −4h to arrive Bristol on the flood. Portishead lock — call ahead.'},
-  'swansea-penarth':    {dist:40, bearing:120,eta:9,  notes:'Cardiff Barrage lock required. VHF Ch 18. Strong ebb in the channel.'},
+const PORT_ALIASES = {
+  'swansea (sysac)':'swansea','swansea':'swansea','sysac':'swansea','mumbles':'swansea',
+  'porthcawl':'porthcawl',
+  'port talbot':'porttalbot',
+  'barry':'barry',
+  'penarth':'penarth',
+  'cardiff bay':'cardiff','cardiff':'cardiff',
+  'newport':'newport',
+  'portishead':'portishead',
+  'clevedon':'clevedon',
+  'weston-super-mare':'weston','weston super mare':'weston','weston':'weston',
+  'burnham-on-sea':'burnham','burnham on sea':'burnham','burnham':'burnham',
+  'watchet':'watchet',
+  'minehead':'minehead',
+  'lynmouth':'lynmouth',
+  'ilfracombe':'ilfracombe',
+  'appledore / bideford':'appledore','appledore':'appledore','bideford':'appledore',
+  'padstow':'padstow',
+  'newquay':'newquay',
+  'st ives':'stives',
+  'penzance / newlyn':'penzance','penzance':'penzance','newlyn':'penzance',
+  'isles of scilly':'scilly','scilly':'scilly',"st mary's":'scilly',
+  'falmouth':'falmouth',
+  'fowey':'fowey',
+  'plymouth':'plymouth','plymouth (sutton)':'plymouth',
+  'dartmouth':'dartmouth',
+  'salcombe':'salcombe',
+  'tenby':'tenby',
+  'saundersfoot':'saundersfoot',
+  'milford haven':'milford','milford':'milford',
+  'pembroke dock':'pembroke',
+  'fishguard':'fishguard',
+  'aberaeron':'aberaeron',
+  'aberystwyth':'aberystwyth',
+  'barmouth':'barmouth',
+  'pwllheli':'pwllheli',
+  'holyhead':'holyhead',
+  'dunmore east':'dunmore',
+  'crosshaven / cork':'cork','crosshaven':'cork','cork':'cork',
+  'kinsale':'kinsale',
+  'baltimore':'baltimore',
 };
-function getRoute(from,to){const k=`${from}-${to}`,r=`${to}-${from}`;return ROUTES[k]||ROUTES[r]||null;}
+function normalizePort(s){ return PORT_ALIASES[s.toLowerCase().trim()] || s.toLowerCase().trim(); }
+
+const ROUTES = {
+  'swansea-porthcawl':  {dist:12, bearing:130,eta:2.5, notes:'Leave HW. Nash Sands lie 2nm to the south — pass north of them. Porthcawl breakwater harbour dries in places; check tides for berthing.'},
+  'swansea-porttalbot': {dist:7,  bearing:120,eta:1.5, notes:'Short hop east. Tidal basin with lock — call Port Talbot on VHF Ch 14. Limited yacht facilities.'},
+  'swansea-barry':      {dist:30, bearing:130,eta:6,   notes:'Barry Roads are accessible most states of tide. Barry Dock has a lock — check opening times on VHF Ch 11.'},
+  'swansea-penarth':    {dist:40, bearing:120,eta:9,   notes:'Cardiff Bay Barrage lock required. Call on VHF Ch 18. Strong ebb in the channel; stem it on the last of the flood.'},
+  'swansea-cardiff':    {dist:38, bearing:115,eta:8,   notes:'Leave HW Swansea. Follow the north shore. Cardiff Bay Barrage lock on VHF Ch 18.'},
+  'swansea-newport':    {dist:50, bearing:110,eta:10,  notes:'Newport lock-controlled (VHF Ch 71). Spring ebb in the Usk reaches 5 kn. Not recommended in strong E winds.'},
+  'swansea-portishead': {dist:60, bearing:135,eta:14,  notes:'Leave HW −4h to arrive Bristol on the flood. Portishead lock — call ahead on VHF Ch 80. Avonmouth TSS to port.'},
+  'swansea-clevedon':   {dist:55, bearing:140,eta:11,  notes:'Clevedon is a drying anchorage only — no marina. Suitable for a brief stop in calm conditions around HW.'},
+  'swansea-weston':     {dist:35, bearing:145,eta:7,   notes:'Weston-super-Mare dries completely on springs. Approach HW ±1.5h only. Not suitable for an overnight stay without drying.'},
+  'swansea-burnham':    {dist:50, bearing:155,eta:10,  notes:'Burnham-on-Sea dries. Bristol Channel spring range 12m. Approach on the flood only — seek local knowledge.'},
+  'swansea-watchet':    {dist:55, bearing:165,eta:11,  notes:'Watchet marina accessible HW ±2h; dries on the hard outside. VHF Ch 80. Good facilities once in.'},
+  'swansea-minehead':   {dist:50, bearing:155,eta:10,  notes:'Leave HW −2h. Minehead dries — approach on the flood. Spring range here is 12m. Call Minehead Ch 16.'},
+  'swansea-lynmouth':   {dist:40, bearing:180,eta:8,   notes:'Small drying harbour — foredeck handling needed. Arrive HW. Very limited capacity; anchor in the bay in settled weather.'},
+  'swansea-ilfracombe': {dist:25, bearing:195,eta:5.5, notes:'Day sail. Leave HW −2h. Tidal stream sets SE across the channel. Ilfracombe marina accessible most states; outer harbour dries partially.'},
+  'swansea-appledore':  {dist:50, bearing:200,eta:10,  notes:'Bideford Bar can be dangerous in W swell. Cross HW slack only. VHF Ch 12. Good shelter in the river above the bar.'},
+  'swansea-padstow':    {dist:75, bearing:210,eta:15,  notes:'Overnight passage. Doom Bar sandbank — cross HW slack with care; bar moves seasonally. Rock Point tide race in strong W winds. Good harbour inside.'},
+  'swansea-newquay':    {dist:95, bearing:215,eta:19,  notes:'Overnight. Newquay harbour dries. Atlantic swell can make approach rough. Arrive HW. Good anchorage in Newquay Bay in E winds.'},
+  'swansea-stives':     {dist:125,bearing:220,eta:25,  notes:'Two-night passage. St Ives Bay open to NW swell. Harbour dries — approach HW. Good anchorage in E winds off the island.'},
+  'swansea-penzance':   {dist:130,bearing:225,eta:26,  notes:'Two nights. Newlyn (adjacent) has better deep-water berths. Watch Runnel Stone (2nm SW of Gwennap Hd) and Wolf Rock. Lizard Point tide race in strong winds.'},
+  'swansea-scilly':     {dist:145,bearing:230,eta:29,  notes:'Overnight offshore. Leave HW −3h to carry tide W past Lundy. 4nm clearance west of Lundy Island. Watch Pendeen TSS approach and Seven Stones LF buoy.'},
+  'swansea-falmouth':   {dist:155,bearing:225,eta:31,  notes:'Long offshore passage. Lizard Point is the key headland — pass 2nm off in strong winds. Carrick Roads anchorage excellent. Stop at Newlyn for fuel/rest.'},
+  'swansea-fowey':      {dist:120,bearing:218,eta:24,  notes:'Overnight. Fowey is a deep-water river port with good anchorage. Beware Cannis Rock to the south of the harbour entrance.'},
+  'swansea-plymouth':   {dist:130,bearing:215,eta:26,  notes:'Two nights. Plymouth Sound has good anchorage. Eddystone Rocks 14nm S of Plymouth — stay clear. Queen Annes Battery or Mayflower marina.'},
+  'swansea-dartmouth':  {dist:145,bearing:210,eta:29,  notes:'Two nights. Dartmouth River — no bar, excellent shelter. Start Point tide race 3nm east in strong SW winds.'},
+  'swansea-salcombe':   {dist:140,bearing:208,eta:28,  notes:'Two nights. Bar at Salcombe entrance — avoid in heavy swell. Excellent anchorage inside. Bolt Head tide race to the W.'},
+  'swansea-tenby':      {dist:40, bearing:245,eta:8,   notes:'Leave HW +1h to catch the W-going tide past the Gower. Tenby harbour dries — arrive HW ±2h. Good wall berths. Caldey Island anchorage in E winds.'},
+  'swansea-saundersfoot':{dist:45,bearing:250,eta:9,   notes:'Leave HW +1h. Saundersfoot drying harbour, similar approach to Tenby. Good anchorage in the bay in offshore winds.'},
+  'swansea-milford':    {dist:60, bearing:285,eta:12,  notes:'Leave HW, head W into St Georges Channel. Major commercial port — follow buoyed channel. Dale Roads is an excellent anchorage inside the Haven.'},
+  'swansea-pembroke':   {dist:65, bearing:282,eta:13,  notes:'Pembroke Dock tidal basin. Enter Milford Haven and follow N shore. Good facilities at Neyland marina.'},
+  'swansea-fishguard':  {dist:80, bearing:305,eta:16,  notes:'Leave HW to carry ebb W. Strumble Head tide race in strong winds — pass 2nm off. Fishguard Bay anchorage good in E winds. Ferry terminal — commercial traffic.'},
+  'swansea-aberaeron':  {dist:85, bearing:350,eta:17,  notes:'Long day. Aberaeron drying harbour — tricky entrance in swell or strong onshore winds. Cardigan Bay coastal passage.'},
+  'swansea-aberystwyth':{dist:100,bearing:345,eta:20,  notes:'Overnight or very long day. Cardigan Bay. Aberystwyth marina has good facilities. Arrival on the flood.'},
+  'swansea-barmouth':   {dist:120,bearing:350,eta:24,  notes:'Two days up the Welsh coast. Barmouth is a drying estuary — enter HW slack. Beautiful but tidal. Llyn Peninsula ahead if continuing.'},
+  'swansea-pwllheli':   {dist:150,bearing:355,eta:30,  notes:'Two-day passage N. Pwllheli marina good facilities. Bardsey Island race at Aberdaron — pass in calm or with the tide.'},
+  'swansea-holyhead':   {dist:185,bearing:350,eta:37,  notes:'Two-night passage up the Welsh coast. Holyhead is a major port of refuge. Holyhead Mountain landmark. South Stack lighthouse.'},
+  'swansea-dunmore':    {dist:125,bearing:265,eta:25,  notes:'Offshore overnight to SE Ireland. Dunmore East is a well-sheltered fishing harbour. Coningbeg shoal to the S of Wexford — stay clear. Good facilities.'},
+  'swansea-cork':       {dist:200,bearing:255,eta:40,  notes:'Major offshore passage. Two nights. Fastnet Rock the key waypoint. Crosshaven at the entrance to Cork Harbour. Excellent facilities.'},
+  'swansea-kinsale':    {dist:210,bearing:250,eta:42,  notes:'Long offshore passage. Old Head of Kinsale — keep 2nm off. Kinsale is a beautiful harbour. Plan for 2-night passage with Fastnet strategy.'},
+  'swansea-baltimore':  {dist:230,bearing:248,eta:46,  notes:'Longest offshore leg. Fastnet Rock 6nm north of Baltimore — the classic Irish passage waypoint. Sherkin Island anchorage. Three nights recommended.'},
+};
+function normalizeAndLookup(s){ return normalizePort(s); }
+function getRoute(a,b){ const k=`${a}-${b}`,r=`${b}-${a}`; return ROUTES[k]||ROUTES[r]||null; }
 
 async function planPassage() {
-  const from=$('p-from').value, to=$('p-to').value, out=$('passage-result');
-  if (from===to) {out.textContent='From and To must be different.'; return;}
-  const route=getRoute(from,to);
-  if (!route) {out.innerHTML=`<p style="color:var(--ink3)">No route data for this combination yet. Use AI Skipper for a custom briefing.</p>`; return;}
+  const fromRaw=($('p-from').value||'').trim(), toRaw=($('p-to').value||'').trim();
+  const out=$('passage-result');
+  if (!fromRaw||!toRaw){ out.textContent='Enter a departure and destination port.'; return; }
+  const fk=normalizePort(fromRaw), tk=normalizePort(toRaw);
+  if (fk===tk){ out.textContent='Departure and destination appear to be the same place.'; return; }
+
+  const route=getRoute(fk,tk);
+
+  // Show/hide custom distance+bearing fields
+  const hasRoute=!!route;
+  $('p-cust-row').style.display      = hasRoute?'none':'block';
+  $('p-cust-bear-row').style.display = hasRoute?'none':'block';
+
+  const custDist = parseFloat($('p-cust-dist').value)||null;
+  const custBear = parseFloat($('p-cust-bear').value)||null;
+  const dist   = route?.dist    ?? custDist;
+  const bearing= route?.bearing ?? custBear;
+  const etaH   = dist ? (dist/5) : null;
+
   const depMs=($('p-date').value&&$('p-time').value)?new Date(`${$('p-date').value}T${$('p-time').value}`).getTime():Date.now();
-  const arrMs=depMs+route.eta*3.6e6;
-  const dep=new Date(depMs), arr=new Date(arrMs);
+  const dep=new Date(depMs);
+  const arr=etaH?new Date(depMs+etaH*3.6e6):null;
   const ex=findExtrema(depMs,2);
   const hw=ex.find(e=>e.type==='HW');
-  out.innerHTML=`<h4>Route · ${from} → ${to}</h4>
-    <div class="row"><span class="k">Distance</span><span class="v">~${route.dist} nm</span></div>
-    <div class="row"><span class="k">Bearing</span><span class="v">~${route.bearing}°</span></div>
-    <div class="row"><span class="k">ETA at 5 kn</span><span class="v">${route.eta} h</span></div>
+
+  out.innerHTML=`<h4>${fromRaw} → ${toRaw}</h4>
+    ${dist   ?`<div class="row"><span class="k">Distance</span><span class="v">~${dist} nm</span></div>`:''}
+    ${bearing?`<div class="row"><span class="k">Bearing</span><span class="v">~${bearing}°T</span></div>`:''}
+    ${etaH   ?`<div class="row"><span class="k">ETA at 5 kn</span><span class="v">${etaH.toFixed(1)} h</span></div>`:''}
     <div class="row"><span class="k">Depart</span><span class="v">${fmtDate(dep)} ${fmt(dep)}</span></div>
-    <div class="row"><span class="k">Est. arrival</span><span class="v">${fmtDate(arr)} ${fmt(arr)}</span></div>
-    ${hw?`<div class="row"><span class="k">Next HW Swansea</span><span class="v">${fmt(new Date(hw.t))} · ${hw.h.toFixed(2)} m</span></div>`:''}
-    <p style="margin-top:10px;color:var(--ink2)">${route.notes}</p>`;
+    ${arr    ?`<div class="row"><span class="k">Est. arrival</span><span class="v">${fmtDate(arr)} ${fmt(arr)}</span></div>`:''}
+    ${hw     ?`<div class="row"><span class="k">Next HW Swansea</span><span class="v">${fmt(new Date(hw.t))} · ${hw.h.toFixed(2)} m</span></div>`:''}
+    ${route  ?`<p style="margin-top:10px;color:var(--ink2)">${route.notes}</p>`:''}
+    ${!route&&!S.apiKey?`<p style="margin-top:8px;font-size:13px;color:var(--ink3)">No saved data for this route. Add an API key in Settings to get an AI briefing, or fill in distance and bearing above.</p>`:''}`;
 
   if (S.apiKey) {
     out.innerHTML+='<div class="thinking">⊕ Getting AI passage briefing…</div>';
     try {
       const c=S.weather?.current||{};
       const wKn=c.wind_speed_10m?parseFloat(kph2kn(c.wind_speed_10m)).toFixed(1):'—';
-      const pr=`Brief passage plan for *Ava*, Nicholson 30 from ${from} to ${to} (${route.dist} nm), departing ${fmtDate(dep)} ${fmt(dep)}. Wind ${wKn} kn. ${route.notes} Give 3 sentences: tidal strategy, key hazards, go/no-go note. Max 80 words.`;
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:S.model,max_tokens:300,messages:[{role:'user',content:pr}]})});
+      const distNote=dist?`${dist} nm${bearing?`, bearing approx ${bearing}°`:''}`:' distance unknown — estimate if you can';
+      const liveNote=S._livePos?`Current position: ${($('p-from').value)}. SOG ${S._livePos.sog}, COG ${S._livePos.cog}.`:'';
+      const pr=`Brief passage plan for *Ava*, a Nicholson 30 based at SYSAC Swansea. Route: ${fromRaw} to ${toRaw} (${distNote}), departing ${fmtDate(dep)} ${fmt(dep)} UT. Current wind at Swansea: ${wKn} kn. ${liveNote} ${route?.notes||''} Give 4 sentences: tidal strategy, key hazards or waypoints, overnight/stop planning if applicable, and a go/no-go note. Max 100 words.`;
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:S.model,max_tokens:400,messages:[{role:'user',content:pr}]})});
       const data=await res.json();
       const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('\n');
       out.querySelector('.thinking')?.remove();
       if (text) out.innerHTML+=`<h4>AI Briefing</h4><p>${text}</p>`;
     } catch{out.querySelector('.thinking')?.remove();}
   }
-  // Save button — captures plan after AI briefing
-  const routeLabel=`${$('p-from').options[$('p-from').selectedIndex].text} → ${$('p-to').options[$('p-to').selectedIndex].text}`;
+
+  const routeLabel=`${fromRaw} → ${toRaw}`;
   const departLabel=`${$('p-date').value||'—'} ${$('p-time').value||''}`.trim();
-  out.innerHTML+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><button class="sk-btn sk-btn-secondary" style="font-size:11px" onclick="savePassageEntry('${routeLabel.replace(/'/g,'&#39;')}','${departLabel}')">⊕ Save to log</button></div>`;
+  out.innerHTML+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><button class="sk-btn sk-btn-secondary" style="font-size:11px" onclick="savePassageEntry('${routeLabel.replace(/'/g,"&#39;")}','${departLabel}')">⊕ Save to log</button></div>`;
 }
 
 // ── PASSAGE LOG ────────────────────────────────────────────────────
@@ -2005,6 +2132,25 @@ function clearPassageLog() {
   if(!confirm('Clear all saved passages?')) return;
   setPassageLog([]);
   renderPassageLog();
+}
+
+// ── PASSAGE LIVE POSITION ──────────────────────────────────────────
+function passageUseLivePos() {
+  const pos = S.skData['navigation.position'];
+  const sog = S.skData['navigation.speedOverGround'];
+  const cog = S.skData['navigation.courseOverGroundTrue'];
+  const inp = $('p-from');
+  if (!pos?.latitude) {
+    inp.value = 'No GPS (Signal K not connected)';
+    return;
+  }
+  const lat = pos.latitude.toFixed(4), lon = pos.longitude.toFixed(4);
+  const ns = pos.latitude>=0?'N':'S', ew = pos.longitude>=0?'E':'W';
+  const sogKn = sog ? (sog*1.944).toFixed(1)+' kn' : '—';
+  const cogDeg= cog ? Math.round(cog*180/Math.PI)+'°' : '—';
+  inp.value = `${Math.abs(pos.latitude).toFixed(3)}°${ns} ${Math.abs(pos.longitude).toFixed(3)}°${ew}`;
+  // Store raw position for use in planPassage
+  S._livePos = { lat: pos.latitude, lon: pos.longitude, sog: sogKn, cog: cogDeg };
 }
 
 // ── CHECKLIST ──────────────────────────────────────────────────────
