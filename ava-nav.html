@@ -1637,36 +1637,37 @@ function renderLockForDay(dayMs, dayDate, isToday) {
 
   const { open, close } = getLockHours(dayDate);
 
-  // Build hourly OUT slots within operating hours
+  // Build hourly OUT slots within operating hours, checking tide >= 1.5 m at slot time
+  const LOCK_MIN_TIDE = 1.5;
   const slots = [];
   for (let h = open; h < close; h++) {
     const outT = new Date(dayDate); outT.setHours(h, 0, 0, 0);
     const inT  = new Date(dayDate); inT.setHours(h, 30, 0, 0);
-    slots.push({ outT, inT, past: outT.getTime() < now });
+    const tideOut = tideAt(outT.getTime());
+    const tideIn  = tideAt(inT.getTime());
+    const tideLow = tideOut < LOCK_MIN_TIDE || tideIn < LOCK_MIN_TIDE;
+    slots.push({ outT, inT, past: outT.getTime() < now, tideLow, tideOut });
   }
 
-  // Tidal caution: warn if LW is very shallow (sea-side approaches)
-  const extrema = findExtrema(dayMs, 8).filter(e => e.t < dayMs + 86400000);
-  const lws = extrema.filter(e => e.type === 'LW');
-  const minLW = lws.length ? Math.min(...lws.map(e => e.h)) : null;
-  const lwWarn = (minLW !== null && minLW < 1.0)
-    ? `<span style="color:var(--amber);font-size:10px">⚠ LW ${minLW.toFixed(1)} m – check sea-side depth on Ava's approach</span><br>`
-    : '';
+  const renderSlot = (s, forceFull) => {
+    if (s.tideLow) {
+      const style = s.past ? 'opacity:0.38;' : '';
+      return `<span style="${style}color:var(--ink3)"><strong>${fmt(s.outT)}</strong> — tide ${s.tideOut.toFixed(1)} m (min 1.5 m)</span>`;
+    }
+    const style = s.past ? 'opacity:0.38' : '';
+    return `<span style="${style}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`;
+  };
 
   let slotsHtml;
   if (isToday) {
-    // Show last past slot (faded) + next 4 upcoming
+    // Show last past slot + next 4 upcoming (all categories)
     const past = slots.filter(s => s.past).slice(-1);
     const upcoming = slots.filter(s => !s.past).slice(0, 4);
-    slotsHtml = [...past, ...upcoming].map(s =>
-      `<span style="${s.past ? 'opacity:0.38' : ''}"><strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in</span>`
-    ).join('<br>');
-    if (!upcoming.length) slotsHtml += '<br><span style="color:var(--ink3)">Lock closed for today — reopens 07:00</span>';
+    slotsHtml = [...past, ...upcoming].map(s => renderSlot(s)).join('<br>');
+    if (!slots.filter(s => !s.past).length)
+      slotsHtml += '<br><span style="color:var(--ink3)">No more slots today — reopens 07:00</span>';
   } else {
-    // Future day: show full compact schedule
-    slotsHtml = slots.map(s =>
-      `<strong>${fmt(s.outT)}</strong> out · <strong>${fmt(s.inT)}</strong> in`
-    ).join('<br>');
+    slotsHtml = slots.map(s => renderSlot(s)).join('<br>');
   }
 
   const ph2 = `~${String(open).padStart(2,'0')}:00–${String(close).padStart(2,'0')}:00`;
