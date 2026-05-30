@@ -1020,6 +1020,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <!-- shared port datalist -->
     <datalist id="port-list">
       <option>Swansea (SYSAC)</option>
+      <!-- Gower anchorages -->
+      <option>Limeslade Bay (anchorage)</option>
+      <option>Langland Bay (anchorage)</option>
+      <option>Caswell Bay (anchorage)</option>
+      <option>Brandy Cove (anchorage)</option>
+      <option>Pwll Du Bay (anchorage)</option>
+      <option>Three Cliffs Bay (anchorage)</option>
+      <option>Oxwich Bay (anchorage)</option>
+      <option>Port Eynon Bay (anchorage)</option>
+      <option>Mewslade / Fall Bay (anchorage)</option>
+      <option>Rhossili Bay (anchorage)</option>
+      <!-- Bristol Channel offshore -->
+      <option>Lundy Island (anchorage)</option>
       <option>Mumbles</option>
       <option>Porthcawl</option>
       <option>Port Talbot</option>
@@ -1968,10 +1981,36 @@ const PORT_ALIASES = {
   'crosshaven / cork':'cork','crosshaven':'cork','cork':'cork',
   'kinsale':'kinsale',
   'baltimore':'baltimore',
+  // Gower anchorages
+  'limeslade bay (anchorage)':'limeslade','limeslade bay':'limeslade','limeslade':'limeslade',
+  'langland bay (anchorage)':'langland','langland bay':'langland','langland':'langland',
+  'caswell bay (anchorage)':'caswell','caswell bay':'caswell','caswell':'caswell',
+  'brandy cove (anchorage)':'brandy','brandy cove':'brandy','brandy':'brandy',
+  'pwll du bay (anchorage)':'pwlldu','pwll du bay':'pwlldu','pwll du':'pwlldu',
+  'three cliffs bay (anchorage)':'threecliffs','three cliffs bay':'threecliffs','three cliffs':'threecliffs','pobbles bay':'threecliffs','pobbles':'threecliffs',
+  'oxwich bay (anchorage)':'oxwich','oxwich bay':'oxwich','oxwich':'oxwich',
+  'port eynon bay (anchorage)':'porteynon','port eynon bay':'porteynon','port eynon':'porteynon',
+  'mewslade / fall bay (anchorage)':'mewslade','mewslade / fall bay':'mewslade','mewslade':'mewslade','fall bay':'mewslade',
+  'rhossili bay (anchorage)':'rhossili','rhossili bay':'rhossili','rhossili':'rhossili',
+  'lundy island (anchorage)':'lundy','lundy island':'lundy','lundy':'lundy',
 };
 function normalizePort(s){ return PORT_ALIASES[s.toLowerCase().trim()] || s.toLowerCase().trim(); }
 
 const ROUTES = {
+  // ── GOWER ANCHORAGES ──────────────────────────────────────────────
+  'swansea-limeslade':   {dist:3,  bearing:195,eta:0.7, notes:'Quick hop from the lock. Limeslade Bay tucks just SW of Mumbles Head — shelter from NE and E. Sand and rock bottom, 2–4m at LW. Exposed to S and SW. Watch the rocks off Mumbles Head on your port as you round; keep 0.3nm off. Popular lunch stop in a NE breeze.'},
+  'swansea-langland':    {dist:5,  bearing:200,eta:1,   notes:'Round Mumbles Head leaving it 0.5nm to starboard then bear away SE. Sand bottom, good holding, 3–5m at LW. Best in N to NE winds. Exposed to S and SW swell — not in a southerly. Langland Point forms the E side of the bay. No facilities; dinghy to the beach.'},
+  'swansea-caswell':     {dist:6,  bearing:200,eta:1.2, notes:'Pass Langland Bay and continue SE into Caswell. Small sandy bay, good holding. Sheltered from N and NE; exposed to S. Limited swinging room — 3–4 yachts only. Approach from the SE keeping clear of the rocky headlands either side. Surfing beach — watch for swimmers in season.'},
+  'swansea-brandy':      {dist:7,  bearing:202,eta:1.4, notes:'Tiny cove immediately east of Pwll Du Head. Excellent shelter in N, NE and E winds. Rocky sides — approach in settled conditions only, identify the cove opening carefully before committing. Shingle and rock bottom. 2–4m at LW in the centre. No swinging room — one or two boats only. Very secluded; no facilities.'},
+  'swansea-pwlldu':      {dist:8,  bearing:205,eta:1.6, notes:'Shingle bay with good holding. Approach on the centreline — rocks on both headlands at the bay entrance. 3–5m at LW in the anchorage zone. Best shelter in N, NE and E winds; exposed to S and SW. Steep limestone cliffs provide good windbreak in a NE breeze. Stream runs into the head of the bay. No facilities.'},
+  'swansea-threecliffs': {dist:10, bearing:212,eta:2,   notes:'Pobbles Bay (E of the Three Cliffs) is the anchoring area — approach from the S, keeping 0.3nm off the cliffs. Sand, good holding. 3–4m at HW; dries near the beach at LW. Best in N and NE winds. Exposed to SW and S. Pennard Pill stream at the head. One of the most scenic spots on the Gower coast. No facilities.'},
+  'swansea-oxwich':      {dist:12, bearing:220,eta:2.4, notes:'Larger bay — more room to swing than the eastern coves. Sand, good holding, 4–5m offshore. Best in N and NE winds. Oxwich Point and rocks to the SW — keep clear; approach from SE. Shoaling near the beach. Good for a day stop in settled summer weather. Sandy beach, small village with pub ashore. Watch for the Oxwich NNR restrictions in bird-nesting season.'},
+  'swansea-porteynon':   {dist:14, bearing:228,eta:2.8, notes:'Sandy bay with one hazard: Skysea Rock (dries 1.2m) near the centre — anchor E of it in 4–5m. Best in N to NE winds. Port Eynon Point and Overton Mere to the W have submerged rocks. Approach from the SE. Good holding on sand. Village with pub, café and fish & chips ashore. Lifeboat station at the point.'},
+  'swansea-mewslade':    {dist:15, bearing:232,eta:3,   notes:'Mewslade Bay and adjacent Fall Bay are very small and only suitable in calm or light-wind conditions — no real shelter from S or W. Rocky approach: identify the bay entrance carefully from the S. 3–4m in the centre. More of a fine-weather lunch stop than an overnight anchorage. No facilities. Dramatic limestone headlands.'},
+  'swansea-rhossili':    {dist:18, bearing:238,eta:3.6, notes:'Only approach in very settled, calm conditions — completely exposed to SW Atlantic swell and W wind. 3nm long sandy beach; anchor in 5–7m off the centre in a N wind. Worm\'s Head at the S end has a strong tide race when wind-against-tide — cross HW slack. Shipwreck of the Helvetia (1887) on the beach. No facilities nearby. A special anchorage in the right conditions.'},
+  // ── BRISTOL CHANNEL OFFSHORE ──────────────────────────────────────
+  'swansea-lundy':       {dist:52, bearing:198,eta:10.5,notes:'Overnight or long day passage to the granite island at the mouth of the Bristol Channel. Main anchorage off the SE corner (Landing Beach) in W and NW winds; Lundy Roads off the E side in light conditions. Strong tides — plan arrival at slack water. Via Bull Point (N Devon coast) with 2nm clearance. Moorings available — phone Lundy Shore Office ahead (day moorings £20). Grey seals, puffins (spring/summer). No fuel on the island. Exposed in E winds.'},
+  // ── HARBOURS ──────────────────────────────────────────────────────
   'swansea-porthcawl':  {dist:12, bearing:130,eta:2.5, notes:'Leave HW. Nash Sands lie 2nm to the south — pass north of them. Porthcawl breakwater harbour dries in places; check tides for berthing.'},
   'swansea-porttalbot': {dist:7,  bearing:120,eta:1.5, notes:'Short hop east. Tidal basin with lock — call Port Talbot on VHF Ch 14. Limited yacht facilities.'},
   'swansea-barry':      {dist:30, bearing:130,eta:6,   notes:'Barry Roads are accessible most states of tide. Barry Dock has a lock — check opening times on VHF Ch 11.'},
