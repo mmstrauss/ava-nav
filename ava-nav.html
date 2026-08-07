@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ava · Nav">
+<meta name="theme-color" content="#0d0f0e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f0ede6" media="(prefers-color-scheme: light)">
 <title>Ava · Nav</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -38,10 +40,20 @@ html[data-theme="night"] {
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; }
-#app { display: flex; flex-direction: column; height: 100vh; }
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
 /* ── HEADER ── */
-header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 10px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; height: 52px; }
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  padding-top: env(safe-area-inset-top);          /* push below notch / Dynamic Island */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  height: calc(52px + env(safe-area-inset-top));  /* grow to match */
+}
 .logo { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: .15em; text-transform: uppercase; margin-right: 8px; white-space: nowrap; }
 .logo span { color: var(--ink3); margin: 0 3px; }
 nav { display: flex; gap: 2px; flex: 1; }
@@ -52,7 +64,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 .chart-btn:hover { background: rgba(91,159,207,.22); }
 
 /* ── LAYOUT ── */
-#content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
 .tab { display: none; padding: 12px; max-width: 960px; margin: 0 auto; }
 .tab.visible { display: block; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
@@ -188,9 +200,75 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   .tab { padding: 9px; }
   #passage-fields, .trim-grid { grid-template-columns: 1fr; }
 }
+/* ── AIS / COLREGs ── */
+.ais-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.ais-tbl th { font-family:var(--font-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink3); text-align:left; padding:4px 6px 6px; border-bottom:1px solid var(--border); }
+.ais-tbl td { padding:6px 6px; border-bottom:1px solid var(--bg3); vertical-align:top; }
+.ais-tbl tr:last-child td { border-bottom:none; }
+.ais-badge { display:inline-block; font-family:var(--font-mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding:2px 7px; border-radius:20px; font-weight:700; white-space:nowrap; }
+.ais-badge.give-way  { background:rgba(192,86,78,.18); color:var(--red);    border:1px solid rgba(192,86,78,.4); }
+.ais-badge.stand-on  { background:rgba(91,159,207,.15); color:var(--blue);  border:1px solid rgba(91,159,207,.35); }
+.ais-badge.head-on   { background:rgba(200,164,90,.18); color:var(--accent);border:1px solid rgba(200,164,90,.4); }
+.ais-badge.clear     { background:var(--bg3); color:var(--ink3); border:1px solid var(--border); }
+.ais-vessel-name { font-size:13px; color:var(--ink); font-weight:500; }
+.ais-vessel-sub  { font-size:11px; color:var(--ink3); font-family:var(--font-mono); margin-top:2px; }
+.ais-cpa-alert   { color:var(--red); font-weight:700; }
+.ais-cpa-warn    { color:var(--amber); }
+.ais-empty       { font-family:var(--font-mono); font-size:11px; color:var(--ink3); padding:12px 0; text-align:center; }
+.prop-toggle     { display:inline-flex; align-items:center; gap:0; border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-left:8px; }
+.prop-toggle button { background:none; border:none; color:var(--ink3); font-family:var(--font-mono); font-size:10px; padding:3px 9px; cursor:pointer; }
+.prop-toggle button.active { background:var(--accent); color:var(--bg); }
+.ais-analyse-btn { font-family:var(--font-mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:var(--r); background:none; border:1px solid var(--border); color:var(--ink3); cursor:pointer; white-space:nowrap; }
+.ais-analyse-btn:hover { border-color:var(--ink3); color:var(--ink); }
+/* ── Celestial learning path ── */
+.cel-progress { display:flex; align-items:center; gap:12px; }
+.cel-progress-bar { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.cel-progress-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+.cel-progress-label { font-family:var(--font-mono); font-size:11px; color:var(--ink3); white-space:nowrap; }
+details.cel-step { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); margin-top:10px; }
+details.cel-step > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:13px 16px; user-select:none; -webkit-user-select:none; }
+details.cel-step > summary::-webkit-details-marker { display:none; }
+details.cel-step[open] > summary { border-bottom:1px solid var(--border); }
+.cel-step-num { font-family:var(--font-mono); font-size:11px; color:var(--bg); background:var(--ink3); min-width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+details.cel-step.done .cel-step-num { background:var(--green, #5dba6e); }
+details.cel-step.current .cel-step-num { background:var(--accent); }
+.cel-step-title { font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); }
+.cel-step-sub { font-size:12px; color:var(--ink3); margin-top:2px; }
+.cel-step-chev { margin-left:auto; color:var(--ink3); transition:transform .2s; flex-shrink:0; }
+details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
+.cel-step-body { padding:14px 16px 16px; }
+.cel-step-body .panel { background:transparent; border:none; padding:0; margin-top:14px; }
+.cel-done-btn { margin-top:14px; }
+/* ── PIN lock ── */
+#pin-overlay { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+#pin-overlay.hidden { display:none; }
+#pin-dots { display:flex; gap:14px; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:1px solid var(--ink3); }
+.pin-dot.filled { background:var(--accent); border-color:var(--accent); }
+#pin-pad { display:grid; grid-template-columns:repeat(3,64px); gap:12px; }
+#pin-pad button { width:64px; height:64px; border-radius:50%; background:var(--bg2); border:1px solid var(--border); color:var(--ink); font-size:22px; font-family:var(--font-mono); cursor:pointer; }
+#pin-pad button:active { background:var(--bg3); }
+#pin-msg { font-family:var(--font-mono); font-size:12px; color:var(--red); min-height:16px; }
 </style>
 </head>
 <body>
+
+<!-- ── PIN LOCK ── -->
+<div id="pin-overlay" class="hidden">
+  <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3)">Ava · Nav</div>
+  <div style="font-size:15px;color:var(--ink2)">Enter PIN</div>
+  <div id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div id="pin-msg"></div>
+  <div id="pin-pad">
+    <button onclick="pinKey('1')">1</button><button onclick="pinKey('2')">2</button><button onclick="pinKey('3')">3</button>
+    <button onclick="pinKey('4')">4</button><button onclick="pinKey('5')">5</button><button onclick="pinKey('6')">6</button>
+    <button onclick="pinKey('7')">7</button><button onclick="pinKey('8')">8</button><button onclick="pinKey('9')">9</button>
+    <button style="visibility:hidden"></button><button onclick="pinKey('0')">0</button><button onclick="pinKey('del')">⌫</button>
+  </div>
+</div>
 <div id="app">
 
 <header>
@@ -276,6 +354,26 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <div id="forecast-strip"></div>
     <div class="source" style="margin-top:6px">Open-Meteo · dot = solo sail conditions for Nicholson 30</div>
   </div>
+
+  <!-- SHIPPING FORECAST PANEL -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Shipping Forecast · Lundy</h2>
+    <div id="sf-status" style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-bottom:10px">
+      Loading…
+    </div>
+    <div id="sf-gales" style="display:none;padding:8px 10px;margin-bottom:10px;border-radius:var(--r);font-size:13px;font-weight:600;background:rgba(192,86,78,.15);color:var(--red)"></div>
+    <div id="sf-synopsis" style="font-size:13px;color:var(--ink3);margin-bottom:10px;line-height:1.7"></div>
+    <div id="sf-lundy" style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:10px"></div>
+    <div id="sf-bristol-wrap" style="display:none">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">Inshore · Lands End to St Davids Head</div>
+      <div id="sf-bristol" style="font-size:13px;color:var(--ink2);line-height:1.8"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+      <button class="sk-btn sk-btn-secondary" style="font-size:11px;padding:4px 10px" onclick="loadShipping(true)">↻ Refresh</button>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">Via Pi admin server · cached 2 h</span>
+    </div>
+  </div>
+
 </div>
 
 
@@ -291,6 +389,10 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     <button class="sk-lnk" onclick="runSim()">Sim</button>
     <span style="color:var(--border)">|</span>
     <button class="sk-lnk" onclick="stopSK()">Stop</button>
+    <div class="prop-toggle" title="Your propulsion mode affects COLREGs Rule 18 (power/sail priority)">
+      <button id="prop-sail" class="active" onclick="setPropulsion('sail')">⛵ Sail</button>
+      <button id="prop-motor" onclick="setPropulsion('motor')">⚙ Motor</button>
+    </div>
   </div>
 
   <div class="grid">
@@ -368,6 +470,31 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
       <button class="sk-btn sk-btn-secondary" onclick="$('ai-output').innerHTML=''">✕ Clear</button>
     </div>
     <div id="ai-output"><p style="color:var(--ink3);font-style:italic;font-size:14px">Press <em>Ask the skipper</em> for a pre-departure briefing — tide windows, weather, sail plan and Bristol Channel watch points.</p></div>
+  </div>
+
+  <!-- AIS TRAFFIC / COLREGs panel -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Traffic · AIS Targets</h2>
+    <div id="ais-alert-bar" style="display:none;padding:8px 10px;margin-bottom:10px;border-radius:var(--r);font-size:13px;font-weight:600;background:rgba(192,86,78,.15);color:var(--red)"></div>
+    <div id="ais-panel">
+      <div class="ais-empty">No Signal K connection — connect or run simulator to see AIS traffic.</div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-top:8px" id="ais-update-time"></div>
+    <div style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--ink3);line-height:1.7">
+      <strong style="color:var(--ink);font-family:var(--font-mono);font-size:10px">COLREGS QUICK REF</strong><br>
+      <strong>R13 Overtaking</strong> · You overtake → give way at all times, pass port or starboard<br>
+      <strong>R14 Head-on</strong> · Both alter starboard · sound 1 blast each<br>
+      <strong>R15 Crossing</strong> · Target to your starboard → YOU give way · don't cross ahead<br>
+      <strong>R16/17</strong> · Give-way: early &amp; substantial action · Stand-on: hold unless collision inevitable<br>
+      <strong>R18 Hierarchy</strong> · NUC &gt; RAM &gt; Constrained by draft &gt; Fishing &gt; Sailing &gt; Power
+    </div>
+  </div>
+
+  <!-- COLREGs encounter AI analysis output -->
+  <div class="panel" style="margin-top:10px;display:none" id="colregs-panel">
+    <h2>COLREGs Analysis · <span id="colregs-vessel-name">—</span></h2>
+    <div id="colregs-output"></div>
+    <button class="sk-btn sk-btn-secondary" style="margin-top:10px;font-size:11px" onclick="$('colregs-panel').style.display='none'">✕ Close</button>
   </div>
 
   <div class="panel" style="margin-top:10px">
@@ -512,6 +639,24 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
 <!-- ════════════════════════ CELESTIAL ════════════════════════ -->
 <div id="celest-tab" class="tab">
+
+<!-- LEARNING PATH PROGRESS -->
+<div class="panel">
+  <h2>Your Celestial Nav Path · Sextant to Yachtmaster</h2>
+  <div class="cel-progress">
+    <div class="cel-progress-bar"><div class="cel-progress-fill" id="cel-progress-fill" style="width:0%"></div></div>
+    <span class="cel-progress-label" id="cel-progress-label">Step 1 of 6</span>
+  </div>
+  <p style="font-size:13px;color:var(--ink3);margin-top:10px">Work through the steps in order — each one builds on the last. Tap a step to open it, and mark it done when you're confident. Your progress is saved on this device.</p>
+</div>
+
+<details class="cel-step" data-step="1">
+<summary>
+  <span class="cel-step-num">1</span>
+  <span><span class="cel-step-title">Foundations</span><div class="cel-step-sub">What celestial nav is, the kit you need, and the language</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
 <div class="grid">
 
   <div class="panel" style="grid-column:1/-1">
@@ -544,9 +689,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 
 </div><!-- /grid -->
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(1)">✓ Mark step done</button>
+</div>
+</details>
 
 <!-- NOON SIGHT -->
-<div class="panel" style="margin-top:10px">
+<details class="cel-step" data-step="2">
+<summary>
+  <span class="cel-step-num">2</span>
+  <span><span class="cel-step-title">The Noon Sight</span><div class="cel-step-sub">Your first real fix — latitude from one sextant reading, no tables</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
+<div class="panel">
   <h2>The Noon Sight · Latitude by Meridian Passage</h2>
   <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:12px">At local noon the sun crosses your meridian (due south in the northern hemisphere) and reaches its highest point in the sky. At that exact moment, a single sextant reading gives you your latitude directly — no time needed, no sight reduction tables.</p>
 
@@ -594,8 +749,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 </div>
 
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(2)">✓ Mark step done</button>
+</div>
+</details>
+
 <!-- SUN SIGHT LOP -->
-<div class="panel" style="margin-top:10px">
+<details class="cel-step" data-step="3">
+<summary>
+  <span class="cel-step-num">3</span>
+  <span><span class="cel-step-title">Sun Lines &amp; the Running Fix</span><div class="cel-step-sub">Turn timed sun sights into position lines and a daily fix routine</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
+<div class="panel">
   <h2>Sun Sight · Line of Position (LOP)</h2>
   <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:10px">A time sight taken when the sun is not on the meridian gives a line of position — you are somewhere along that line. Two sights, or a morning sight + noon sight, give a fix.</p>
   <div class="grid" style="margin-top:0">
@@ -626,8 +792,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 </div>
 
-<!-- SUN ALMANAC -->
-<div class="panel" style="margin-top:10px">
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(3)">✓ Mark step done</button>
+</div>
+</details>
+
+<!-- SUN ALMANAC + SIGHT REDUCTION + CORRECTIONS -->
+<details class="cel-step" data-step="4">
+<summary>
+  <span class="cel-step-num">4</span>
+  <span><span class="cel-step-title">Almanac, Sight Reduction &amp; Corrections</span><div class="cel-step-sub">The working tools — GHA/Dec tables, intercept calculator, Hs→Ho corrections</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
+<div class="panel">
   <h2>Sun Almanac · <span id="cel-alm-date">Today</span> (UTC)</h2>
   <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:10px">Computed GHA and Declination of the sun for each full UTC hour. Find the row for the sight hour, note GHA and Dec, then add the increment for the remaining minutes and seconds below.</p>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
@@ -660,7 +837,7 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 </div>
 
 <!-- SIGHT REDUCTION CALCULATOR -->
-<div class="panel" style="margin-top:10px">
+<div class="panel" style="margin-top:14px">
   <h2>Sun Sight Reduction · Intercept Method</h2>
   <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:12px">Enter your observation. This calculator gives Hc, azimuth Zn, and intercept — ready to plot your line of position.</p>
 
@@ -769,8 +946,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 </div>
 
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(4)">✓ Mark step done</button>
+</div>
+</details>
+
 <!-- STAR SIGHTS -->
-<div class="panel" style="margin-top:10px">
+<details class="cel-step" data-step="5">
+<summary>
+  <span class="cel-step-num">5</span>
+  <span><span class="cel-step-title">Stars &amp; Polaris</span><div class="cel-step-sub">Twilight sights and the simplest latitude check in the northern sky</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
+<div class="panel">
   <h2>Star & Planet Sights</h2>
   <p style="font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:10px">Stars and planets are observed at dawn and dusk during <strong style="color:var(--ink)">civil twilight</strong> — when the horizon is still visible but the sky is dark enough to see the body. The brief window is typically 20–30 minutes.</p>
   <div class="grid" style="margin-top:0">
@@ -796,8 +984,19 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
   </div>
 </div>
 
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(5)">✓ Mark step done</button>
+</div>
+</details>
+
 <!-- PRACTICE -->
-<div class="panel" style="margin-top:10px">
+<details class="cel-step" data-step="6">
+<summary>
+  <span class="cel-step-num">6</span>
+  <span><span class="cel-step-title">Practice Afloat</span><div class="cel-step-sub">A week-by-week plan from armchair to Yachtmaster-standard fixes</div></span>
+  <span class="cel-step-chev">›</span>
+</summary>
+<div class="cel-step-body">
+<div class="panel">
   <h2>Practice Plan · Getting Started</h2>
   <div class="grid" style="margin-top:0">
     <div>
@@ -820,6 +1019,10 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
     </div>
   </div>
 </div>
+
+<button class="sk-btn sk-btn-secondary cel-done-btn" onclick="celToggleDone(6)">✓ Mark step done</button>
+</div>
+</details>
 
 </div><!-- /celest-tab -->
 
@@ -1251,11 +1454,13 @@ After=network.target
 [Service]
 ExecStart=/usr/bin/python3 /home/pi/ava-nav/ava-admin.py
 WorkingDirectory=/home/pi/ava-nav
+Environment=AVA_ADMIN_PIN=1234
 Restart=on-failure
 User=pi
 
 [Install]
 WantedBy=multi-user.target</pre>
+      <p style="margin-bottom:14px;font-size:12px;color:var(--ink3)">Set <code style="font-family:var(--font-mono)">AVA_ADMIN_PIN</code> to the same 4-digit PIN you set in Settings → PIN Lock. Without it the admin server runs open (fine on Ava's private WiFi only). Alternatively put the PIN in a file called <code style="font-family:var(--font-mono)">.ava-pin</code> next to the script.</p>
       <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-size:12px;overflow-x:auto;margin-bottom:14px">sudo systemctl enable ava-admin
 sudo systemctl start ava-admin</pre>
 
@@ -1438,6 +1643,24 @@ with open(fname, 'w', newline='') as f:
     <button class="sk-btn sk-btn-primary" onclick="saveSgKey()">Save &amp; fetch waves</button>
 
     <div class="divider"></div>
+    <h2>PIN Lock</h2>
+    <label for="set-pin">4-digit PIN</label>
+    <input type="password" id="set-pin" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div class="set-note">Locks the app on open and protects Admin actions (git pull etc.). The same PIN is sent to <code style="font-family:var(--font-mono)">ava-admin.py</code> on the Pi — set <code style="font-family:var(--font-mono)">AVA_ADMIN_PIN</code> there to the same value. This is a casual-access lock for the boat iPad, not strong encryption.</div>
+    <div style="display:flex;gap:8px">
+      <button class="sk-btn sk-btn-primary" onclick="savePin()">Set / change PIN</button>
+      <button class="sk-btn sk-btn-secondary" onclick="removePin()">Remove PIN</button>
+    </div>
+    <div id="pin-set-status" style="font-family:var(--font-mono);font-size:11px;color:var(--ink3);margin-top:6px"></div>
+
+    <div class="divider"></div>
+    <h2>Vessel Notes (for AI briefings)</h2>
+    <label for="set-vessel-notes">Current rig / sail / engine status</label>
+    <input type="text" id="set-vessel-notes" placeholder="e.g. New main being fitted — motor only this week" autocomplete="off">
+    <div class="set-note">Anything temporary the AI skipper should know — sail changes, engine issues, crew aboard. Included in every briefing. Leave blank when all is normal.</div>
+    <button class="sk-btn sk-btn-secondary" onclick="saveVesselNotes()">Save notes</button>
+
+    <div class="divider"></div>
     <h2>Anthropic API</h2>
     <label for="set-key">API Key</label>
     <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off">
@@ -1496,6 +1719,7 @@ with open(fname, 'w', newline='') as f:
 const S = {
   weather: null, marine: null,
   skWs: null, simTimer: null, skData: {},
+  aisTargets: {}, skSelfCtx: null, propulsion: 'sail',
   log: [],
   apiKey:  localStorage.getItem('ava-api-key')  || '',
   model:   localStorage.getItem('ava-model')    || 'claude-sonnet-4-6',
@@ -1508,6 +1732,10 @@ const S = {
   wtKey:   localStorage.getItem('ava-wt-key')   || '',
   sgKey:   localStorage.getItem('ava-sg-key')   || '',
   tideData: null,
+  harmCal: null,
+  pin: null,            // PIN entered this session (sent to admin server)
+  vesselNotes: localStorage.getItem('ava-vessel-notes') || '',
+  shippingForecast: null,
   sgData: null,
 };
 
@@ -1546,7 +1774,13 @@ function initAdmin() {
 
 async function adminFetch(method, path) {
   try {
-    const r = await fetch(S.adminUrl + path, {method, signal: AbortSignal.timeout(8000)});
+    const headers = {};
+    if (S.pin) headers['X-Ava-Pin'] = S.pin;
+    const r = await fetch(S.adminUrl + path, {method, headers, signal: AbortSignal.timeout(8000)});
+    if (r.status === 401) {
+      if (pinLockActive() && !S.pin) { showPinLock(); return {ok:false, error:'Enter your PIN, then retry.'}; }
+      return {ok: false, error: 'PIN required or wrong — set the same 4-digit PIN in Settings and AVA_ADMIN_PIN on the Pi.'};
+    }
     if (!r.ok) return {ok: false, error: `HTTP ${r.status}`};
     return await r.json();
   } catch(e) { return {ok: false, error: e.message}; }
@@ -1600,6 +1834,7 @@ function initSettings() {
   $('set-sk-port').value = S.skPort;
   $('set-sk-auto').value = S.skAuto;
   $('set-nav-url').value = S.navUrl;
+  const vn = $('set-vessel-notes'); if (vn) vn.value = S.vesselNotes;
   $('chart-btn').href    = S.navUrl || '#';
 }
 function saveWtKey() {
@@ -1715,29 +1950,119 @@ function set(id, val, cls) { const el=$(id); if(!el) return; el.textContent=val;
 const fmt     = d => d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
 const fmtDate = d => d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 const deg2cpt = d => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
-const kph2kn  = k => (k/1.852).toFixed(1);
+const toKn    = k => (+k).toFixed(1);   // open-meteo now requested in knots directly
 const ms2kn   = v => v!=null ? (v*1.944).toFixed(1)+' kn' : '—';
 const ms2knv  = v => v!=null ? (v*1.944).toFixed(1) : null;
 const r2dg    = v => v!=null ? (v*180/Math.PI).toFixed(0)+'°' : '—';
 function bfScale(kn) { return [1,3,6,10,16,21,27,33,40,47,55,63].findIndex(v => kn<v); }
 
 // ── TIDES ──────────────────────────────────────────────────────────
-// Swansea harmonic constituents (amplitude m, phase deg, speed deg/hr)
-const CONSTS = [
-  {amp:4.29, ph:101.0, spd:28.9841042}, // M2
-  {amp:1.48, ph:129.3, spd:30.0000000}, // S2
-  {amp:0.86, ph:84.5,  spd:28.4397295}, // N2
-  {amp:0.14, ph:178.0, spd:15.0410686}, // K1
-  {amp:0.11, ph:148.0, spd:13.9430356}, // O1
-  {amp:0.24, ph:42.0,  spd:57.9682084}, // M4
-  {amp:0.14, ph:78.0,  spd:58.9841042}, // MS4
-];
-const MSL = 5.48; // mean sea level above chart datum, Swansea
-const EPOCH = Date.UTC(2025,0,1,0,0,0);
+// Proper harmonic prediction: h(t) = Z0 + Σ f·H·cos(V + u − g)
+// V  = equilibrium argument at Greenwich (computed from lunar/solar mean longitudes)
+// f,u = 18.6-year nodal corrections.  H,g = local harmonic constants.
+// Seed constants below are APPROXIMATE for Swansea (Mumbles). Whenever WorldTides
+// data is fetched, the app least-squares-fits H,g to the official curve and caches
+// the calibrated set — so the offline fallback becomes genuinely accurate.
+const TIDE_SEED = {
+  z0: 5.20, // mean level above CD, Swansea (approx)
+  consts: [
+    {name:'M2',  H:3.15, g:171, spd:28.9841042},
+    {name:'S2',  H:1.13, g:214, spd:30.0000000},
+    {name:'N2',  H:0.60, g:152, spd:28.4397295},
+    {name:'K1',  H:0.07, g:130, spd:15.0410686},
+    {name:'O1',  H:0.07, g:355, spd:13.9430356},
+    {name:'M4',  H:0.18, g:115, spd:57.9682084},
+    {name:'MS4', H:0.10, g:170, spd:58.9841042},
+  ],
+};
+const D2R = Math.PI/180, J2000 = Date.UTC(2000,0,1,0,0,0);
+
+// Equilibrium arguments V (deg) and nodal corrections f,u at time ms (UTC)
+function tideArgs(ms) {
+  const Hh = (ms - J2000) / 3.6e6;          // hours since 2000-01-01 00:00 UT
+  const T  = (Hh/24 - 0.5) / 36525;          // Julian centuries from J2000.0
+  const wrap = a => ((a % 360) + 360) % 360;
+  const s = wrap(218.3164477 + 481267.88123421*T);  // mean longitude of moon
+  const h = wrap(280.46646   + 36000.76983*T);      // mean longitude of sun
+  const p = wrap(83.3532465  + 4069.0137287*T);     // lunar perigee
+  const N = wrap(125.04452   - 1934.13626*T) * D2R; // ascending node (rad)
+  const t15 = wrap(15*Hh);
+  const V = {
+    M2:  wrap(2*t15 - 2*s + 2*h),
+    S2:  wrap(2*t15),
+    N2:  wrap(2*t15 - 3*s + 2*h + p),
+    K1:  wrap(t15 + h + 90),
+    O1:  wrap(t15 + h - 2*s - 90),
+  };
+  V.M4 = wrap(2*V.M2); V.MS4 = wrap(V.M2 + V.S2);
+  const cN=Math.cos(N), sN=Math.sin(N);
+  const fM2 = 1.0004 - 0.0373*cN, uM2 = -2.14*sN;
+  const f = {M2:fM2, S2:1, N2:fM2, M4:fM2*fM2, MS4:fM2,
+             K1:1.0060 + 0.1150*cN - 0.0088*Math.cos(2*N),
+             O1:1.0089 + 0.1871*cN - 0.0147*Math.cos(2*N)};
+  const u = {M2:uM2, S2:0, N2:uM2, M4:2*uM2, MS4:uM2,
+             K1:-8.86*sN + 0.68*Math.sin(2*N),
+             O1:10.80*sN - 1.34*Math.sin(2*N)};
+  return {V, f, u};
+}
+
+function activeTideConsts() {
+  if (S.harmCal) return S.harmCal;
+  try {
+    const cal = JSON.parse(localStorage.getItem('ava-harm-cal') || 'null');
+    if (cal?.consts?.length) { S.harmCal = cal; return cal; }
+  } catch(_) {}
+  return TIDE_SEED;
+}
 
 function harmonicTideAt(ms) {
-  const h = (ms - EPOCH) / 3.6e6;
-  return MSL + CONSTS.reduce((s,c) => s + c.amp * Math.cos((c.spd*h - c.ph)*Math.PI/180), 0);
+  const set = activeTideConsts();
+  const {V, f, u} = tideArgs(ms);
+  return set.z0 + set.consts.reduce((sum,c) =>
+    sum + f[c.name]*c.H*Math.cos((V[c.name] + u[c.name] - c.g)*D2R), 0);
+}
+
+// Least-squares fit of H,g to WorldTides hourly heights (ridge-regularised
+// toward the seed so short records can't destabilise N2 vs M2).
+function calibrateHarmonics(heights) {
+  try {
+    if (!heights || heights.length < 96) return;
+    const names = TIDE_SEED.consts.map(c=>c.name);
+    const n = 1 + 2*names.length;             // z0 + (a,b) per constituent
+    const A = Array.from({length:n},()=>new Float64Array(n));
+    const b = new Float64Array(n);
+    const lambda = 2;
+    // prior x0 from seed
+    const x0 = new Float64Array(n); x0[0] = TIDE_SEED.z0;
+    TIDE_SEED.consts.forEach((c,i)=>{ x0[1+2*i]=c.H*Math.cos(c.g*D2R); x0[2+2*i]=c.H*Math.sin(c.g*D2R); });
+    for (const pt of heights) {
+      const ms = pt.dt*1000, {V,f,u} = tideArgs(ms);
+      const row = new Float64Array(n); row[0] = 1;
+      names.forEach((nm,i)=>{
+        const ang=(V[nm]+u[nm])*D2R;
+        row[1+2*i]=f[nm]*Math.cos(ang); row[2+2*i]=f[nm]*Math.sin(ang);
+      });
+      for (let i=0;i<n;i++){ b[i]+=row[i]*pt.height; for(let j=0;j<n;j++) A[i][j]+=row[i]*row[j]; }
+    }
+    for (let i=0;i<n;i++){ A[i][i]+=lambda; b[i]+=lambda*x0[i]; }
+    // Gaussian elimination with partial pivoting
+    for (let col=0;col<n;col++){
+      let piv=col; for(let r=col+1;r<n;r++) if(Math.abs(A[r][col])>Math.abs(A[piv][col])) piv=r;
+      [A[col],A[piv]]=[A[piv],A[col]]; const tb=b[col]; b[col]=b[piv]; b[piv]=tb;
+      if (Math.abs(A[col][col])<1e-9) return;
+      for (let r=col+1;r<n;r++){ const m=A[r][col]/A[col][col]; if(!m) continue;
+        for(let j=col;j<n;j++) A[r][j]-=m*A[col][j]; b[r]-=m*b[col]; }
+    }
+    const x=new Float64Array(n);
+    for (let r=n-1;r>=0;r--){ let sum=b[r]; for(let j=r+1;j<n;j++) sum-=A[r][j]*x[j]; x[r]=sum/A[r][r]; }
+    const cal = {z0:x[0], fittedAt:Date.now(), consts:names.map((nm,i)=>{
+      const a=x[1+2*i], bb=x[2+2*i];
+      return {name:nm, H:Math.hypot(a,bb), g:((Math.atan2(bb,a)/D2R)%360+360)%360,
+              spd:TIDE_SEED.consts[i].spd};
+    })};
+    S.harmCal = cal;
+    localStorage.setItem('ava-harm-cal', JSON.stringify(cal));
+  } catch(e) { console.warn('Harmonic calibration failed:', e); }
 }
 
 function tideAt(ms) {
@@ -2063,6 +2388,7 @@ async function loadTides() {
     const data = {extremes: d.extremes, heights: d.heights, fetchedAt: Date.now()};
     S.tideData = data;
     localStorage.setItem('ava-tide-cache', JSON.stringify(data));
+    calibrateHarmonics(d.heights);   // tune the offline harmonic fallback to the official curve
     updateTideSrc(); renderDayView(S.selectedDay);
   } catch(e) {
     console.warn('WorldTides fetch failed:', e);
@@ -2077,13 +2403,16 @@ async function loadTides() {
 
 function updateTideSrc() {
   const el = $('tide-src'); if (!el) return;
+  const cal = !!(S.harmCal || localStorage.getItem('ava-harm-cal'));
   if (S.tideData) {
     const age = Math.round((Date.now() - S.tideData.fetchedAt) / 3600000);
     el.textContent = `WorldTides · Swansea · fetched ${age < 1 ? 'just now' : age+'h ago'}`;
+  } else if (cal) {
+    el.textContent = 'Harmonic model (calibrated from WorldTides) — offline prediction';
   } else if (S.wtKey) {
-    el.textContent = 'WorldTides · fetch failed — using harmonic estimate';
+    el.textContent = 'WorldTides · fetch failed — using uncalibrated harmonic estimate';
   } else {
-    el.textContent = 'Harmonic model (inaccurate) — add WorldTides key in Settings';
+    el.textContent = 'Harmonic estimate (approx.) — add WorldTides key in Settings for official data';
   }
 }
 
@@ -2097,7 +2426,7 @@ function renderAstroForDay(date) {
   const B = (360/365)*(doy-81)*Math.PI/180;
   const eq = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
   const ha = Math.acos(-Math.tan(lat*Math.PI/180)*Math.tan(23.45*Math.sin(B)*Math.PI/180))*180/Math.PI;
-  const tz = date.getTimezoneOffset() < 0 ? -date.getTimezoneOffset()/60 : 1;
+  const tz = -date.getTimezoneOffset()/60;  // 0 in GMT, 1 in BST
   const rise = new Date(date); rise.setHours(0,0,0,0); rise.setMinutes(720 - 4*(lng+ha) - eq + tz*60);
   const sset = new Date(date); sset.setHours(0,0,0,0); sset.setMinutes(720 - 4*(lng-ha) - eq + tz*60);
   set('sunrise', fmt(rise)); set('sunset', fmt(sset));
@@ -2119,8 +2448,8 @@ function renderWeatherForDay(offset) {
   }
   const d = S.weather.daily;
   if (!d || !d.time[offset]) return;
-  const wKn = parseFloat(kph2kn(d.wind_speed_10m_max[offset]));
-  const gKn = parseFloat(kph2kn(d.wind_gusts_10m_max[offset]));
+  const wKn = parseFloat(toKn(d.wind_speed_10m_max[offset]));
+  const gKn = parseFloat(toKn(d.wind_gusts_10m_max[offset]));
   const dir = d.wind_direction_10m_dominant[offset];
   const bf = bfScale(wKn);
   const wicons = {0:'☀',1:'🌤',2:'⛅',3:'☁',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'⛈',71:'🌨',80:'🌦',81:'🌧',95:'⛈'};
@@ -2150,8 +2479,8 @@ function drawHourlyWind(offset) {
   if (!wrap || !svg || !h?.wind_speed_10m) return;
   const W = 240, H = 40;
   const s0 = offset * 24;
-  const speeds = Array.from({length:24}, (_,i) => parseFloat(kph2kn(h.wind_speed_10m[s0+i] || 0)));
-  const gusts  = Array.from({length:24}, (_,i) => parseFloat(kph2kn(h.wind_gusts_10m[s0+i]  || 0)));
+  const speeds = Array.from({length:24}, (_,i) => parseFloat(toKn(h.wind_speed_10m[s0+i] || 0)));
+  const gusts  = Array.from({length:24}, (_,i) => parseFloat(toKn(h.wind_gusts_10m[s0+i]  || 0)));
   const dirs   = Array.from({length:24}, (_,i) => h.wind_direction_10m[s0+i] || 0);
   const mx = Math.max(...gusts, 20);
   const bw = W / 24;
@@ -2189,13 +2518,13 @@ function wCodeDesc(c) {
 async function loadWeather() {
   try {
     const [atm,mar] = await Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=mph&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=kn&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
       fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London').then(r=>r.json()),
     ]);
     S.weather=atm; S.marine=mar;
     const c=atm.current;
-    const windKn=parseFloat(kph2kn(c.wind_speed_10m));
-    const gustKn=parseFloat(kph2kn(c.wind_gusts_10m));
+    const windKn=parseFloat(toKn(c.wind_speed_10m));
+    const gustKn=parseFloat(toKn(c.wind_gusts_10m));
     const waveH=mar.current?.wave_height ?? 0;
     const bf=bfScale(windKn);
     set('wind-now',`${windKn.toFixed(1)} kn  ${c.wind_direction_10m}° (${deg2cpt(c.wind_direction_10m)})`,'amber big');
@@ -2278,8 +2607,8 @@ function buildForecast(daily) {
   const strip=$('forecast-strip'); strip.innerHTML='';
   const icons={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',65:'⛈',80:'🌦',95:'⛈'};
   for (let i=0;i<Math.min(daily.time.length,7);i++) {
-    const wKn=parseFloat(kph2kn(daily.wind_speed_10m_max[i]));
-    const gKn=parseFloat(kph2kn(daily.wind_gusts_10m_max[i]));
+    const wKn=parseFloat(toKn(daily.wind_speed_10m_max[i]));
+    const gKn=parseFloat(toKn(daily.wind_gusts_10m_max[i]));
     const col=wKn<15?'#5dba6e':wKn<22?'#d4a843':'#c0564e';
     const d=document.createElement('div'); d.className='fc-day';
     d.dataset.offset=i;
@@ -2314,10 +2643,31 @@ function connectSK() {
     };
     ws.onmessage=e=>{
       try {
-        const msg=JSON.parse(e.data); if (!msg.updates) return;
-        msg.updates.forEach(u=>u.values?.forEach(v=>{S.skData[v.path]=v.value;}));
+        const msg=JSON.parse(e.data);
+        // Hello message — capture own-vessel context string
+        if (msg.self) { S.skSelfCtx = msg.self; }
+        if (!msg.updates) return;
+        msg.updates.forEach(u => {
+          const ctx = msg.context || u.context || 'vessels.self';
+          const isSelf = ctx==='vessels.self' || ctx===S.skSelfCtx || !ctx.includes('urn:mrn');
+          if (isSelf) {
+            u.values?.forEach(v => { S.skData[v.path]=v.value; });
+          } else {
+            // Other vessel — AIS target
+            const mmsi = ctx.match(/mmsi:(\d+)/)?.[1] || ctx;
+            if (!S.aisTargets[mmsi]) S.aisTargets[mmsi]={mmsi, lastSeen:0};
+            const t = S.aisTargets[mmsi];
+            t.lastSeen = Date.now();
+            u.values?.forEach(v => {
+              if (v.path==='name') t.name=v.value;
+              else t[v.path]=v.value;
+            });
+            computeCPA(mmsi);
+          }
+        });
         renderSK();
-      } catch{}
+        renderAIS();
+      } catch(err){ console.warn('SK parse error',err); }
     };
     ws.onerror=()=>{$('sk-dot').className='error';$('sk-label').textContent='Error';};
     ws.onclose=()=>{$('sk-dot').className='';$('sk-label').textContent='Disconnected';S.skWs=null;};
@@ -2327,8 +2677,10 @@ function connectSK() {
 function stopSK() {
   if (S.skWs){try{S.skWs.close();}catch{} S.skWs=null;}
   if (S.simTimer){clearInterval(S.simTimer);S.simTimer=null;}
+  S.aisTargets = {};
   $('sk-dot').className=''; $('sk-label').textContent='Disconnected';
   $('btn-sk-connect').textContent='Connect'; $('btn-sk-connect').onclick=connectSK;
+  renderAIS();
 }
 
 function renderSK() {
@@ -2526,8 +2878,426 @@ function runSim() {
     S.skData['tanks.freshWater.0.currentLevel']=0.80+0.01*Math.sin(t/80);
     S.skData['bilge.0.pump.state']=false;
     S.skData['bilge.0.highWaterAlarm']=false;
+
+    // ── Simulated AIS targets (Bristol Channel scenarios) ──────────
+    // Three vessels representing typical encounter types
+    const ownLat = S.skData['navigation.position'].latitude;
+    const ownLon = S.skData['navigation.position'].longitude;
+    const NM2DEG = 1/60;
+
+    // Target 1: Cargo vessel on reciprocal course — crossing to starboard, approaching
+    // Starts 2.5 nm ahead-right, heading SW (toward Swansea approach)
+    const angle1 = (240 + t*0.3) * Math.PI/180; // slow drift
+    const rng1   = Math.max(0.6, 2.5 - t*0.008); // closing
+    _simAIS('235001001', 'BISCAY TRADER', 70,
+      ownLat + rng1*NM2DEG*Math.cos(0.6), ownLon + rng1*NM2DEG*Math.sin(0.6)/Math.cos(ownLat*Math.PI/180),
+      (60+20*Math.sin(t/30))*Math.PI/180, 10.2/1.944);
+
+    // Target 2: Fishing vessel working ground to port — stand-on scenario
+    const rng2 = 1.8 + 0.5*Math.sin(t/60);
+    _simAIS('235002002', 'CELTIC DAWN', 30,
+      ownLat + rng2*NM2DEG*Math.cos(Math.PI*1.3), ownLon + rng2*NM2DEG*Math.sin(Math.PI*1.3)/Math.cos(ownLat*Math.PI/180),
+      (110)*Math.PI/180, 3.5/1.944);
+
+    // Target 3: Overtaking ferry astern — head-on/stand-on
+    const rng3 = Math.max(1.0, 4.0 - t*0.015);
+    _simAIS('235003003', 'PRIDE OF SWANSEA', 60,
+      ownLat - rng3*NM2DEG*0.9, ownLon - rng3*NM2DEG*0.3/Math.cos(ownLat*Math.PI/180),
+      (245)*Math.PI/180, 15.0/1.944);
+
     renderSK();
+    renderAIS();
   },1000);
+}
+
+// Helper: inject/update a simulated AIS target
+function _simAIS(mmsi, name, typeId, lat, lon, cogRad, sogMs) {
+  if (!S.aisTargets[mmsi]) S.aisTargets[mmsi]={mmsi};
+  const t = S.aisTargets[mmsi];
+  t.mmsi=mmsi; t.name=name; t.lastSeen=Date.now();
+  t['navigation.position']={latitude:lat,longitude:lon};
+  t['navigation.courseOverGroundTrue']=cogRad;
+  t['navigation.speedOverGround']=sogMs;
+  t['design.aisShipType']={id:typeId,name:shipTypeName(typeId)};
+  computeCPA(mmsi);
+}
+
+// ── AIS / COLREGs ──────────────────────────────────────────────────
+// Targets keyed by MMSI string. Each stores raw Signal K path values
+// plus computed fields: _range (nm), _bearing (°T), _relBrg (°T rel COG),
+// _cpa (nm), _tcpa (min), _colregs {rule, situation, action, manoeuvre}.
+
+function setPropulsion(mode) {
+  S.propulsion = mode;
+  $('prop-sail').classList.toggle('active', mode==='sail');
+  $('prop-motor').classList.toggle('active', mode==='motor');
+  // Re-assess all targets
+  Object.keys(S.aisTargets).forEach(mmsi => {
+    const t = S.aisTargets[mmsi];
+    if (t._range != null) t._colregs = colregsAssess(t);
+  });
+  renderAIS();
+}
+
+// ── CPA / TCPA ─────────────────────────────────────────────────────
+function computeCPA(mmsi) {
+  const t   = S.aisTargets[mmsi];
+  const own = S.skData;
+  const ownPos = own['navigation.position'];
+  const ownCog = own['navigation.courseOverGroundTrue']; // rad
+  const ownSog = own['navigation.speedOverGround'];       // m/s → knots
+  const tgtPos = t['navigation.position'];
+  const tgtCog = t['navigation.courseOverGroundTrue'];
+  const tgtSog = t['navigation.speedOverGround'];
+
+  if (!ownPos || !tgtPos) return;
+
+  // Flat-earth Cartesian in nautical miles (good to ~50 nm)
+  const R    = 3440.065; // Earth radius in nm
+  const lat0 = ownPos.latitude * Math.PI/180;
+  const dx   = (tgtPos.longitude - ownPos.longitude) * Math.PI/180 * R * Math.cos(lat0); // E+
+  const dy   = (tgtPos.latitude  - ownPos.latitude)  * Math.PI/180 * R;                  // N+
+
+  t._range   = Math.hypot(dx, dy);
+  t._bearing = ((Math.atan2(dx, dy) * 180/Math.PI) + 360) % 360; // bearing T from own to target
+
+  const ownCogDeg = ownCog != null ? ((ownCog * 180/Math.PI) + 360) % 360 : 0;
+  t._relBrg  = ((t._bearing - ownCogDeg) + 360) % 360; // 0=ahead 90=stbd 270=port
+
+  // Velocities in nm/min
+  const ownSogKn = (ownSog || 0) * 1.944;
+  const tgtSogKn = (tgtSog || 0) * 1.944;
+  const ownVx = Math.sin(ownCog||0) * ownSogKn / 60;
+  const ownVy = Math.cos(ownCog||0) * ownSogKn / 60;
+  const tgtVx = Math.sin(tgtCog||0) * tgtSogKn / 60;
+  const tgtVy = Math.cos(tgtCog||0) * tgtSogKn / 60;
+
+  const rvx = tgtVx - ownVx, rvy = tgtVy - ownVy;
+  const v2  = rvx*rvx + rvy*rvy;
+  const tcpa = v2 > 1e-9 ? -(dx*rvx + dy*rvy) / v2 : 9999; // minutes
+
+  t._tcpa = tcpa;
+  if (tcpa <= 0) {
+    t._cpa = t._range; // diverging — CPA is current range
+  } else {
+    t._cpa = Math.hypot(dx + rvx*tcpa, dy + rvy*tcpa);
+  }
+
+  t._colregs = colregsAssess(t);
+}
+
+// ── COLREGs assessment ──────────────────────────────────────────────
+// Returns {rule, situation, action, manoeuvre, sound} or null.
+// action: 'give-way' | 'stand-on' | 'head-on' | 'clear'
+function colregsAssess(t) {
+  const own    = S.skData;
+  const ownCog = own['navigation.courseOverGroundTrue'];
+  const ownSog = (own['navigation.speedOverGround'] || 0) * 1.944;
+  const tgtCog = t['navigation.courseOverGroundTrue'];
+  const tgtSog = (t['navigation.speedOverGround'] || 0) * 1.944;
+
+  if (t._range == null || t._cpa == null) return null;
+
+  // No collision risk: CPA > 1.5 nm or already past CPA
+  if (t._cpa > 1.5 || t._tcpa < 0) {
+    return {rule:null, situation:'Clear', action:'clear',
+            manoeuvre:'No immediate risk of collision (CPA > 1.5 nm or diverging).',
+            sound:null};
+  }
+
+  const ownCogDeg = ((ownCog||0)*180/Math.PI + 360) % 360;
+  const tgtCogDeg = ((tgtCog||0)*180/Math.PI + 360) % 360;
+  const relBrg    = t._relBrg; // relative bearing, 0=ahead
+
+  // Ship type
+  const stype   = t['design.aisShipType'];
+  const typeId  = typeof stype === 'object' ? (stype?.id ?? 0) : (stype || 0);
+  const typeName= typeof stype === 'object' ? (stype?.name || shipTypeName(typeId)) : shipTypeName(typeId);
+  const isFishing    = typeId === 30;
+  const isSailing    = typeId === 36 || typeId === 37;
+  const isRestricted = [31,32,33,50,51,55,58].includes(typeId);
+
+  const weSailing = S.propulsion === 'sail';
+
+  // ── Rule 18 special vessels (highest priority after NUC/RAM which we can't detect from AIS alone) ──
+  if (isFishing) {
+    return {rule:18, situation:'Fishing vessel (Rule 18)',
+            action:'give-way',
+            manoeuvre:'Fishing vessel exercising fishing rights. Give way and pass well clear of her working gear — cross her STERN. Do not impede. Course change ≥ 30° is clearly visible to the other vessel.',
+            sound:'Your signal: 2 short blasts (altering to port) or 1 (to starboard).'};
+  }
+  if (isRestricted) {
+    return {rule:18, situation:'Restricted in ability to manoeuvre',
+            action:'give-way',
+            manoeuvre:'This vessel cannot manoeuvre to avoid you. YOU must give way completely. Pass well clear of her track. Sound 2 short blasts if altering to port.',
+            sound:null};
+  }
+
+  // ── Compute whether WE are in THEIR stern quarter (= we are overtaking) ──
+  // If bearing of own vessel from target is > 112.5° and < 247.5° relative to target's heading
+  const ownBrgFromTgt  = (t._bearing + 180) % 360; // bearing of own from target (°T)
+  const relBrgFromTgt  = ((ownBrgFromTgt - tgtCogDeg) + 360) % 360;
+  const weOvertaking   = relBrgFromTgt > 112.5 && relBrgFromTgt < 247.5;
+  const theyOvertaking = relBrg         > 112.5 && relBrg         < 247.5;
+
+  // ── Rule 14 Head-on ──
+  const courseDiff  = Math.abs(((ownCogDeg - tgtCogDeg) + 360) % 360);
+  const reciprocal  = courseDiff > 157.5 && courseDiff < 202.5;
+  const headOnBrg   = relBrg < 10 || relBrg > 350;
+  if (headOnBrg && reciprocal) {
+    return {rule:14, situation:'HEAD-ON',
+            action:'head-on',
+            manoeuvre:'Rule 14 — HEAD-ON encounter. BOTH vessels alter to STARBOARD. Turn right NOW so you pass port-to-port. Do not reduce speed until courses are clear. If in any doubt about whether this is head-on, treat it as head-on.',
+            sound:'1 short blast each.'};
+  }
+
+  // ── Rule 13 Overtaking ──
+  if (weOvertaking) {
+    const side = relBrgFromTgt < 180 ? 'starboard' : 'port';
+    return {rule:13, situation:'Overtaking — you are the overtaking vessel',
+            action:'give-way',
+            manoeuvre:`Rule 13 — YOU are coming up from abaft their beam and must keep clear regardless of any other rule. Pass to ${side} and keep well clear until you are past and clear. If uncertain, you are overtaking.`,
+            sound:`${side==='starboard'?'1':'2'} short blast${side==='starboard'?'':'s'}.`};
+  }
+  if (theyOvertaking) {
+    return {rule:13, situation:'Being overtaken',
+            action:'stand-on',
+            manoeuvre:'Rule 13 — You are being overtaken. Maintain your course and speed. The overtaking vessel must keep clear of you. If she fails to do so, sound 5 short blasts and take avoiding action.',
+            sound:'5 short blasts if they fail to give way.'};
+  }
+
+  // ── Rule 15 Crossing + Rule 18 power/sail ──
+  // Power vessel gives way to sailing vessel (Rule 18b)
+  if (weSailing && !isSailing) {
+    const tgtSide = relBrg < 180 ? 'starboard' : 'port';
+    return {rule:18, situation:`Crossing · Power vessel (target to ${tgtSide})`,
+            action:'stand-on',
+            manoeuvre:`Rule 18 — Power-driven vessels give way to sailing vessels. Maintain your course and speed. Monitor their action. If CPA < 0.5 nm with no avoiding action, sound 5 short blasts and manoeuvre — pass under their stern.`,
+            sound:'5 short blasts if they do not give way.'};
+  }
+
+  // Crossing: target to starboard → give way
+  if (relBrg > 10 && relBrg <= 112.5) {
+    return {rule:15, situation:'Crossing · Target to STARBOARD',
+            action:'give-way',
+            manoeuvre:'Rule 15 — Target is on YOUR starboard side. YOU must give way. Alter course to starboard to pass under her stern, OR reduce speed to let her pass. Do NOT attempt to cross ahead. Aim for CPA ≥ 1 nm.',
+            sound:'1 short blast (altering to starboard).'};
+  }
+  // Crossing: target to port → stand on
+  if (relBrg >= 247.5 && relBrg < 350) {
+    return {rule:15, situation:'Crossing · Target to PORT',
+            action:'stand-on',
+            manoeuvre:'Rule 15 — Target is on your port side. They must give way to you. Maintain course and speed. Watch closely. If CPA closes to < 1 nm with no action, sound 5 short blasts and take your own avoiding action — turning to starboard (passing under their stern).',
+            sound:'5 short blasts if they do not give way.'};
+  }
+
+  return {rule:null, situation:'Unclear geometry', action:'clear',
+          manoeuvre:'Maintain careful watch. Situation not cleanly classified — use eyes and radar plot.',
+          sound:null};
+}
+
+// AIS ship type name lookup
+function shipTypeName(id) {
+  if (!id) return 'Unknown';
+  if (id===30) return 'Fishing';
+  if (id===36) return 'Sailing';
+  if (id===37) return 'Pleasure craft';
+  if (id>=31&&id<=35) return 'Tug/Towing';
+  if (id===50) return 'Pilot';
+  if (id===51) return 'SAR';
+  if (id===55) return 'Law enforcement';
+  if (id>=60&&id<=69) return 'Passenger';
+  if (id>=70&&id<=79) return 'Cargo';
+  if (id>=80&&id<=89) return 'Tanker';
+  return `Type ${id}`;
+}
+
+// ── AIS panel renderer ──────────────────────────────────────────────
+function renderAIS() {
+  const panel = $('ais-panel');
+  const alertBar = $('ais-alert-bar');
+  const updateLbl = $('ais-update-time');
+  if (!panel) return;
+
+  const targets = Object.values(S.aisTargets)
+    .filter(t => t._range != null)
+    .sort((a,b) => {
+      // Sort: alerts first, then by range
+      const urgency = t => (t._cpa<0.5&&t._tcpa>0&&t._tcpa<20) ? 0 : (t._cpa<1&&t._tcpa>0&&t._tcpa<30) ? 1 : 2;
+      return urgency(a) - urgency(b) || a._range - b._range;
+    });
+
+  if (!targets.length) {
+    panel.innerHTML = '<div class="ais-empty">No AIS targets within range.</div>';
+    alertBar.style.display = 'none';
+    if (updateLbl) updateLbl.textContent = '';
+    return;
+  }
+
+  // Alert bar: any vessel with dangerous CPA
+  const hot = targets.filter(t => t._cpa < 0.5 && t._tcpa > 0 && t._tcpa < 20);
+  if (hot.length) {
+    const names = hot.map(t => (t.name||t.mmsi||'?') + ` CPA ${t._cpa.toFixed(2)} nm`).join(' · ');
+    alertBar.innerHTML = `⚠ CLOSE QUARTERS: ${names}`;
+    alertBar.style.display = 'block';
+  } else {
+    alertBar.style.display = 'none';
+  }
+
+  const rows = targets.map(t => {
+    const cr   = t._colregs;
+    const name = t.name || `MMSI ${t.mmsi||'?'}`;
+    const stype= (()=>{const s=t['design.aisShipType']; return typeof s==='object'?s?.name||shipTypeName(s?.id):shipTypeName(s);})();
+    const cogDeg = t['navigation.courseOverGroundTrue'] != null ? ((t['navigation.courseOverGroundTrue']*180/Math.PI+360)%360).toFixed(0)+'°' : '—';
+    const sogKn  = t['navigation.speedOverGround']  != null ? (t['navigation.speedOverGround']*1.944).toFixed(1)+' kn' : '—';
+    const cpaStr = t._cpa  != null ? t._cpa.toFixed(2)+' nm' : '—';
+    const tcpaStr= t._tcpa != null && t._tcpa > 0 ? t._tcpa.toFixed(0)+' min' : (t._tcpa<=0?'Past CPA':'—');
+    const brgStr = t._bearing != null ? t._bearing.toFixed(0)+'°T' : '—';
+    const rngStr = t._range   != null ? t._range.toFixed(1)+' nm' : '—';
+
+    const badgeCls = !cr ? 'clear' :
+      cr.action==='give-way'  ? 'give-way'  :
+      cr.action==='stand-on'  ? 'stand-on'  :
+      cr.action==='head-on'   ? 'head-on'   : 'clear';
+    const badgeLbl = !cr ? '—' :
+      cr.action==='give-way'  ? `R${cr.rule} GIVE WAY` :
+      cr.action==='stand-on'  ? `R${cr.rule} STAND ON` :
+      cr.action==='head-on'   ? `R${cr.rule} HEAD-ON`  :
+      cr.situation==='Clear'  ? 'Clear' : '?';
+
+    const cpaClass = t._cpa<0.5&&t._tcpa>0 ? 'ais-cpa-alert' : t._cpa<1&&t._tcpa>0 ? 'ais-cpa-warn' : '';
+
+    return `<tr>
+      <td>
+        <div class="ais-vessel-name">${name}</div>
+        <div class="ais-vessel-sub">${stype} · Brg ${brgStr} · ${rngStr}</div>
+        <div class="ais-vessel-sub">COG ${cogDeg} · SOG ${sogKn}</div>
+        ${cr?.manoeuvre ? `<div style="font-size:12px;color:var(--ink2);margin-top:5px;line-height:1.6">${cr.manoeuvre}</div>` : ''}
+        ${cr?.sound ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;font-family:var(--font-mono)">📢 ${cr.sound}</div>` : ''}
+      </td>
+      <td style="text-align:right;white-space:nowrap;padding-left:4px">
+        <div><span class="ais-badge ${badgeCls}">${badgeLbl}</span></div>
+        <div class="${cpaClass}" style="font-family:var(--font-mono);font-size:11px;margin-top:6px">CPA ${cpaStr}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink3)">T ${tcpaStr}</div>
+        <button class="ais-analyse-btn" style="margin-top:8px" onclick="askColregs('${t.mmsi||''}')">Ask AI ›</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `<table class="ais-tbl"><thead><tr><th>Vessel</th><th style="text-align:right">COLREGs / CPA</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  if (updateLbl) {
+    const cnt = targets.length;
+    updateLbl.textContent = `${cnt} target${cnt!==1?'s':''} · updated ${new Date().toLocaleTimeString('en-GB')}`;
+  }
+
+  // Watch log alert for hot targets
+  hot.forEach(t => {
+    const cr = t._colregs;
+    const name = t.name || `MMSI ${t.mmsi||'?'}`;
+    if (cr && cr.action !== 'clear') {
+      skLog(`⚠ ${name}: ${cr.situation} — CPA ${t._cpa.toFixed(2)} nm in ${t._tcpa.toFixed(0)} min — ${cr.action.toUpperCase()}`);
+    }
+  });
+}
+
+// ── Stale target cleanup ────────────────────────────────────────────
+setInterval(() => {
+  const now = Date.now();
+  let changed = false;
+  Object.keys(S.aisTargets).forEach(k => {
+    if (now - (S.aisTargets[k].lastSeen||0) > 5*60*1000) {
+      delete S.aisTargets[k]; changed = true;
+    }
+  });
+  if (changed) renderAIS();
+}, 60000);
+
+// ── COLREGs AI analysis ─────────────────────────────────────────────
+async function askColregs(mmsi) {
+  // Find target (works for sim targets too — check by mmsi field)
+  const t = mmsi
+    ? (S.aisTargets[mmsi] || Object.values(S.aisTargets).find(x=>x.mmsi===mmsi))
+    : null;
+
+  if (!t && !mmsi) {
+    // No mmsi: find closest concerning target
+    const hot = Object.values(S.aisTargets)
+      .filter(x=>x._cpa<2&&x._tcpa>0)
+      .sort((a,b)=>a._cpa-b._cpa)[0];
+    if (!hot) { alert('No concerning AIS targets within 2 nm.'); return; }
+    return askColregs(hot.mmsi);
+  }
+
+  const panel   = $('colregs-panel');
+  const nameEl  = $('colregs-vessel-name');
+  const out     = $('colregs-output');
+  if (!panel||!out) return;
+
+  const name    = (t?.name) || `MMSI ${mmsi||'?'}`;
+  if (nameEl) nameEl.textContent = name;
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  out.innerHTML = '<div class="thinking">⊕ Analysing encounter…</div>';
+
+  const cr      = t?._colregs;
+  const ownPos  = S.skData['navigation.position'];
+  const ownCog  = S.skData['navigation.courseOverGroundTrue'];
+  const ownSog  = S.skData['navigation.speedOverGround'];
+  const tgtCog  = t?.['navigation.courseOverGroundTrue'];
+  const tgtSog  = t?.['navigation.speedOverGround'];
+
+  const ownCogDeg = ownCog!=null ? ((ownCog*180/Math.PI+360)%360).toFixed(0) : '—';
+  const ownSogKn  = ownSog!=null ? (ownSog*1.944).toFixed(1) : '—';
+  const tgtCogDeg = tgtCog!=null ? ((tgtCog*180/Math.PI+360)%360).toFixed(0) : '—';
+  const tgtSogKn  = tgtSog!=null ? (tgtSog*1.944).toFixed(1) : '—';
+
+  const stype = (()=>{const s=t?.['design.aisShipType']; return typeof s==='object'?s?.name||shipTypeName(s?.id):shipTypeName(s);})();
+
+  const encounterData = `
+VESSEL: ${name} (${stype})
+Range: ${t?._range?.toFixed(2)||'?'} nm · Bearing: ${t?._bearing?.toFixed(0)||'?'}°T · Relative bearing: ${t?._relBrg?.toFixed(0)||'?'}° (0=ahead, 90=starboard)
+Target COG: ${tgtCogDeg}° · Target SOG: ${tgtSogKn} kn
+Own COG: ${ownCogDeg}° · Own SOG: ${ownSogKn} kn · Under: ${S.propulsion==='sail'?'SAIL':'MOTOR'}
+CPA: ${t?._cpa?.toFixed(2)||'?'} nm · TCPA: ${t?._tcpa?.toFixed(1)||'?'} min
+Pre-assessed: ${cr?.situation||'Unknown'} (Rule ${cr?.rule||'?'}) → ${(cr?.action||'').toUpperCase()}`;
+
+  const prompt = `You are an expert RYA Yachtmaster examiner advising solo sailor Marna on *Ava*, a 1973 Nicholson 30 MkI in the Bristol Channel.
+
+ENCOUNTER DATA:
+${encounterData}
+
+Provide a concise, practical COLREGs analysis under these exact headings — no preamble, max 300 words:
+
+**ENCOUNTER TYPE** — Which rule applies and why (including brief geometry explanation)
+**OBLIGATION** — Give-way or stand-on, with specific actions and timings for this CPA/TCPA
+**MANOEUVRE** — Exact action to take right now (heading change, speed change, or hold)
+**SOUND SIGNALS** — Which signals apply
+**WATCH POINTS** — What to monitor to confirm situation is resolving
+**EXAM NOTE** — One Yachtmaster exam tip for this scenario type`;
+
+  if (!S.apiKey) {
+    out.innerHTML = cr
+      ? `<p><strong>${cr.situation}</strong> (Rule ${cr.rule||'?'})</p><p>${cr.manoeuvre}</p>${cr.sound?`<p><strong>Sound:</strong> ${cr.sound}</p>`:''}<p style="color:var(--ink3);font-size:12px">Add Anthropic API key in Settings for full AI analysis.</p>`
+      : '<p style="color:var(--ink3)">No API key — add one in Settings for AI analysis.</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,
+               'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:S.model, max_tokens:800,
+        messages:[{role:'user', content:prompt}]})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    out.innerHTML = mdToHtml(text);
+  } catch(e) {
+    out.innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
+  }
 }
 
 // ── WATCH LOG ──────────────────────────────────────────────────────
@@ -2545,8 +3315,8 @@ async function askSkipper() {
   out.innerHTML='<div class="thinking">⊕ The skipper is thinking…</div>';
 
   const c=S.weather?.current||{};
-  const windKn=c.wind_speed_10m?parseFloat(kph2kn(c.wind_speed_10m)).toFixed(1):'—';
-  const gustKn=c.wind_gusts_10m?parseFloat(kph2kn(c.wind_gusts_10m)).toFixed(1):'—';
+  const windKn=c.wind_speed_10m?parseFloat(toKn(c.wind_speed_10m)).toFixed(1):'—';
+  const gustKn=c.wind_gusts_10m?parseFloat(toKn(c.wind_gusts_10m)).toFixed(1):'—';
   const waveH=S.marine?.current?.wave_height?.toFixed(1)||'—';
   const tideH=tideAt(Date.now()).toFixed(2);
   const ex=findExtrema(Date.now(),4);
@@ -2554,25 +3324,54 @@ async function askSkipper() {
   const d=S.skData;
   const liveStr=(S.skWs||S.simTimer)?`Live instruments: TWS ${ms2kn(d['environment.wind.speedTrue'])} TWA ${r2dg(d['environment.wind.angleTrueWater'])} SOG ${ms2kn(d['navigation.speedOverGround'])}`:'Not underway.';
 
+  // AIS traffic summary for briefing
+  const aisActive = Object.values(S.aisTargets).filter(t=>t._range!=null).sort((a,b)=>a._range-b._range);
+  const aisStr = aisActive.length
+    ? 'AIS TRAFFIC:\n' + aisActive.slice(0,6).map(t=>{
+        const cr=t._colregs;
+        const name=t.name||`MMSI ${t.mmsi}`;
+        const stype=(()=>{const s=t['design.aisShipType'];return typeof s==='object'?s?.name||shipTypeName(s?.id):shipTypeName(s);})();
+        const cogDeg=t['navigation.courseOverGroundTrue']!=null?((t['navigation.courseOverGroundTrue']*180/Math.PI+360)%360).toFixed(0)+'°':'?';
+        const sogKn=t['navigation.speedOverGround']!=null?(t['navigation.speedOverGround']*1.944).toFixed(1)+' kn':'?';
+        return `  ${name} (${stype}) · Brg ${t._bearing?.toFixed(0)||'?'}°T · Rng ${t._range?.toFixed(1)||'?'} nm · COG ${cogDeg} · SOG ${sogKn} · CPA ${t._cpa?.toFixed(2)||'?'} nm in ${t._tcpa?.toFixed(0)||'?'} min → ${cr?.situation||'?'} (${cr?.action?.toUpperCase()||'?'})`;
+      }).join('\n')
+    : 'AIS TRAFFIC: None detected.';
+
+  const sf = S.shippingForecast;
+  const sfStr = sf?.lundy
+    ? `SHIPPING FORECAST · LUNDY (${sf.issued || 'recent issue'}):
+Synopsis: ${sf.synopsis || '—'}
+Lundy, Fastnet, Irish Sea: ${sf.lundy}
+${sf.gales && !/no gale/i.test(sf.gales) ? 'GALE WARNING: ' + sf.gales : 'No gale warnings.'}
+${sf.bristol_channel ? 'Inshore (Lands End–St Davids Head): ' + sf.bristol_channel : ''}`
+    : null;
+
+  const dly=S.weather?.daily;
+  const outlook=dly?[1,2].map(i=>dly.time[i]?`${new Date(dly.time[i]).toLocaleDateString('en-GB',{weekday:'short'})}: ${toKn(dly.wind_speed_10m_max[i])} kn max, gusts ${toKn(dly.wind_gusts_10m_max[i])} kn, ${deg2cpt(dly.wind_direction_10m_dominant[i])}, ${wCodeDesc(dly.weather_code[i])}`:'').filter(Boolean).join(' · '):'—';
+
   const prompt=`You are the AI skipper advisor for *Ava*, a 1973 Nicholson 30 MkI sailing solo from SYSAC, Swansea, Bristol Channel, UK.
 
 VESSEL: Nicholson 30 MkI · LOA 30' · Disp 7,280 lb · Hull speed 5.4 kn · Beta B20 diesel
-SAILS: Slab (jiffy) reefing main (new sail being fitted this week — motor only until installed) · 150% genoa (furling) — only two sails aboard
-ELECTRONICS: Signal K / OpenPlotter Pi · Class B AIS · iPad Navionics
+SAILS: Slab (jiffy) reefing main · 150% genoa (furling) — only two sails aboard
+${S.vesselNotes?`CURRENT NOTES: ${S.vesselNotes}\n`:''}ELECTRONICS: Signal K / OpenPlotter Pi · Class B AIS · iPad Navionics
 
 CONDITIONS (${new Date().toLocaleString('en-GB')}):
 Wind: ${windKn} kn, gusts ${gustKn} kn, direction ${c.wind_direction_10m}° (${deg2cpt(c.wind_direction_10m||0)})
 Sea state: ${waveH} m · Tide: ${tideH} m above CD
 Next ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Next ${lw?`LW ${fmt(new Date(lw.t))} ${lw.h.toFixed(2)} m`:'—'}
 Visibility: ${c.visibility?(c.visibility/1000).toFixed(1)+' km':'—'} · Pressure: ${c.pressure_msl?.toFixed(0)||'—'} hPa
+48h OUTLOOK: ${outlook}
+${sfStr || '(Shipping forecast not cached — search Met Office for current Lundy area forecast)'}
 ${liveStr}
+Propulsion: ${S.propulsion==='sail'?'UNDER SAIL':'MOTORING'}
+${aisStr}
 
-Concise skipper's briefing under these exact headings — no preamble, max 350 words:
+Concise skipper's briefing under these exact headings — no preamble, max 400 words:
 **GO/NO-GO** — one sentence verdict
 **WIND & WEATHER** — assessment and watch points
 **TIDE & LOCK** — lock window and tidal strategy for Bristol Channel
 **SAIL PLAN** — specific sails and reef state for these conditions
-**WATCH POINTS** — top 3 things to monitor once underway
+${aisActive.length?'**TRAFFIC** — COLREGs obligations for each vessel within 3 nm, and recommended actions\n':''}**WATCH POINTS** — top 3 things to monitor once underway
 **SAFETY** — one line on comms and safety`;
 
   if (!S.apiKey) {
@@ -2586,10 +3385,13 @@ Concise skipper's briefing under these exact headings — no preamble, max 350 w
   }
 
   try {
+    const tools = sfStr ? [] : [{type:'web_search_20250305', name:'web_search'}];
+    const body = {model:S.model, max_tokens:1024, messages:[{role:'user',content:prompt}]};
+    if (tools.length) body.tools = tools;
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:S.model,max_tokens:1024,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify(body)
     });
     const data=await res.json();
     if (data.error) throw new Error(data.error.message);
@@ -2822,7 +3624,7 @@ async function planPassage() {
     out.innerHTML+='<div class="thinking">⊕ Getting AI passage briefing…</div>';
     try {
       const c=S.weather?.current||{};
-      const wKn=c.wind_speed_10m?parseFloat(kph2kn(c.wind_speed_10m)).toFixed(1):'—';
+      const wKn=c.wind_speed_10m?parseFloat(toKn(c.wind_speed_10m)).toFixed(1):'—';
       const distNote=dist?`${dist} nm${bearing?`, bearing approx ${bearing}°`:''}`:' distance unknown — estimate if you can';
       const liveNote=S._livePos?`Current position: ${($('p-from').value)}. SOG ${S._livePos.sog}, COG ${S._livePos.cog}.`:'';
       const pr=`Brief passage plan for *Ava*, a Nicholson 30 based at SYSAC Swansea. Route: ${fromRaw} to ${toRaw} (${distNote}), departing ${fmtDate(dep)} ${fmt(dep)} UT. Current wind at Swansea: ${wKn} kn. ${liveNote} ${route?.notes||''} Give 4 sentences: tidal strategy, key hazards or waypoints, overnight/stop planning if applicable, and a go/no-go note. Max 100 words.`;
@@ -3155,16 +3957,214 @@ function initCelestial() {
   buildAlmanac();
 }
 
+// ── SHIPPING FORECAST ─────────────────────────────────────────────
+// Primary: fetches from Pi admin /shipping (which proxies Met Office).
+// Fallback: if Pi is offline, uses localStorage cache (2h TTL).
+// The AI skipper includes the forecast text in its prompt regardless of source.
+async function loadShipping(force) {
+  const CACHE_KEY = 'ava-sf-cache';
+  const TTL = 7200000; // 2h ms
+  const status  = $('sf-status');
+  const galesEl = $('sf-gales');
+  const synopsis= $('sf-synopsis');
+  const lundy   = $('sf-lundy');
+  const bristolW= $('sf-bristol-wrap');
+  const bristol = $('sf-bristol');
+
+  // Try localStorage cache first unless forced refresh
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached?.fetchedAt > Date.now() - TTL) {
+        _renderShipping(cached);
+        S.shippingForecast = cached;
+        return;
+      }
+    } catch(_) {}
+  }
+
+  // Try Pi admin server
+  if (S.adminUrl) {
+    try {
+      const r = await fetch(S.adminUrl + '/shipping', {signal: AbortSignal.timeout(12000)});
+      if (r.ok) {
+        const d = await r.json();
+        if (d.ok) {
+          d.localFetchedAt = Date.now();
+          localStorage.setItem(CACHE_KEY, JSON.stringify(d));
+          S.shippingForecast = d;
+          _renderShipping(d);
+          return;
+        }
+      }
+    } catch(_) {}
+  }
+
+  // Fall back to stale cache with notice
+  try {
+    const stale = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (stale) {
+      const ageH = Math.round((Date.now() - stale.localFetchedAt) / 3600000);
+      S.shippingForecast = stale;
+      _renderShipping(stale);
+      if (status) status.textContent = `Met Office · cached ${ageH}h ago · Pi offline`;
+      return;
+    }
+  } catch(_) {}
+
+  // Nothing available
+  S.shippingForecast = null;
+  if (status) status.textContent = 'Unavailable — Pi admin server offline (start ava-admin.py on the Pi)';
+  if (lundy)  lundy.textContent  = '';
+}
+
+function _renderShipping(d) {
+  const status  = $('sf-status');
+  const galesEl = $('sf-gales');
+  const synopsis= $('sf-synopsis');
+  const lundy   = $('sf-lundy');
+  const bristolW= $('sf-bristol-wrap');
+  const bristol = $('sf-bristol');
+
+  const ageH = d.localFetchedAt ? Math.round((Date.now() - d.localFetchedAt) / 3600000) : '?';
+  if (status) status.textContent = `Met Office${d.stale?' · stale':''} · ${d.issued || 'issued unknown'} · fetched ${ageH < 1 ? 'just now' : ageH + 'h ago'}`;
+
+  const noGale = !d.gales || /no gale/i.test(d.gales);
+  if (galesEl) {
+    galesEl.textContent = noGale ? '' : ('⚠ GALE WARNING: ' + d.gales);
+    galesEl.style.display = noGale ? 'none' : 'block';
+  }
+  if (synopsis) synopsis.textContent = d.synopsis ? ('Synopsis: ' + d.synopsis) : '';
+
+  if (lundy) {
+    if (d.lundy) {
+      lundy.innerHTML = '<strong style="color:var(--ink)">Lundy, Fastnet, Irish Sea — </strong>' + d.lundy;
+    } else {
+      lundy.textContent = 'Lundy forecast not found in latest issue.';
+    }
+  }
+  if (d.bristol_channel && bristolW && bristol) {
+    bristol.textContent = d.bristol_channel;
+    bristolW.style.display = 'block';
+  } else if (bristolW) {
+    bristolW.style.display = 'none';
+  }
+}
+
+
+// Iterated salted hash — deters casual access on a shared iPad. The PIN
+// itself is also held in memory and sent as X-Ava-Pin to ava-admin.py.
+function pinHash(pin, salt) {
+  let h = 0x811c9dc5 >>> 0;
+  const str = salt + ':' + pin;
+  for (let r = 0; r < 5000; r++)
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i) ^ (r & 0xff);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+  return h.toString(16);
+}
+let pinBuf = '';
+function pinLockActive() { return !!localStorage.getItem('ava-pin-hash'); }
+function showPinLock() {
+  pinBuf = '';
+  pinPaint();
+  $('pin-msg').textContent = '';
+  $('pin-overlay').classList.remove('hidden');
+}
+function pinPaint() {
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d,i)=>d.classList.toggle('filled', i < pinBuf.length));
+}
+function pinKey(k) {
+  if (k === 'del') { pinBuf = pinBuf.slice(0,-1); pinPaint(); return; }
+  if (pinBuf.length >= 4) return;
+  pinBuf += k; pinPaint();
+  if (pinBuf.length === 4) setTimeout(pinSubmit, 120);
+}
+function pinSubmit() {
+  const salt = localStorage.getItem('ava-pin-salt') || '';
+  if (pinHash(pinBuf, salt) === localStorage.getItem('ava-pin-hash')) {
+    S.pin = pinBuf;
+    sessionStorage.setItem('ava-unlocked', '1');
+    $('pin-overlay').classList.add('hidden');
+  } else {
+    $('pin-msg').textContent = 'Wrong PIN — try again';
+    pinBuf = ''; pinPaint();
+  }
+}
+function savePin() {
+  const v = $('set-pin').value.trim();
+  if (!/^\d{4}$/.test(v)) { $('pin-set-status').textContent = 'PIN must be exactly 4 digits.'; return; }
+  const salt = Math.random().toString(36).slice(2, 12);
+  localStorage.setItem('ava-pin-salt', salt);
+  localStorage.setItem('ava-pin-hash', pinHash(v, salt));
+  S.pin = v;
+  sessionStorage.setItem('ava-unlocked', '1');
+  $('set-pin').value = '';
+  $('pin-set-status').textContent = 'PIN set ✓ — the app will ask for it on next open. Remember to set AVA_ADMIN_PIN on the Pi.';
+}
+function removePin() {
+  localStorage.removeItem('ava-pin-hash');
+  localStorage.removeItem('ava-pin-salt');
+  sessionStorage.removeItem('ava-unlocked');
+  S.pin = null;
+  $('pin-set-status').textContent = 'PIN removed.';
+}
+
+// ── VESSEL NOTES ───────────────────────────────────────────────────
+function saveVesselNotes() {
+  S.vesselNotes = $('set-vessel-notes').value.trim();
+  localStorage.setItem('ava-vessel-notes', S.vesselNotes);
+  alert('Vessel notes saved — included in AI briefings.');
+}
+
+// ── CELESTIAL LEARNING PATH ────────────────────────────────────────
+function celDone() { try { return JSON.parse(localStorage.getItem('ava-cel-done') || '[]'); } catch(_) { return []; } }
+function celToggleDone(n) {
+  let d = celDone();
+  d = d.includes(n) ? d.filter(x => x !== n) : [...d, n];
+  localStorage.setItem('ava-cel-done', JSON.stringify(d));
+  celRender(false);
+}
+function celRender(openCurrent = true) {
+  const d = celDone();
+  const steps = document.querySelectorAll('details.cel-step');
+  if (!steps.length) return;
+  let done = 0, current = null;
+  steps.forEach(el => {
+    const n = +el.dataset.step;
+    const isDone = d.includes(n);
+    el.classList.toggle('done', isDone);
+    if (isDone) done++;
+    else if (current === null) current = n;
+    const num = el.querySelector('.cel-step-num');
+    if (num) num.textContent = isDone ? '✓' : n;
+    const btn = el.querySelector('.cel-done-btn');
+    if (btn) btn.textContent = isDone ? '↺ Mark as not done' : '✓ Mark step done';
+  });
+  steps.forEach(el => {
+    const n = +el.dataset.step;
+    el.classList.toggle('current', n === current);
+    if (openCurrent) el.open = (n === current);
+  });
+  const fill = $('cel-progress-fill'), lbl = $('cel-progress-label');
+  if (fill) fill.style.width = (100 * done / steps.length) + '%';
+  if (lbl) lbl.textContent = done === steps.length ? 'All steps complete ⚓' : `Step ${current} of ${steps.length} · ${done} done`;
+}
+
 // ── INIT ───────────────────────────────────────────────────────────
 function init() {
+  if (pinLockActive() && sessionStorage.getItem('ava-unlocked') !== '1') showPinLock();
   applyTheme(localStorage.getItem('ava-theme') || 'dark');
   renderPassageLog();
   initSettings();
   $('p-date').value=new Date().toISOString().split('T')[0];
   initCelestial();
+  celRender();
   loadTides();
   loadWeather();
   loadWaves();
+  loadShipping();
   renderDayView(0);
   setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
   setInterval(loadTides, 12*3600000);
