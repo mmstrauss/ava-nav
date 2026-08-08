@@ -3900,24 +3900,6 @@ ${aisActive.length?'**TRAFFIC** — COLREGs obligations for vessels within 3 nm\
   }
 }
 
-  try {
-    const tools = sfStr ? [] : [{type:'web_search_20250305', name:'web_search'}];
-    const body = {model:S.model, max_tokens:1024, messages:[{role:'user',content:prompt}]};
-    if (tools.length) body.tools = tools;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify(body)
-    });
-    const data=await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
-    out.innerHTML=mdToHtml(text);
-  } catch(e) {
-    out.innerHTML=`<p style="color:var(--red)">Error: ${e.message}</p>`;
-  }
-}
-
 function mdToHtml(md) {
   return md
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -4487,9 +4469,6 @@ async function loadShipping(force) {
 }
 
 async function _loadShippingCore(force) {
-  const status = $('sf-status');
-  if (status) status.textContent = 'Loading…';
-
   const status = $('sf-status');
   if (status) status.textContent = 'Loading…';
 
