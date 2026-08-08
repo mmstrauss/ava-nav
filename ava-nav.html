@@ -16,7 +16,7 @@
   --ink:    #e8e2d6; --ink2:   #b8b0a0; --ink3:   #706858;
   --bg:     #0d0f0e; --bg2:    #141714; --bg3:    #1b1f1b;
   --border: #2a2f2a; --amber:  #d4a843; --green:  #5dba6e;
-  --red:    #c0564e; --blue:   #5b9fcf; --accent: #c8a45a;
+  --red:    #e8605a; --blue:   #5b9fcf; --accent: #c8a45a;
   --r: 6px;
   --font-body: 'Crimson Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
@@ -250,6 +250,29 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
 #pin-pad button { width:64px; height:64px; border-radius:50%; background:var(--bg2); border:1px solid var(--border); color:var(--ink); font-size:22px; font-family:var(--font-mono); cursor:pointer; }
 #pin-pad button:active { background:var(--bg3); }
 #pin-msg { font-family:var(--font-mono); font-size:12px; color:var(--red); min-height:16px; }
+/* ── Anchor alarm ── */
+.anchor-alarm-active { animation: anchor-pulse 2s ease-in-out infinite; }
+@keyframes anchor-pulse { 0%,100%{border-color:rgba(232,96,90,.4)} 50%{border-color:var(--red);box-shadow:0 0 12px rgba(232,96,90,.4)} }
+#anchor-status-bar { display:none; padding:10px 14px; border-radius:var(--r); font-family:var(--font-mono); font-size:12px; border:1px solid var(--border); margin-bottom:10px; }
+#anchor-status-bar.active { display:block; background:rgba(93,186,110,.1); border-color:rgba(93,186,110,.4); color:var(--green); }
+#anchor-status-bar.dragging { display:block; background:rgba(232,96,90,.12); border-color:var(--red); color:var(--red); }
+/* ── Voice ── */
+.voice-btn { background:none; border:1px solid var(--border); border-radius:50%; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; flex-shrink:0; transition:background .2s; }
+.voice-btn:hover { background:var(--bg3); }
+.voice-btn.listening { background:rgba(232,96,90,.15); border-color:var(--red); animation:mic-pulse 1s ease infinite; }
+@keyframes mic-pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.voice-btn.speaking { background:rgba(91,159,207,.15); border-color:var(--blue); }
+/* ── Wind sector arcs ── */
+.wind-zone { opacity:.15; }
+.tack-indicator { font-family:var(--font-mono); font-size:12px; text-align:center; margin-top:4px; }
+/* ── Sail trim enhanced ── */
+.trim-bar { height:6px; border-radius:3px; background:var(--bg3); margin-top:4px; overflow:hidden; }
+.trim-bar-fill { height:100%; border-radius:3px; background:var(--accent); transition:width .4s; }
+.trim-telltale { display:inline-block; font-size:18px; margin-right:4px; }
+/* ── Depth safety line ── */
+#depth-safe-label { font-family:var(--font-mono); font-size:9px; }
+/* ── 14-day strip ── */
+.fc-card { min-width:72px; }
 </style>
 </head>
 <body>
@@ -397,18 +420,33 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
 
   <div class="grid">
     <div class="panel">
-      <h2>Wind</h2>
+      <h2>Wind · AWA / TWA</h2>
       <div class="compass-wrap">
-        <svg viewBox="-100 -100 200 200" width="154" height="154">
+        <svg viewBox="-100 -100 200 200" width="164" height="164" id="wind-svg">
+          <!-- Sector zones -->
+          <path d="M0,0 L0,-90 A90,90 0 0,1 63.64,-63.64 Z" fill="var(--red)" class="wind-zone"/><!-- no-go port 0-45 -->
+          <path d="M0,0 L-63.64,-63.64 A90,90 0 0,0 0,-90 Z" fill="var(--red)" class="wind-zone"/><!-- no-go stbd -->
+          <path d="M0,0 L63.64,-63.64 A90,90 0 0,1 90,0 Z" fill="var(--accent)" class="wind-zone" opacity=".12"/><!-- close hauled stbd -->
+          <path d="M0,0 L-90,0 A90,90 0 0,0 -63.64,-63.64 Z" fill="var(--accent)" class="wind-zone" opacity=".12"/><!-- close hauled port -->
+          <path d="M0,0 L90,0 A90,90 0 0,1 63.64,63.64 Z" fill="var(--green)" class="wind-zone" opacity=".1"/><!-- reach stbd -->
+          <path d="M0,0 L-63.64,63.64 A90,90 0 0,0 -90,0 Z" fill="var(--green)" class="wind-zone" opacity=".1"/><!-- reach port -->
           <circle cx="0" cy="0" r="90" fill="none" stroke="var(--border)" stroke-width="1"/>
           <circle cx="0" cy="0" r="58" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 5"/>
-          <text x="0" y="-72" text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">0</text>
-          <text x="72" y="4"  text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">90</text>
-          <text x="0" y="80"  text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">180</text>
-          <text x="-72" y="4" text-anchor="middle" fill="var(--ink3)" font-size="10" font-family="monospace">270</text>
-          <polygon id="awa-arrow" points="0,-78 -7,-58 7,-58" fill="var(--amber)" class="wind-arrow"/>
+          <!-- Labels -->
+          <text x="0" y="-74" text-anchor="middle" fill="var(--red)" font-size="9" font-family="monospace">NO GO</text>
+          <text x="72" y="4" text-anchor="middle" fill="var(--ink3)" font-size="9" font-family="monospace">90</text>
+          <text x="0" y="80" text-anchor="middle" fill="var(--ink3)" font-size="9" font-family="monospace">180</text>
+          <text x="-72" y="4" text-anchor="middle" fill="var(--ink3)" font-size="9" font-family="monospace">270</text>
+          <!-- TWA arrow (blue, behind) -->
+          <polygon id="twa-arrow" points="0,-78 -5,-55 5,-55" fill="var(--blue)" opacity="0.6" transform="rotate(0)"/>
+          <!-- AWA arrow (amber, prominent) -->
+          <polygon id="awa-arrow" points="0,-78 -7,-58 7,-58" fill="var(--amber)" class="wind-arrow" transform="rotate(0)"/>
+          <!-- Layline markers at 40° -->
+          <line x1="0" y1="0" x2="57.36" y2="-76.60" stroke="var(--accent)" stroke-width=".5" stroke-dasharray="3 3" opacity=".5"/>
+          <line x1="0" y1="0" x2="-57.36" y2="-76.60" stroke="var(--accent)" stroke-width=".5" stroke-dasharray="3 3" opacity=".5"/>
         </svg>
       </div>
+      <div class="tack-indicator" id="tack-indicator">—</div>
       <div class="row"><span class="k">AWA</span><span class="v amber big" id="inst-awa">—</span></div>
       <div class="row"><span class="k">AWS</span><span class="v amber" id="inst-aws">—</span></div>
       <div class="row"><span class="k">TWS</span><span class="v" id="inst-tws">—</span></div>
@@ -441,35 +479,82 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
   </div>
 
   <div class="panel" style="margin-top:10px">
-    <h2>Trim Recommendations</h2>
-    <p style="font-size:12px;color:var(--ink3);font-family:var(--font-mono);margin-bottom:10px">Windex (masthead) installed — use it to confirm AWA and check for header/lift shifts. Combines with AWA instrument below.</p>
+    <h2>Sail Trim · Genoa &amp; Main — ST60+ Live</h2>
+    <p style="font-size:12px;color:var(--ink3);font-family:var(--font-mono);margin-bottom:12px">Raymarine ST60+ Wind feeds AWA/AWS via Signal K. ⬛ = LED bar position on ST60+. Amber = action needed, green = on target.</p>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <span id="pos-badge" style="font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--ink)">—</span>
+      <span id="tack-badge" style="font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--ink)">—</span>
+      <span id="vmg-badge" style="font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--blue)">VMG —</span>
+    </div>
+
     <div class="trim-grid">
+      <!-- MAINSAIL -->
       <div>
-        <div class="trim-head">Mainsail (slab reefing)</div>
+        <div class="trim-head">⛵ Mainsail (slab reefing)</div>
         <div class="row"><span class="k">Reef state</span><span class="v amber" id="trim-reef">—</span></div>
-        <div class="row"><span class="k">Mainsheet</span><span class="v" id="trim-main">—</span></div>
+        <div class="row">
+          <span class="k">Mainsheet</span>
+          <span class="v" id="trim-main">—</span>
+        </div>
+        <div style="margin:2px 0 8px"><div class="trim-bar"><div class="trim-bar-fill" id="trim-main-bar" style="width:0%;background:var(--accent)"></div></div></div>
         <div class="row"><span class="k">Traveller</span><span class="v" id="trim-trav">—</span></div>
-        <div class="row"><span class="k">Outhaul</span><span class="v" id="trim-out">—</span></div>
         <div class="row"><span class="k">Kicker / vang</span><span class="v" id="trim-kick">—</span></div>
+        <div class="row"><span class="k">Outhaul</span><span class="v" id="trim-out">—</span></div>
+        <div class="row"><span class="k">Cunningham</span><span class="v" id="trim-cunn">—</span></div>
+        <div class="row"><span class="k">Backstay</span><span class="v" id="trim-back">—</span></div>
       </div>
+      <!-- GENOA -->
       <div>
-        <div class="trim-head">Genoa 150%</div>
+        <div class="trim-head">🌊 Genoa 150%</div>
         <div class="row"><span class="k">Furl %</span><span class="v amber" id="trim-furl">—</span></div>
-        <div class="row"><span class="k">Sheet</span><span class="v" id="trim-jib">—</span></div>
+        <div class="row">
+          <span class="k">Sheet tension</span>
+          <span class="v" id="trim-jib">—</span>
+        </div>
+        <div style="margin:2px 0 8px"><div class="trim-bar"><div class="trim-bar-fill" id="trim-jib-bar" style="width:0%;background:var(--blue)"></div></div></div>
         <div class="row"><span class="k">Car position</span><span class="v" id="trim-car">—</span></div>
         <div class="row"><span class="k">Halyard</span><span class="v" id="trim-hal">—</span></div>
         <div class="row"><span class="k">Telltales</span><span class="v" id="trim-tell">—</span></div>
+        <div class="row"><span class="k">Luff check</span><span class="v" id="trim-luff">—</span></div>
+      </div>
+    </div>
+
+    <!-- ST60+ LED bar legend and specific advice -->
+    <div id="trim-advice-box" style="margin-top:14px;padding:12px;background:var(--bg3);border-radius:var(--r);font-size:13px;line-height:1.7;color:var(--ink2)">
+      Connect Signal K to see live trim advice.
+    </div>
+
+    <!-- Sailing by the lee / gybe warning -->
+    <div id="gybe-warning" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(232,96,90,.12);border:1px solid var(--red);border-radius:var(--r);color:var(--red);font-family:var(--font-mono);font-size:12px">
+      ⚠ GYBE RISK — Sailing near 180° AWA. Check preventer rigged. Vang hard on to prevent death roll.
+    </div>
+
+    <!-- Upwind target angles -->
+    <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:var(--r)">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Nicholson 30 Target Angles</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px">
+        <div><div style="color:var(--ink3);font-size:10px">Close hauled</div><div class="v">AWA 38–45°</div><div style="color:var(--ink3);font-size:10px">4.5–5.0 kn</div></div>
+        <div><div style="color:var(--ink3);font-size:10px">Beam reach</div><div class="v green">AWA 85–95°</div><div style="color:var(--ink3);font-size:10px">5.5–6.0 kn</div></div>
+        <div><div style="color:var(--ink3);font-size:10px">Broad reach</div><div class="v">AWA 120–140°</div><div style="color:var(--ink3);font-size:10px">5.0–5.5 kn</div></div>
       </div>
     </div>
   </div>
 
   <div class="panel" style="margin-top:10px">
-    <h2>AI Skipper · Pre-departure Briefing</h2>
-    <div class="sk-btns">
-      <button class="sk-btn sk-btn-primary" onclick="askSkipper()">⊕ Ask the skipper</button>
+    <h2>AI Skipper · Briefing &amp; Q&amp;A</h2>
+    <div class="sk-btns" style="align-items:center;gap:8px">
+      <button class="sk-btn sk-btn-primary" onclick="askSkipper()">⊕ Full briefing</button>
       <button class="sk-btn sk-btn-secondary" onclick="$('ai-output').innerHTML=''">✕ Clear</button>
+      <button class="voice-btn" id="voice-input-btn" title="Speak your question" onclick="toggleVoice()">🎤</button>
+      <button class="voice-btn" id="voice-speak-btn" title="Read last response aloud" onclick="speakLastResponse()">🔊</button>
     </div>
-    <div id="ai-output"><p style="color:var(--ink3);font-style:italic;font-size:14px">Press <em>Ask the skipper</em> for a pre-departure briefing — tide windows, weather, sail plan and Bristol Channel watch points.</p></div>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:flex-start">
+      <textarea id="skipper-input" rows="2" placeholder="Type a question, or tap 🎤 to speak… e.g. 'Should I reef before leaving the lock?' or 'Explain the Tawe Bar transit timing'" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;color:var(--ink);font-family:var(--font-body);font-size:14px;resize:vertical;min-height:44px"></textarea>
+      <button class="sk-btn sk-btn-primary" style="white-space:nowrap;flex-shrink:0" onclick="askSkipperQuestion()">Send ›</button>
+    </div>
+    <div id="voice-status" style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);min-height:14px;margin-top:4px"></div>
+    <div id="ai-output"><p style="color:var(--ink3);font-style:italic;font-size:14px">Press <em>Full briefing</em> for a pre-departure assessment, or type / speak any question.</p></div>
   </div>
 
   <!-- AIS TRAFFIC / COLREGs panel -->
@@ -522,7 +607,8 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
 
   <div class="panel">
     <h2>Tawe Lock · Solo Checklist</h2>
-    <div class="check-item"><input type="checkbox" id="lk1"><label for="lk1">Call Tawe Lock VHF Ch 18, 10 min before. State: Ava, LOA 9.1 m, destination.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk0"><label for="lk0">Check tide height ≥ 2.2 m above CD — Ava's draft 1.7 m requires minimum 2.2 m at lock sill and approach channel.</label></div>
+    <div class="check-item"><input type="checkbox" id="lk1"><label for="lk1">Call Tawe Lock VHF Ch 18, 10 min before. State: Ava, LOA 9.1 m, draft 1.7 m, destination.</label></div>
     <div class="check-item"><input type="checkbox" id="lk2"><label for="lk2">Fenders both sides — port preferred (pontoon side in lock).</label></div>
     <div class="check-item"><input type="checkbox" id="lk3"><label for="lk3">Bow and stern lines led to midships cleat — manage from one position.</label></div>
     <div class="check-item"><input type="checkbox" id="lk4"><label for="lk4">Engine warm, neutral. VHF on Ch 18.</label></div>
@@ -1361,6 +1447,49 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
     <div id="passage-result" style="color:var(--ink3);font-style:italic;font-size:14px">Enter departure and destination, then press Plan.</div>
   </div>
 
+  <!-- ANCHOR ALARM -->
+  <div class="panel" style="margin-top:10px">
+    <h2>Anchor Alarm</h2>
+    <div id="anchor-status-bar">⚓ Anchor watch active — monitoring position</div>
+
+    <div class="grid" style="margin-top:0;gap:8px">
+      <div>
+        <label style="font-size:12px;color:var(--ink3)">Alarm radius (m)</label>
+        <input type="number" id="anchor-radius" value="40" min="10" max="500" step="5" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--ink);font-size:14px;margin-top:4px">
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;font-family:var(--font-mono)">Include scope + swinging room. With 1.7 m draft, set based on HW depth.</div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--ink3)">Min. depth for re-anchoring (m)</label>
+        <input type="number" id="anchor-min-depth" value="2.2" min="1.5" max="20" step="0.1" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--ink);font-size:14px;margin-top:4px">
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;font-family:var(--font-mono)">Ava draft 1.7 m → safe water 2.2 m minimum</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-family:var(--font-mono);font-size:11px">
+      <div><span style="color:var(--ink3)">Drop position</span><div id="anchor-drop-pos" style="color:var(--ink)">Not set</div></div>
+      <div><span style="color:var(--ink3)">Current position</span><div id="anchor-cur-pos" style="color:var(--ink)">—</div></div>
+      <div><span style="color:var(--ink3)">Distance from drop</span><div id="anchor-distance" style="color:var(--ink)">—</div></div>
+      <div><span style="color:var(--ink3)">Max recorded drift</span><div id="anchor-max-drift" style="color:var(--ink)">—</div></div>
+    </div>
+
+    <!-- Visual drag indicator -->
+    <div id="anchor-drag-visual" style="display:none;margin-top:10px;height:80px;position:relative;background:var(--bg3);border-radius:var(--r);overflow:hidden">
+      <div id="anchor-circle-outer" style="position:absolute;border:1px dashed var(--border);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+      <div id="anchor-dot-drop" style="position:absolute;width:12px;height:12px;background:var(--green);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2" title="Anchor drop"></div>
+      <div id="anchor-dot-cur" style="position:absolute;width:10px;height:10px;background:var(--amber);border-radius:50%;z-index:3" title="Current position"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="sk-btn sk-btn-primary" onclick="setAnchorDrop()">⚓ Set anchor drop point</button>
+      <button class="sk-btn sk-btn-secondary" onclick="clearAnchorAlarm()">✕ Clear alarm</button>
+    </div>
+    <div id="anchor-source" style="font-family:var(--font-mono);font-size:10px;color:var(--ink3);margin-top:8px">Position source: not connected</div>
+
+    <div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--ink3);line-height:1.7">
+      <strong style="color:var(--ink)">Bristol Channel note</strong> — With 9–10 m spring tides, always use <strong>HW depth</strong> when calculating scope. In Oxwich, Three Cliffs, Pwll Du — patches dry at LW. Ava's 1.7 m draft means 2.2 m minimum at LW to hold a safety margin.
+    </div>
+  </div>
+
   <div class="panel" style="margin-top:10px">
     <h2>Ava · Performance Reference</h2>
     <div class="grid" style="margin-top:0">
@@ -1369,6 +1498,7 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
         <div class="row"><span class="k">Passage speed</span><span class="v">4.5–5.0 kn</span></div>
         <div class="row"><span class="k">Motor speed</span><span class="v">~4 kn</span></div>
         <div class="row"><span class="k">Fuel range</span><span class="v">~80 nm</span></div>
+        <div class="row"><span class="k">Draft</span><span class="v amber">1.7 m · safe water 2.2 m</span></div>
       </div>
       <div>
         <div class="row"><span class="k">Spring range Swansea</span><span class="v">~9.5 m</span></div>
@@ -2214,11 +2344,17 @@ function drawTideGraph(dayMs, nowMs) {
   <text x="3" y="${Math.max(lockY - 3, PT + 1).toFixed(1)}" fill="#ff9800" font-size="8" font-family="monospace" font-weight="bold">lock 1.5m</text>`
     : '';
 
-  // Ava minimum safe depth line (1.52 m draft + safety margin = 2.0 m)
-  const avaY = py(2.0);
-  const avaLine = (avaY >= 0 && avaY <= H)
-    ? `<line x1="0" y1="${avaY.toFixed(1)}" x2="${W}" y2="${avaY.toFixed(1)}" stroke="#66bb6a" stroke-width="1.2" stroke-dasharray="6,3"/>
-  <text x="${W - 2}" y="${Math.max(avaY - 3, PT + 1).toFixed(1)}" fill="#66bb6a" font-size="8" font-family="monospace" text-anchor="end" font-weight="bold">Ava min 2.0m</text>`
+  // Ava minimum safe depth lines — draft 1.7 m, safe water 2.2 m
+  const avaKeel = py(1.7);
+  const avaSafe = py(2.2);
+  const avaKeelLine = (avaKeel >= 0 && avaKeel <= H)
+    ? `<rect x="0" y="${avaKeel.toFixed(1)}" width="${W}" height="${(H-PB-avaKeel).toFixed(1)}" fill="var(--red)" opacity=".06"/>
+  <line x1="0" y1="${avaKeel.toFixed(1)}" x2="${W}" y2="${avaKeel.toFixed(1)}" stroke="var(--red)" stroke-width="1.2" stroke-dasharray="3,3" opacity=".7"/>
+  <text x="${W-2}" y="${Math.max(avaKeel-3,PT+1).toFixed(1)}" fill="var(--red)" font-size="8" font-family="monospace" text-anchor="end">keel 1.7m</text>`
+    : '';
+  const avaSafeLine = (avaSafe >= 0 && avaSafe <= H)
+    ? `<line x1="0" y1="${avaSafe.toFixed(1)}" x2="${W}" y2="${avaSafe.toFixed(1)}" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="5,3"/>
+  <text x="3" y="${Math.max(avaSafe-3,PT+1).toFixed(1)}" fill="var(--amber)" font-size="8" font-family="monospace" font-weight="bold">safe 2.2m</text>`
     : '';
 
   // HW / LW annotations across the 36 h window
@@ -2280,7 +2416,7 @@ function drawTideGraph(dayMs, nowMs) {
   svg.innerHTML = `<defs>${defs}</defs>
   ${fills}
   <path d="${path}" fill="none" stroke="#29b6f6" stroke-width="2.5"/>
-  ${lockLine}${avaLine}${boundary}${ticks.join('')}${extremeLabels}${nowLine}
+  ${lockLine}${avaKeelLine}${avaSafeLine}${boundary}${ticks.join('')}${extremeLabels}${nowLine}
   <line id="tg-cursor" x1="-1" y1="0" x2="-1" y2="${H}" stroke="#fff" stroke-width="1" stroke-dasharray="2,2" opacity="0.8"/>
   <circle id="tg-dot" cx="-10" cy="-10" r="4.5" fill="#fff" stroke="#29b6f6" stroke-width="1.5"/>`;
 
@@ -2379,13 +2515,16 @@ async function loadTides() {
   const start = Math.floor(Date.now()/1000);
   try {
     const r = await fetch(
-      `https://www.worldtides.info/api/v3?extremes&heights&datum=CD` +
-      `&lat=51.617&lon=-3.944&key=${encodeURIComponent(S.wtKey)}` +
+      `https://www.worldtides.info/api/v3?extremes&heights&datum=CD&localtime&timezone` +
+      `&lat=51.617&lon=-3.944&stationDistance=5` +
+      `&key=${encodeURIComponent(S.wtKey)}` +
       `&start=${start}&length=691200&step=3600`
     );
     const d = await r.json();
     if (d.status && d.status !== 200) throw new Error(d.error || `WorldTides error ${d.status}`);
-    const data = {extremes: d.extremes, heights: d.heights, fetchedAt: Date.now()};
+    // Log which station was actually used (key accuracy indicator)
+    if (d.station) console.info(`WorldTides: using station "${d.station}" at ${d.responseLat?.toFixed(3)},${d.responseLon?.toFixed(3)}`);
+    const data = {extremes: d.extremes, heights: d.heights, station: d.station||'', fetchedAt: Date.now()};
     S.tideData = data;
     localStorage.setItem('ava-tide-cache', JSON.stringify(data));
     calibrateHarmonics(d.heights);   // tune the offline harmonic fallback to the official curve
@@ -2406,7 +2545,8 @@ function updateTideSrc() {
   const cal = !!(S.harmCal || localStorage.getItem('ava-harm-cal'));
   if (S.tideData) {
     const age = Math.round((Date.now() - S.tideData.fetchedAt) / 3600000);
-    el.textContent = `WorldTides · Swansea · fetched ${age < 1 ? 'just now' : age+'h ago'}`;
+    const stn = S.tideData.station ? ` · Station: ${S.tideData.station}` : '';
+    el.textContent = `WorldTides · Swansea${stn} · fetched ${age < 1 ? 'just now' : age+'h ago'}`;
   } else if (cal) {
     el.textContent = 'Harmonic model (calibrated from WorldTides) — offline prediction';
   } else if (S.wtKey) {
@@ -2518,7 +2658,7 @@ function wCodeDesc(c) {
 async function loadWeather() {
   try {
     const [atm,mar] = await Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=kn&forecast_days=7&timezone=Europe/London').then(r=>r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=kn&forecast_days=16&timezone=Europe/London').then(r=>r.json()),
       fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London').then(r=>r.json()),
     ]);
     S.weather=atm; S.marine=mar;
@@ -2799,48 +2939,11 @@ function updatePointOfSail(twa,twsKn,heel) {
   $('pos-name').textContent=name;
   $('pos-detail').textContent=`TWA ${twa.toFixed(0)}°${twsKn?' · TWS '+twsKn.toFixed(0)+' kn':''}`;
   $('pos-advice').innerHTML=`<p>${advice}</p>`;
-  if (twsKn!=null) setTrim(twsKn,twa,heel);
+  if (twsKn!=null) renderTrimAdvice();
+  _anchorTickFromSK();
 }
 
-function setTrim(tws,twa,heel) {
-  let reef,furl;
-  if (tws<9)      {reef='Full · light air'; furl='0%';}
-  else if (tws<16){reef='Full';             furl='0%';}
-  else if (tws<21){reef=heel>20?'1 reef':'Full · reef ready'; furl=heel>20?'15%':'0–10%';}
-  else if (tws<26){reef='1 reef';           furl='30%';}
-  else if (tws<31){reef='2 reefs';           furl='50–70% furled';}
-  else            {reef='3 reefs / bare poles'; furl='Furl completely';}
-  set('trim-reef',reef); set('trim-furl',furl);
-
-  if (twa<50) {
-    set('trim-main','Hard in, traveller centre or above');
-    set('trim-trav','Up to weather in <15 kn; leeward in puffs');
-    set('trim-out','On hard — flat foot');      set('trim-kick','Snug — block leech twist');
-    set('trim-jib','Hard in, leech 4–6 cm off spreader');
-    set('trim-car','Forward — leech telltales streaming');
-    set('trim-hal','Tight — no luff scallops'); set('trim-tell','Both streaming aft');
-  } else if (twa<80) {
-    set('trim-main','Ease 10–20 cm');           set('trim-trav','Leeward');
-    set('trim-out','On — flat for power');       set('trim-kick','Snug');
-    set('trim-jib','Ease 10–15 cm');            set('trim-car','One hole aft');
-    set('trim-hal','Medium');                   set('trim-tell','Both streaming, outer just lifting');
-  } else if (twa<110) {
-    set('trim-main','Eased — boom to rail');     set('trim-trav','Fully leeward');
-    set('trim-out','Off — deep belly');          set('trim-kick','On to control twist');
-    set('trim-jib','Eased — leech open');        set('trim-car','Aft — open leech');
-    set('trim-hal','Eased');                    set('trim-tell','Outer streaming, inner curling OK');
-  } else if (twa<160) {
-    set('trim-main','Fully eased. Preventer ON'); set('trim-trav','Fully leeward');
-    set('trim-out','Off');                       set('trim-kick','On');
-    set('trim-jib','Full ease to leeward');      set('trim-car','Full aft');
-    set('trim-hal','Eased');                    set('trim-tell','Unreliable — watch sail shape');
-  } else {
-    set('trim-main','Goose-wing or drop. Preventer ESSENTIAL'); set('trim-trav','Fully leeward');
-    set('trim-out','Off');                       set('trim-kick','On');
-    set('trim-jib','Goose-winged to weather');   set('trim-car','Full aft');
-    set('trim-hal','Eased');                    set('trim-tell','Watch for collapse');
-  }
-}
+// Old setTrim removed — replaced by renderTrimAdvice() above
 
 // ── SIMULATOR ──────────────────────────────────────────────────────
 function runSim() {
@@ -3300,6 +3403,437 @@ Provide a concise, practical COLREGs analysis under these exact headings — no 
   }
 }
 
+// ── VOICE INPUT / TTS ─────────────────────────────────────────────
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let _voiceActive = false, _lastResponse = '';
+
+function toggleVoice() {
+  if (_voiceActive) { stopVoice(); return; }
+  if (!SpeechRec) {
+    $('voice-status').textContent = 'Voice not supported — use Safari or Chrome.';
+    return;
+  }
+  const rec = new SpeechRec();
+  rec.lang = 'en-GB'; rec.continuous = false; rec.interimResults = true;
+  const btn = $('voice-input-btn');
+
+  rec.onstart = () => {
+    _voiceActive = true;
+    btn.classList.add('listening');
+    $('voice-status').textContent = '🎤 Listening…';
+  };
+  rec.onresult = e => {
+    const interim = Array.from(e.results).map(r=>r[0].transcript).join('');
+    $('skipper-input').value = interim;
+    if (e.results[e.results.length-1].isFinal) {
+      $('voice-status').textContent = '✓ Heard — sending…';
+      stopVoice();
+      askSkipperQuestion();
+    }
+  };
+  rec.onerror = e => { $('voice-status').textContent = `Mic error: ${e.error}`; stopVoice(); };
+  rec.onend = () => stopVoice();
+  rec.start();
+  window._curRec = rec;
+}
+
+function stopVoice() {
+  _voiceActive = false;
+  const btn = $('voice-input-btn');
+  if (btn) btn.classList.remove('listening');
+  if (window._curRec) { try{ window._curRec.abort(); }catch(_){} window._curRec=null; }
+}
+
+function speakLastResponse() {
+  if (!window.speechSynthesis || !_lastResponse) return;
+  speechSynthesis.cancel();
+  const txt = _lastResponse.replace(/<[^>]+>/g,'').replace(/\*\*/g,'').slice(0,2000);
+  const utt = new SpeechSynthesisUtterance(txt);
+  utt.lang = 'en-GB'; utt.rate = 0.88; utt.pitch = 1;
+  const voices = speechSynthesis.getVoices();
+  const brit = voices.find(v=>v.lang==='en-GB'&&v.name.toLowerCase().includes('female'))
+    || voices.find(v=>v.lang==='en-GB') || voices[0];
+  if (brit) utt.voice = brit;
+  const btn = $('voice-speak-btn');
+  utt.onstart  = () => btn?.classList.add('speaking');
+  utt.onend    = () => btn?.classList.remove('speaking');
+  speechSynthesis.speak(utt);
+}
+
+// Ask skipper with a typed/spoken question
+async function askSkipperQuestion() {
+  const q = ($('skipper-input')?.value || '').trim();
+  if (!q) { askSkipper(); return; }
+  if (!S.apiKey) { $('ai-output').innerHTML='<p style="color:var(--red)">Add Anthropic API key in Settings.</p>'; return; }
+  const out = $('ai-output');
+  out.innerHTML = '<div class="thinking">⊕ Thinking…</div>';
+
+  const ctx = buildSkipperContext();
+  const prompt = `${ctx}\n\n---\nUser question: ${q}\n\nAnswer concisely and practically in under 250 words. Use nautical/sailing terms appropriate for a solo RYA Coastal Skipper passage maker.`;
+  try {
+    const tools = S.shippingForecast ? [] : [{type:'web_search_20250305',name:'web_search'}];
+    const body = {model:S.model,max_tokens:600,messages:[{role:'user',content:prompt}]};
+    if (tools.length) body.tools=tools;
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    _lastResponse = text;
+    out.innerHTML = mdToHtml(text);
+    $('skipper-input').value = '';
+    $('voice-status').textContent = 'Tap 🔊 to hear the response.';
+  } catch(e) {
+    out.innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
+  }
+}
+
+// Build the shared context string for all skipper calls
+function buildSkipperContext() {
+  const d   = S.skData;
+  const c   = S.weather?.current_weather || S.weather?.current || {};
+  const hw  = nextExtreme('HW'); const lw = nextExtreme('LW');
+  const tideH = S.skWs||S.simTimer ? harmonicTideAt(Date.now()).toFixed(2) : '—';
+  const waveH = S.marine?.current ? (S.marine.current.wave_height??'—')+'m' : '—';
+  const windKn  = c.wind_speed_10m ? toKn(c.wind_speed_10m) : '—';
+  const gustKn  = c.wind_gusts_10m ? toKn(c.wind_gusts_10m) : '—';
+  const fmt = t => new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const ms2kn = v => v!=null ? (v*1.944).toFixed(1)+' kn' : '—';
+  const r2dg  = v => v!=null ? ((v*180/Math.PI+360)%360).toFixed(0)+'°' : '—';
+  const liveStr=(S.skWs||S.simTimer)?`TWS ${ms2kn(d['environment.wind.speedTrue'])} TWA ${r2dg(d['environment.wind.angleTrueWater'])} SOG ${ms2kn(d['navigation.speedOverGround'])}`:'Not underway.';
+  const dly=S.weather?.daily;
+  const outlook=dly?[1,2,3].map(i=>dly.time[i]?`${new Date(dly.time[i]).toLocaleDateString('en-GB',{weekday:'short'})}: ${toKn(dly.wind_speed_10m_max[i])} kn, ${wCodeDesc(dly.weather_code[i])}`:'').filter(Boolean).join(' · '):'—';
+  const sf=S.shippingForecast;
+  const sfStr=sf?.lundy?`SHIPPING FORECAST · LUNDY (${sf.issued||'recent'}):\nSynopsis: ${sf.synopsis||'—'}\nLundy: ${sf.lundy}\n${sf.gales&&!/no gale/i.test(sf.gales)?'⚠ GALE WARNING: '+sf.gales:'No gale warnings.'}\n${sf.bristol_channel?'Inshore (Lands End–St Davids Head): '+sf.bristol_channel:''}`:null;
+  const aisActive=Object.values(S.aisTargets).filter(t=>t._range!=null).sort((a,b)=>a._range-b._range);
+  const aisStr=aisActive.length?'AIS TRAFFIC:\n'+aisActive.slice(0,4).map(t=>{const cr=t._colregs;return`  ${t.name||'MMSI '+t.mmsi} · Brg ${t._bearing?.toFixed(0)||'?'}°T · ${t._range?.toFixed(1)||'?'} nm · CPA ${t._cpa?.toFixed(2)||'?'} nm → ${cr?.situation||'?'} (${(cr?.action||'').toUpperCase()})`;}).join('\n'):'AIS: None detected.';
+
+  return `You are AI skipper advisor for *Ava*, a 1973 Nicholson 30 MkI sailing solo from SYSAC, Swansea, Bristol Channel.
+VESSEL: LOA 30' · Draft 1.7 m · Safe water 2.2 m · Disp 7,280 lb · Hull speed 5.4 kn · Beta B20 diesel
+SAILS: Slab reefing main · 150% genoa (furling)
+${S.vesselNotes?`NOTES: ${S.vesselNotes}\n`:''}ELECTRONICS: Signal K · Class B AIS · iPad Navionics · Raymarine ST60+ wind
+CONDITIONS (${new Date().toLocaleString('en-GB')}):
+Wind: ${windKn} kn, gusts ${gustKn} kn, ${deg2cpt(c.wind_direction_10m||0)}
+Sea: ${waveH} · Tide: ${tideH} m CD · Pressure: ${c.pressure_msl?.toFixed(0)||'—'} hPa
+HW: ${hw?`${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · LW: ${lw?`${fmt(new Date(lw.t))} ${lw.h.toFixed(2)} m`:'—'}
+Outlook 72h: ${outlook}
+${sfStr||'(Shipping forecast: search Met Office for current Lundy area)'}
+${liveStr}
+Propulsion: ${S.propulsion==='sail'?'UNDER SAIL':'MOTORING'}
+${aisStr}`;
+}
+
+// ── ANCHOR ALARM ───────────────────────────────────────────────────
+const _anchor = { active:false, dropLat:null, dropLon:null, radius:40, maxDrift:0, watchId:null };
+
+function setAnchorDrop() {
+  const radius = parseFloat($('anchor-radius')?.value||40);
+  _anchor.radius = radius;
+  _anchor.maxDrift = 0;
+
+  // Try Signal K position first
+  const skPos = S.skData['navigation.position'];
+  if (skPos) {
+    _startAnchorWatch(skPos.latitude, skPos.longitude, 'Signal K GPS');
+    return;
+  }
+  // Fall back to browser geolocation
+  if (!navigator.geolocation) { alert('No GPS available. Connect Signal K or enable Location Services.'); return; }
+  $('anchor-source').textContent = 'Requesting GPS position…';
+  navigator.geolocation.getCurrentPosition(
+    pos => _startAnchorWatch(pos.coords.latitude, pos.coords.longitude, 'Device GPS'),
+    err => { $('anchor-source').textContent = `GPS error: ${err.message}`; },
+    {enableHighAccuracy:true, timeout:10000}
+  );
+}
+
+function _startAnchorWatch(lat, lon, src) {
+  _anchor.active  = true;
+  _anchor.dropLat = lat;
+  _anchor.dropLon = lon;
+  _anchor.maxDrift= 0;
+
+  const bar = $('anchor-status-bar');
+  if (bar) { bar.className = 'active'; bar.style.display = 'block'; }
+  $('anchor-drop-pos').textContent = `${lat.toFixed(4)}°N ${Math.abs(lon).toFixed(4)}°W`;
+  $('anchor-source').textContent   = `Source: ${src} · watching…`;
+  $('anchor-drag-visual').style.display = 'block';
+
+  // Update loop: Signal K preferred, geolocation fallback
+  _anchor.watchId = setInterval(_checkAnchor, 5000);
+  if (!S.skWs && !S.simTimer && navigator.geolocation) {
+    _anchor.geoId = navigator.geolocation.watchPosition(_geoAnchorUpdate, null, {enableHighAccuracy:true});
+  }
+  skLog(`⚓ Anchor watch set at ${lat.toFixed(4)},${lon.toFixed(4)} radius ${_anchor.radius} m`);
+}
+
+function _geoAnchorUpdate(pos) {
+  _anchor._lastGeoLat = pos.coords.latitude;
+  _anchor._lastGeoLon = pos.coords.longitude;
+}
+
+function _checkAnchor() {
+  if (!_anchor.active) return;
+  const skPos = S.skData['navigation.position'];
+  const curLat = skPos?.latitude ?? _anchor._lastGeoLat;
+  const curLon = skPos?.longitude ?? _anchor._lastGeoLon;
+  if (curLat == null) return;
+
+  const dist = _haversineM(_anchor.dropLat, _anchor.dropLon, curLat, curLon);
+  if (dist > _anchor.maxDrift) _anchor.maxDrift = dist;
+
+  $('anchor-cur-pos').textContent  = `${curLat.toFixed(4)}°N ${Math.abs(curLon).toFixed(4)}°W`;
+  $('anchor-distance').textContent = `${dist.toFixed(0)} m`;
+  $('anchor-max-drift').textContent= `${_anchor.maxDrift.toFixed(0)} m`;
+
+  const bar = $('anchor-status-bar');
+  if (dist > _anchor.radius) {
+    if (bar) { bar.className='dragging'; bar.textContent=`⚠ ANCHOR DRAGGING — ${dist.toFixed(0)} m from drop (limit: ${_anchor.radius} m)`; }
+    skLog(`⚠ ANCHOR DRAG ALERT: ${dist.toFixed(0)} m from drop (limit ${_anchor.radius} m)`);
+    if ('vibrate' in navigator) navigator.vibrate([500,200,500,200,1000]);
+    // Audio alert
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const osc = ctx.createOscillator(); osc.connect(ctx.destination);
+      osc.frequency.value = 880; osc.start(); osc.stop(ctx.currentTime+0.4);
+    } catch(_) {}
+  } else {
+    if (bar) { bar.className='active'; bar.textContent=`⚓ Anchor watch · ${dist.toFixed(0)} m from drop · max ${_anchor.maxDrift.toFixed(0)} m · limit ${_anchor.radius} m`; }
+  }
+  _renderAnchorDot(dist);
+}
+
+function _renderAnchorDot(dist) {
+  const vis = $('anchor-drag-visual');
+  if (!vis) return;
+  const w = vis.offsetWidth, h = 80, scale = (h*0.4)/_anchor.radius;
+  const outer = $('anchor-circle-outer');
+  if (outer) { const px = _anchor.radius*scale; outer.style.width=outer.style.height=`${px*2}px`; }
+  // Position current dot relative to drop
+  const skPos = S.skData['navigation.position'];
+  const curLat = skPos?.latitude ?? _anchor._lastGeoLat;
+  const curLon = skPos?.longitude ?? _anchor._lastGeoLon;
+  if (curLat == null) return;
+  const dLat = (curLat - _anchor.dropLat) * 111320;
+  const dLon = (curLon - _anchor.dropLon) * 111320 * Math.cos(_anchor.dropLat*Math.PI/180);
+  const dot = $('anchor-dot-cur');
+  if (dot) {
+    dot.style.left = `${Math.min(Math.max(w/2 + dLon*scale, 4), w-4)}px`;
+    dot.style.top  = `${Math.min(Math.max(h/2 - dLat*scale, 4), h-4)}px`;
+  }
+}
+
+function clearAnchorAlarm() {
+  _anchor.active = false;
+  clearInterval(_anchor.watchId);
+  if (_anchor.geoId && navigator.geolocation) navigator.geolocation.clearWatch(_anchor.geoId);
+  const bar = $('anchor-status-bar');
+  if (bar) bar.style.display = 'none';
+  $('anchor-drop-pos').textContent = 'Not set';
+  $('anchor-cur-pos').textContent  = '—';
+  $('anchor-distance').textContent = '—';
+  $('anchor-max-drift').textContent= '—';
+  $('anchor-source').textContent   = 'Position source: not connected';
+  $('anchor-drag-visual').style.display = 'none';
+  skLog('⚓ Anchor watch cleared.');
+}
+
+function _haversineM(lat1,lon1,lat2,lon2) {
+  const R=6371000, d2r=Math.PI/180;
+  const dLat=(lat2-lat1)*d2r, dLon=(lon2-lon1)*d2r;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(a));
+}
+
+// Update anchor alarm from Signal K loop
+function _anchorTickFromSK() {
+  if (_anchor.active && (S.skWs||S.simTimer)) _checkAnchor();
+}
+
+// ── ENHANCED SAIL TRIM (ST60+ via Signal K) ────────────────────────
+function renderTrimAdvice() {
+  const d    = S.skData;
+  const awa  = d['environment.wind.angleApparent'];  // rad, ±π
+  const aws  = d['environment.wind.speedApparent'];  // m/s
+  const twa  = d['environment.wind.angleTrueWater']; // rad
+  const tws  = d['environment.wind.speedTrue'];       // m/s
+  const sog  = d['navigation.speedOverGround'];       // m/s
+  const heel = d['navigation.attitude']?.roll ?? d['navigation.attitude.roll'];
+
+  if (awa == null) return; // instruments not connected
+
+  const awaDeg = (awa * 180 / Math.PI);           // ±180: neg=port, pos=stbd
+  const awaAbs = Math.abs(awaDeg);                 // 0–180
+  const twaDeg = twa != null ? Math.abs(twa * 180 / Math.PI) : awaAbs + 5;
+  const awsKn  = aws != null ? aws * 1.944 : null;
+  const twsKn  = tws != null ? tws * 1.944 : null;
+  const sogKn  = sog != null ? sog * 1.944 : null;
+  const tack   = awaDeg >= 0 ? 'STARBOARD TACK' : 'PORT TACK';
+  const tackCol= awaDeg >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Update tack badges
+  const posBadge = $('pos-badge');  if (posBadge)  posBadge.textContent  = pointOfSailName(awaAbs);
+  const tackBadge= $('tack-badge'); if (tackBadge) { tackBadge.textContent=tack; tackBadge.style.color=tackCol; }
+  const vmgBadge = $('vmg-badge');
+  if (vmgBadge && sogKn && twaDeg) {
+    const vmg = (sogKn * Math.cos(twaDeg * Math.PI/180)).toFixed(1);
+    vmgBadge.textContent = `VMG ${vmg} kn ${twaDeg<90?'↑up':'↓down'}`;
+  }
+
+  // Update TWA arrow on SVG
+  const twaArrow = $('twa-arrow');
+  if (twaArrow && twa != null) twaArrow.setAttribute('transform', `rotate(${(twa*180/Math.PI).toFixed(1)})`);
+  const tackEl = $('tack-indicator');
+  if (tackEl) { tackEl.innerHTML = `<span style="color:${tackCol};font-weight:700">${tack}</span> · AWA ${awaDeg.toFixed(0)}°`; }
+
+  // Gybe warning
+  const gybeWarn = $('gybe-warning');
+  if (gybeWarn) gybeWarn.style.display = awaAbs > 160 ? 'block' : 'none';
+
+  // ── Specific trim for Nicholson 30 with 150% genoa + slab main ──
+  let trim;
+  const wsKn = awsKn || twsKn || 0;
+
+  if (awaAbs < 30) {
+    // In irons / head to wind
+    trim = {
+      reef: 'N/A — head to wind', main: 'Ease fully', trav: 'Centre',
+      kick: 'Release', out: 'Normal', cunn: 'Off', back: 'Ease',
+      furl: '—', sheet: 'Free off', car: '—', hal: 'Normal', tell: '🔴🔴', luff: 'Luffing badly',
+      mainBar: 5, jibBar: 0,
+      advice: `⚠ IN IRONS — head to wind. Bear away urgently: ease all sheets, tiller to leeward, let foresail back to push bow round. On ${awaDeg>=0?'port':'starboard'} tack: push boom out to help bear away.`
+    };
+  } else if (awaAbs < 50) {
+    // Close hauled
+    const reef1 = wsKn >= 20; const reef2 = wsKn >= 28;
+    trim = {
+      reef: reef2 ? '2nd reef (≥28 kn AWS)' : reef1 ? '1st reef (≥20 kn AWS)' : 'Full sail',
+      main: 'Sheet tight — boom near centreline (≈10° off)',
+      trav: awaDeg>0 ? 'Centred or slight weather (stbd)' : 'Centred or slight weather (port)',
+      kick: 'Light–medium tension (prevent twist)',
+      out: 'Moderate tension — foot flat, slight belly',
+      cunn: wsKn > 15 ? 'On — remove draft sag' : 'Off — keep draft forward',
+      back: wsKn > 18 ? 'Firm — depower, reduce heel' : 'Light',
+      furl: reef2 ? '20–30% (reduce power)' : reef1 ? '10%' : 'Fully open',
+      sheet: 'Sheet to 6–8° of mast. Last 5cm should undo heel, not power.',
+      car: 'Forward (sheet pulls luff and leech equally)',
+      hal: 'Full hoist — no scallops on luff',
+      tell: '🟢🟢', luff: 'Just kissing — ease 2cm until it stops',
+      mainBar: reef2 ? 35 : reef1 ? 55 : 80,
+      jibBar: reef2 ? 60 : reef1 ? 75 : 88,
+      advice: `Close-hauled ${tack === 'STARBOARD TACK' ? '— port side down' : '— starboard side down'}. Target AWA 38–45°. VMG maximised when boat just begins to stiffen. Windex should stream at about 45°. If heel >25°: first reef immediately${reef1?' — already reefed ✓':''}.`
+    };
+  } else if (awaAbs < 70) {
+    // Close reach
+    trim = {
+      reef: wsKn >= 25 ? '1st reef' : 'Full sail',
+      main: 'Sheet 10–20° off centreline. Traveller leeward of centre.',
+      trav: 'Leeward — ease traveller 10–15 cm from centreline',
+      kick: 'Light-medium',
+      out: 'Normal',
+      cunn: 'Off',
+      back: 'Light-medium',
+      furl: 'Fully open',
+      sheet: 'Ease 15–20 cm from close-hauled. Inner telltales streaming.',
+      car: 'Mid-track or slightly aft',
+      hal: 'Full hoist',
+      tell: '🟢🟢', luff: 'Good — small ease if telltales stall',
+      mainBar: 68, jibBar: 78,
+      advice: `Close reach — fastest point of sail for the Nicholson 30. Keep inner genoa telltale streaming. Ease main traveller to leeward to depower without losing speed. If overpowered, ease vang and let top of main twist off.`
+    };
+  } else if (awaAbs < 110) {
+    // Beam reach
+    trim = {
+      reef: wsKn >= 28 ? '1st reef' : 'Full sail',
+      main: 'Sheet halfway out — boom at approx 45–60° off centreline',
+      trav: 'Fully to leeward — sheet controls twist now',
+      kick: 'Vang ON — prevents boom rise, maintains leech tension',
+      out: 'Ease slightly — allow more belly',
+      cunn: 'Off',
+      back: 'Ease — allow mast to pump',
+      furl: 'Fully open (beam reach is genoa\'s sweet spot)',
+      sheet: 'Ease substantially — luff just not breaking. Lead aft of car.',
+      car: 'Mid to aft track. Ease as wind goes aft.',
+      hal: 'Full hoist',
+      tell: '🟢🟢', luff: 'Ease until luff just starts to break, sheet in 5 cm',
+      mainBar: 55, jibBar: 72,
+      advice: `Beam reach — boat speed max zone. Both sails should fill but not be tight. Genoa will goosewing (collapse to windward) if you over-ease. Use the vang firmly to hold the main leech — without it the boom rises and the top of the sail stalls. Watch for rolling oscillation: ease main slightly or adjust course.`
+    };
+  } else if (awaAbs < 150) {
+    // Broad reach / training run
+    trim = {
+      reef: wsKn >= 22 ? '1st reef — rolling risk' : 'Full sail',
+      main: 'Fully eased — boom at 80–90° from centreline',
+      trav: 'Fully to leeward — no traveller effect at this angle',
+      kick: 'VANG HARD ON — critical to prevent death roll',
+      out: 'Ease — allow full belly',
+      cunn: 'Off',
+      back: 'Ease fully',
+      furl: wsKn > 18 ? 'Furl 15–25% — reduce rolling' : 'Fully open',
+      sheet: 'Well eased. Move genoa to windward using barber hauler if available.',
+      car: 'Aft track — open the slot',
+      hal: 'Full hoist',
+      tell: '🟡🟢', luff: 'Flying free — luff about to break is OK here',
+      mainBar: 42, jibBar: 55,
+      advice: `Broad reach — gybe risk increases as AWA approaches 160°. Vang must be on hard to prevent boom lift and death roll. Genoa can shadow behind main: goosewing it to windward (opposite side to main) or furl 20%. In swell, steer actively to reduce rolling. If rolling builds: ease main 10 cm, steer up 10°.`
+    };
+  } else {
+    // Running / dead downwind
+    trim = {
+      reef: wsKn >= 20 ? '1st reef + vang hard' : 'Full sail — death roll risk',
+      main: 'Fully eased to shroud — check preventer rigged',
+      trav: 'Irrelevant on run',
+      kick: '⚠ VANG VERY HARD — death roll prevention',
+      out: 'Ease',
+      cunn: 'Off',
+      back: 'Ease fully',
+      furl: 'Furl 30–40% or goosewing to windward',
+      sheet: 'Ease genoa to windward — goosewing (wing-and-wing). Watch for death roll.',
+      car: 'Aft',
+      hal: 'Full',
+      tell: '🟡🟡', luff: 'Flying free — check for inadvertent gybe',
+      mainBar: 25, jibBar: 30,
+      advice: `⚠ DEAD DOWNWIND — highest gybe risk. Ensure preventer is rigged on main boom before easing past 150°. Vang hard on. Watch the burgee/Windex — if it swings to the other side, gybe is imminent. Steer 10–15° above dead downwind to give margin. With 150% genoa and no pole, boat speed will be moderate — consider gybing to a broad reach instead.`
+    };
+  }
+
+  // Update trim display elements
+  const set = (id, val) => { const el=$(id); if(el) el.textContent=val; };
+  set('trim-reef', trim.reef);
+  set('trim-main', trim.main);
+  set('trim-trav', trim.trav);
+  set('trim-kick', trim.kick);
+  set('trim-out',  trim.out);
+  set('trim-cunn', trim.cunn);
+  set('trim-back', trim.back);
+  set('trim-furl', trim.furl);
+  set('trim-jib',  trim.sheet);
+  set('trim-car',  trim.car);
+  set('trim-hal',  trim.hal);
+  set('trim-tell', trim.tell);
+  set('trim-luff', trim.luff);
+
+  // Visual bars
+  const mb = $('trim-main-bar'); if(mb) mb.style.width = trim.mainBar+'%';
+  const jb = $('trim-jib-bar');  if(jb) jb.style.width = trim.jibBar+'%';
+
+  // Advice box
+  const ab = $('trim-advice-box');
+  if (ab) ab.innerHTML = `<strong style="color:var(--ink)">${pointOfSailName(awaAbs)}</strong> — ${trim.advice}`;
+}
+
+function pointOfSailName(awaAbs) {
+  if (awaAbs < 30)  return '⛔ In Irons';
+  if (awaAbs < 50)  return '⬆ Close Hauled';
+  if (awaAbs < 70)  return '↗ Close Reach';
+  if (awaAbs < 110) return '➡ Beam Reach';
+  if (awaAbs < 150) return '↘ Broad Reach';
+  return '⬇ Running';
+}
+
 // ── WATCH LOG ──────────────────────────────────────────────────────
 function skLog(msg) {
   const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -3314,6 +3848,9 @@ async function askSkipper() {
   const out=$('ai-output');
   out.innerHTML='<div class="thinking">⊕ The skipper is thinking…</div>';
 
+  const ctx = buildSkipperContext();
+  const sf = S.shippingForecast;
+  const aisActive = Object.values(S.aisTargets).filter(t=>t._range!=null);
   const c=S.weather?.current||{};
   const windKn=c.wind_speed_10m?parseFloat(toKn(c.wind_speed_10m)).toFixed(1):'—';
   const gustKn=c.wind_gusts_10m?parseFloat(toKn(c.wind_gusts_10m)).toFixed(1):'—';
@@ -3321,68 +3858,47 @@ async function askSkipper() {
   const tideH=tideAt(Date.now()).toFixed(2);
   const ex=findExtrema(Date.now(),4);
   const hw=ex.find(e=>e.type==='HW'), lw=ex.find(e=>e.type==='LW');
-  const d=S.skData;
-  const liveStr=(S.skWs||S.simTimer)?`Live instruments: TWS ${ms2kn(d['environment.wind.speedTrue'])} TWA ${r2dg(d['environment.wind.angleTrueWater'])} SOG ${ms2kn(d['navigation.speedOverGround'])}`:'Not underway.';
-
-  // AIS traffic summary for briefing
-  const aisActive = Object.values(S.aisTargets).filter(t=>t._range!=null).sort((a,b)=>a._range-b._range);
-  const aisStr = aisActive.length
-    ? 'AIS TRAFFIC:\n' + aisActive.slice(0,6).map(t=>{
-        const cr=t._colregs;
-        const name=t.name||`MMSI ${t.mmsi}`;
-        const stype=(()=>{const s=t['design.aisShipType'];return typeof s==='object'?s?.name||shipTypeName(s?.id):shipTypeName(s);})();
-        const cogDeg=t['navigation.courseOverGroundTrue']!=null?((t['navigation.courseOverGroundTrue']*180/Math.PI+360)%360).toFixed(0)+'°':'?';
-        const sogKn=t['navigation.speedOverGround']!=null?(t['navigation.speedOverGround']*1.944).toFixed(1)+' kn':'?';
-        return `  ${name} (${stype}) · Brg ${t._bearing?.toFixed(0)||'?'}°T · Rng ${t._range?.toFixed(1)||'?'} nm · COG ${cogDeg} · SOG ${sogKn} · CPA ${t._cpa?.toFixed(2)||'?'} nm in ${t._tcpa?.toFixed(0)||'?'} min → ${cr?.situation||'?'} (${cr?.action?.toUpperCase()||'?'})`;
-      }).join('\n')
-    : 'AIS TRAFFIC: None detected.';
-
-  const sf = S.shippingForecast;
-  const sfStr = sf?.lundy
-    ? `SHIPPING FORECAST · LUNDY (${sf.issued || 'recent issue'}):
-Synopsis: ${sf.synopsis || '—'}
-Lundy, Fastnet, Irish Sea: ${sf.lundy}
-${sf.gales && !/no gale/i.test(sf.gales) ? 'GALE WARNING: ' + sf.gales : 'No gale warnings.'}
-${sf.bristol_channel ? 'Inshore (Lands End–St Davids Head): ' + sf.bristol_channel : ''}`
-    : null;
-
-  const dly=S.weather?.daily;
-  const outlook=dly?[1,2].map(i=>dly.time[i]?`${new Date(dly.time[i]).toLocaleDateString('en-GB',{weekday:'short'})}: ${toKn(dly.wind_speed_10m_max[i])} kn max, gusts ${toKn(dly.wind_gusts_10m_max[i])} kn, ${deg2cpt(dly.wind_direction_10m_dominant[i])}, ${wCodeDesc(dly.weather_code[i])}`:'').filter(Boolean).join(' · '):'—';
-
-  const prompt=`You are the AI skipper advisor for *Ava*, a 1973 Nicholson 30 MkI sailing solo from SYSAC, Swansea, Bristol Channel, UK.
-
-VESSEL: Nicholson 30 MkI · LOA 30' · Disp 7,280 lb · Hull speed 5.4 kn · Beta B20 diesel
-SAILS: Slab (jiffy) reefing main · 150% genoa (furling) — only two sails aboard
-${S.vesselNotes?`CURRENT NOTES: ${S.vesselNotes}\n`:''}ELECTRONICS: Signal K / OpenPlotter Pi · Class B AIS · iPad Navionics
-
-CONDITIONS (${new Date().toLocaleString('en-GB')}):
-Wind: ${windKn} kn, gusts ${gustKn} kn, direction ${c.wind_direction_10m}° (${deg2cpt(c.wind_direction_10m||0)})
-Sea state: ${waveH} m · Tide: ${tideH} m above CD
-Next ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Next ${lw?`LW ${fmt(new Date(lw.t))} ${lw.h.toFixed(2)} m`:'—'}
-Visibility: ${c.visibility?(c.visibility/1000).toFixed(1)+' km':'—'} · Pressure: ${c.pressure_msl?.toFixed(0)||'—'} hPa
-48h OUTLOOK: ${outlook}
-${sfStr || '(Shipping forecast not cached — search Met Office for current Lundy area forecast)'}
-${liveStr}
-Propulsion: ${S.propulsion==='sail'?'UNDER SAIL':'MOTORING'}
-${aisStr}
-
-Concise skipper's briefing under these exact headings — no preamble, max 400 words:
-**GO/NO-GO** — one sentence verdict
-**WIND & WEATHER** — assessment and watch points
-**TIDE & LOCK** — lock window and tidal strategy for Bristol Channel
-**SAIL PLAN** — specific sails and reef state for these conditions
-${aisActive.length?'**TRAFFIC** — COLREGs obligations for each vessel within 3 nm, and recommended actions\n':''}**WATCH POINTS** — top 3 things to monitor once underway
-**SAFETY** — one line on comms and safety`;
+  const fmt = t => new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 
   if (!S.apiKey) {
     const wn=parseFloat(windKn), bf=bfScale(wn);
     const go=wn<20?'✓ GOOD TO SAIL':wn<28?'⚠ CAUTION':'✕ DO NOT SAIL';
     out.innerHTML=`<h4>Go / No-Go</h4><p>${go} — ${wn.toFixed(1)} kn (F${bf}), gusts ${gustKn} kn, seas ${waveH} m.</p>
-<h4>Tide & Lock</h4><p>Tide ${tideH} m above CD · ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Lock operates 07:00–19:00 GMT / 07:00–22:00 BST (weekdays), 07:00–22:00 weekends. Out on the hour, in on the half. VHF Ch 18.</p>
-<h4>Watch Points</h4><p>1. AIS traffic on Swansea Approach. 2. Monitor pressure trend every 30 min. 3. Tidal streams up to 3 kn — allow for set and drift.</p>
-<h4 style="color:var(--ink3)">No API key</h4><p style="color:var(--ink3);font-size:13px">Rule-based briefing only. Add Anthropic key in Settings for full AI briefings (~0.25p each on Haiku 4.5).</p>`;
+<h4>Tide & Lock</h4><p>Tide ${tideH} m above CD · ${hw?`HW ${fmt(new Date(hw.t))} ${hw.h.toFixed(2)} m`:'—'} · Lock 07:00–21:00 BST (Ch 18).</p>
+<h4>Watch Points</h4><p>1. AIS traffic on Swansea Approach. 2. Monitor pressure every 30 min. 3. Tidal streams to 3 kn.</p>
+<p style="color:var(--ink3);font-size:13px">Add Anthropic key in Settings for full AI briefings.</p>`;
     return;
   }
+
+  const prompt = `${ctx}
+
+Concise skipper's briefing under these exact headings — no preamble, max 400 words:
+**GO/NO-GO** — one sentence verdict
+**WIND & WEATHER** — assessment and watch points  
+**TIDE & LOCK** — lock window and tidal strategy for Bristol Channel
+**SAIL PLAN** — specific sails and reef state for these conditions on a Nicholson 30 with 150% genoa and slab reefing main
+${aisActive.length?'**TRAFFIC** — COLREGs obligations for vessels within 3 nm\n':''}**WATCH POINTS** — top 3 priorities once underway
+**SAFETY** — comms and safety`;
+
+  try {
+    const tools = sf?.lundy ? [] : [{type:'web_search_20250305', name:'web_search'}];
+    const body = {model:S.model, max_tokens:1024, messages:[{role:'user',content:prompt}]};
+    if (tools.length) body.tools = tools;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify(body)
+    });
+    const data=await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    _lastResponse = text;
+    out.innerHTML=mdToHtml(text);
+    $('voice-status').textContent = 'Tap 🔊 to hear this briefing.';
+  } catch(e) {
+    out.innerHTML=`<p style="color:var(--red)">Error: ${e.message}</p>`;
+  }
+}
 
   try {
     const tools = sfStr ? [] : [{type:'web_search_20250305', name:'web_search'}];
