@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --ink:    #e8e2d6; --ink2:   #b8b0a0; --ink3:   #706858;
+  --ink:    #f0ebe0; --ink2:   #cec5b2; --ink3:   #908070;
   --bg:     #0d0f0e; --bg2:    #141714; --bg3:    #1b1f1b;
   --border: #2a2f2a; --amber:  #d4a843; --green:  #5dba6e;
   --red:    #e8605a; --blue:   #5b9fcf; --accent: #c8a45a;
@@ -24,7 +24,7 @@
 }
 /* ── LIGHT THEME ── */
 html[data-theme="light"] {
-  --ink:    #1a1814; --ink2:   #4a4540; --ink3:   #888078;
+  --ink:    #1a1814; --ink2:   #38342e; --ink3:   #706858;
   --bg:     #f0ede6; --bg2:    #e8e5de; --bg3:    #dedad2;
   --border: #c8c4bc; --amber:  #a06800; --green:  #2a7a3c;
   --red:    #b83028; --blue:   #2060a0; --accent: #8a6018;
@@ -39,7 +39,7 @@ html[data-theme="night"] {
   --row-border: #1c0000;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; }
+html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; -webkit-text-size-adjust: 100%; }
 #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
 /* ── HEADER ── */
@@ -71,11 +71,11 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 
 /* ── PANELS ── */
 .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; }
-.panel h2 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
-.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--row-border); }
-.row:last-child { border-bottom: none; }
+.panel h2 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .20em; text-transform: uppercase; color: var(--ink2); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--bg3); gap: 8px; line-height: 1.5; }.row:last-child { border-bottom: none; }
 .k { color: var(--ink3); font-size: 13px; }
-.v { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+.v { font-family: var(--font-mono); font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--bg3); gap: 8px; line-height: 1.5; }
 .v.amber { color: var(--amber); } .v.green { color: var(--green); } .v.red { color: var(--red); } .v.blue { color: var(--blue); }
 .v.big { font-size: 18px; }
 .source { font-size: 10px; color: var(--ink3); margin-top: 8px; font-family: var(--font-mono); }
@@ -134,8 +134,8 @@ nav button.active { color: var(--accent); background: rgba(200,164,90,.1); borde
 .sk-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 
 /* ── AI OUTPUT ── */
-#ai-output { font-size: 15px; line-height: 1.7; color: var(--ink2); min-height: 60px; }
-#ai-output h4 { color: var(--accent); font-size: 11px; font-family: var(--font-mono); letter-spacing: .12em; margin: 12px 0 4px; text-transform: uppercase; }
+#ai-output { font-size: 15px; line-height: 1.75; color: var(--ink); min-height: 60px; }
+#ai-output h4 { color: var(--accent); font-size: 11px; font-family: var(--font-mono); letter-spacing: .14em; margin: 14px 0 5px; text-transform: uppercase; }
 #ai-output p { margin-bottom: 8px; }
 #ai-output strong { color: var(--ink); font-weight: 600; }
 .thinking { color: var(--ink3); font-style: italic; font-family: var(--font-mono); font-size: 12px; animation: pulse 1.4s infinite; }
@@ -4473,66 +4473,128 @@ function initCelestial() {
   buildAlmanac();
 }
 
-// ── SHIPPING FORECAST ─────────────────────────────────────────────
-// Primary: fetches from Pi admin /shipping (which proxies Met Office).
-// Fallback: if Pi is offline, uses localStorage cache (2h TTL).
-// The AI skipper includes the forecast text in its prompt regardless of source.
-async function loadShipping(force) {
-  const CACHE_KEY = 'ava-sf-cache';
-  const TTL = 7200000; // 2h ms
-  const status  = $('sf-status');
-  const galesEl = $('sf-gales');
-  const synopsis= $('sf-synopsis');
-  const lundy   = $('sf-lundy');
-  const bristolW= $('sf-bristol-wrap');
-  const bristol = $('sf-bristol');
+const SF_CACHE_KEY = 'ava-sf-cache';
+const SF_TTL       = 7200000; // 2h ms
 
-  // Try localStorage cache first unless forced refresh
+async function loadShipping(force) {
+  const status = $('sf-status');
+  if (status) status.textContent = 'Loading…';
+
+  // 1. Fresh localStorage cache
   if (!force) {
     try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      if (cached?.fetchedAt > Date.now() - TTL) {
-        _renderShipping(cached);
-        S.shippingForecast = cached;
-        return;
+      const cached = JSON.parse(localStorage.getItem(SF_CACHE_KEY) || 'null');
+      if (cached?.localFetchedAt > Date.now() - SF_TTL) {
+        S.shippingForecast = cached; _renderShipping(cached); return;
       }
     } catch(_) {}
   }
 
-  // Try Pi admin server
+  // 2. Pi admin server (fast when on boat WiFi)
   if (S.adminUrl) {
     try {
-      const r = await fetch(S.adminUrl + '/shipping', {signal: AbortSignal.timeout(12000)});
+      const r = await fetch(S.adminUrl + '/shipping', {signal: AbortSignal.timeout(5000)});
       if (r.ok) {
         const d = await r.json();
-        if (d.ok) {
+        if (d.ok && d.lundy) {
           d.localFetchedAt = Date.now();
-          localStorage.setItem(CACHE_KEY, JSON.stringify(d));
-          S.shippingForecast = d;
-          _renderShipping(d);
-          return;
+          localStorage.setItem(SF_CACHE_KEY, JSON.stringify(d));
+          S.shippingForecast = d; _renderShipping(d); return;
         }
       }
     } catch(_) {}
   }
 
-  // Fall back to stale cache with notice
+  // 3. Direct browser fetch via CORS proxy — works on any WiFi, no Pi needed
   try {
-    const stale = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (status) status.textContent = 'Fetching Met Office…';
+    const d = await _fetchShippingDirect();
+    if (d?.lundy) {
+      localStorage.setItem(SF_CACHE_KEY, JSON.stringify(d));
+      S.shippingForecast = d; _renderShipping(d); return;
+    }
+  } catch(e) { console.warn('Direct shipping fetch:', e.message); }
+
+  // 4. Stale cache fallback
+  try {
+    const stale = JSON.parse(localStorage.getItem(SF_CACHE_KEY) || 'null');
     if (stale) {
       const ageH = Math.round((Date.now() - stale.localFetchedAt) / 3600000);
-      S.shippingForecast = stale;
-      _renderShipping(stale);
-      if (status) status.textContent = `Met Office · cached ${ageH}h ago · Pi offline`;
+      S.shippingForecast = stale; _renderShipping(stale);
+      if (status) status.textContent = `Met Office · cached ${ageH}h ago (offline)`;
       return;
     }
   } catch(_) {}
 
-  // Nothing available
   S.shippingForecast = null;
-  if (status) status.textContent = 'Unavailable — Pi admin server offline (start ava-admin.py on the Pi)';
-  if (lundy)  lundy.textContent  = '';
+  if (status) status.textContent = 'Unavailable — check WiFi';
+  const lundy = $('sf-lundy'); if (lundy) lundy.textContent = '';
 }
+
+// Direct fetch via allorigins CORS proxy — no Pi required
+async function _fetchShippingDirect() {
+  const proxy = u =>
+    `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&t=${Date.now()}`;
+  const [sRes, iRes] = await Promise.allSettled([
+    fetch(proxy('https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/print/shipping-forecast'),
+          {signal: AbortSignal.timeout(20000)}).then(r=>r.json()),
+    fetch(proxy('https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/print/inshore-waters-forecast/'),
+          {signal: AbortSignal.timeout(20000)}).then(r=>r.json()),
+  ]);
+  const sHtml = sRes.status==='fulfilled' ? sRes.value?.contents : '';
+  const iHtml = iRes.status==='fulfilled' ? iRes.value?.contents  : '';
+  if (!sHtml) throw new Error('No content from shipping page');
+  const s = _parseShippingJS(sHtml);
+  const i = iHtml ? _parseInshoreJS(iHtml) : {};
+  return {ok:true, ...s, situation:i.situation||'', bristol_channel:i.bristol||'',
+          source:'direct', localFetchedAt:Date.now(), fetchedAt:Date.now()};
+}
+
+function _cleanHTML(html) {
+  return html.replace(/<[^>]+>/g,' ')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/&nbsp;/g,' ').replace(/&#[0-9]+;/g,'')
+    .replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+function _parseShippingJS(html) {
+  const b = _cleanHTML(html);
+  const issued = (b.match(/Forecast valid from[^\n]{0,150}/) || b.match(/Issued by the Met Office[^\n]+/) || [''])[0].trim();
+  const synM = b.match(/general synopsis([\s\S]{0,600}?)(?=The area forecasts|area forecast|###|##)/i);
+  const synopsis = synM ? synM[1].replace(/^at midnight\s*/i,'').replace(/\s+/g,' ').trim() : '';
+  const lundyHd = b.search(/Lundy[^#\n]{0,60}(?:\n|$)/i);
+  let lundy = '';
+  if (lundyHd >= 0) {
+    const rest = b.slice(b.indexOf('\n', lundyHd)+1);
+    const stop = rest.search(/\n[A-Z][a-zA-Z ,\/]{6,}\n|\n##/);
+    lundy = rest.slice(0, stop>0?stop:600).replace(/\s+/g,' ').trim();
+  }
+  const galeM = b.match(/Gale warnings?([\s\S]{0,800}?)(?=\n##|$)/i);
+  let gales = 'No gale warnings in force.';
+  if (galeM) {
+    const raw = galeM[1].replace(/Sea area gale warnings issued by[^\n]*/,'')
+      .replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ').trim();
+    if (raw && !/^None/i.test(raw)) gales = raw;
+  }
+  return {issued, synopsis, lundy, gales};
+}
+
+function _parseInshoreJS(html) {
+  const b = _cleanHTML(html);
+  const sitM = b.match(/General situation([\s\S]{0,500}?)(?=\n[A-Z][a-zA-Z ,]{8,}\n|\n##)/i);
+  const situation = sitM ? sitM[1].replace(/\s+/g,' ').trim() : '';
+  const brHd = b.search(/Lands? End to St\.? Davids? Head/i);
+  let bristol = '';
+  if (brHd >= 0) {
+    const rest = b.slice(b.indexOf('\n', brHd)+1);
+    const stop = rest.search(/\n[A-Z][a-zA-Z ,\/]{6,}\n|\n##/);
+    bristol = rest.slice(0, stop>0?stop:600)
+      .replace(/^.*?(?:Strong wind warning|warning)\s*/i,'')
+      .replace(/\s+/g,' ').trim();
+  }
+  return {situation, bristol};
+}
+
 
 function _renderShipping(d) {
   const status  = $('sf-status');
