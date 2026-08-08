@@ -4477,6 +4477,19 @@ const SF_CACHE_KEY = 'ava-sf-cache';
 const SF_TTL       = 7200000; // 2h ms
 
 async function loadShipping(force) {
+  // Hard 18-second cap so shipping NEVER blocks the rest of the app
+  const _timer = new Promise((_,rej)=>setTimeout(()=>rej(new Error('shipping timeout')),18000));
+  try { await Promise.race([_loadShippingCore(force), _timer]); }
+  catch(e) {
+    console.warn('Shipping:', e.message);
+    const st=$('sf-status'); if(st) st.textContent='Shipping forecast unavailable — check WiFi';
+  }
+}
+
+async function _loadShippingCore(force) {
+  const status = $('sf-status');
+  if (status) status.textContent = 'Loading…';
+
   const status = $('sf-status');
   if (status) status.textContent = 'Loading…';
 
@@ -4531,19 +4544,22 @@ async function loadShipping(force) {
   const lundy = $('sf-lundy'); if (lundy) lundy.textContent = '';
 }
 
-// Direct fetch via allorigins CORS proxy — no Pi required
+
 async function _fetchShippingDirect() {
+  // allorigins.win is a free CORS proxy — keep timeout tight so it never hangs the app
   const proxy = u =>
     `https://api.allorigins.win/get?url=${encodeURIComponent(u)}&t=${Date.now()}`;
+  const TOUT = 8000; // 8 s — fail fast, stale cache is better than hanging
+
   const [sRes, iRes] = await Promise.allSettled([
     fetch(proxy('https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/print/shipping-forecast'),
-          {signal: AbortSignal.timeout(20000)}).then(r=>r.json()),
+          {signal: AbortSignal.timeout(TOUT)}).then(r=>r.json()),
     fetch(proxy('https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/print/inshore-waters-forecast/'),
-          {signal: AbortSignal.timeout(20000)}).then(r=>r.json()),
+          {signal: AbortSignal.timeout(TOUT)}).then(r=>r.json()),
   ]);
   const sHtml = sRes.status==='fulfilled' ? sRes.value?.contents : '';
   const iHtml = iRes.status==='fulfilled' ? iRes.value?.contents  : '';
-  if (!sHtml) throw new Error('No content from shipping page');
+  if (!sHtml) throw new Error('No content returned from shipping proxy');
   const s = _parseShippingJS(sHtml);
   const i = iHtml ? _parseInshoreJS(iHtml) : {};
   return {ok:true, ...s, situation:i.situation||'', bristol_channel:i.bristol||'',
@@ -4732,22 +4748,50 @@ function celRender(openCurrent = true) {
 
 // ── INIT ───────────────────────────────────────────────────────────
 function init() {
-  if (pinLockActive() && sessionStorage.getItem('ava-unlocked') !== '1') showPinLock();
-  applyTheme(localStorage.getItem('ava-theme') || 'dark');
-  renderPassageLog();
-  initSettings();
-  $('p-date').value=new Date().toISOString().split('T')[0];
-  initCelestial();
-  celRender();
-  loadTides();
-  loadWeather();
-  loadWaves();
-  loadShipping();
+  // Emergency reset: https://mmstrauss.github.io/ava-nav/ava-nav.html?reset
+  if (location.search.includes('reset')) {
+    try { localStorage.clear(); sessionStorage.clear(); } catch(_) {}
+    history.replaceState(null,'',location.pathname);
+    location.reload();
+    return;
+  }
+
+  try {
+    if (pinLockActive() && sessionStorage.getItem('ava-unlocked') !== '1') showPinLock();
+    applyTheme(localStorage.getItem('ava-theme') || 'dark');
+    renderPassageLog();
+    initSettings();
+    $('p-date').value=new Date().toISOString().split('T')[0];
+    initCelestial();
+    celRender();
+  } catch(e) {
+    console.error('Init error:', e);
+    document.body.insertAdjacentHTML('afterbegin',
+      `<div style="position:fixed;inset:0;background:#0d0f0e;color:#e8e2d6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9999;font-family:monospace;padding:24px;text-align:center">
+        <div style="font-size:28px">⚓</div>
+        <div style="font-size:14px;color:#e8605a">Ava-Nav failed to start</div>
+        <div style="font-size:12px;color:#908070;max-width:300px">${e.message}</div>
+        <button onclick="location.href=location.pathname+'?reset'" style="background:#c8a45a;color:#000;border:none;border-radius:6px;padding:10px 20px;font-family:monospace;font-size:12px;cursor:pointer">Clear cache &amp; reload</button>
+        <button onclick="location.reload()" style="background:none;color:#908070;border:1px solid #908070;border-radius:6px;padding:8px 16px;font-family:monospace;font-size:12px;cursor:pointer">Try plain reload</button>
+      </div>`);
+    return;
+  }
+
+  // Fire async data loads — each independently, never blocking each other
+  loadTides().catch(e => console.warn('Tides:', e));
+  loadWeather().catch(e => console.warn('Weather:', e))
+    .finally(() => {
+      // Shipping fetched AFTER weather so they don't compete for connections
+      setTimeout(() => loadShipping().catch(e => console.warn('Shipping:', e)), 500);
+    });
+  loadWaves().catch(e => console.warn('Waves:', e));
+
   renderDayView(0);
   setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
-  setInterval(loadTides, 12*3600000);
-  setInterval(loadWeather,15*60*1000);
-  setInterval(loadWaves, 6*3600000);
+  setInterval(() => loadTides().catch(console.warn),    12*3600000);
+  setInterval(() => loadWeather().catch(console.warn),  15*60*1000);
+  setInterval(() => loadWaves().catch(console.warn),     6*3600000);
+  setInterval(() => loadShipping().catch(console.warn),  2*3600000);
 }
 init();
 </script>
