@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ava · Nav">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#0d0f0e" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f0ede6" media="(prefers-color-scheme: light)">
 <title>Ava · Nav</title>
@@ -276,6 +279,8 @@ details.cel-step[open] .cel-step-chev { transform:rotate(90deg); }
 </style>
 </head>
 <body>
+<!-- BUILD: 2026-08-08-A -->
+<div id="build-stamp" style="position:fixed;bottom:4px;right:8px;font-family:monospace;font-size:9px;color:#444;z-index:500;pointer-events:none;letter-spacing:.05em">build 0808-A</div>
 
 <!-- ── PIN LOCK ── -->
 <div id="pin-overlay" class="hidden">
@@ -2656,10 +2661,12 @@ function wCodeDesc(c) {
 
 // ── WEATHER ────────────────────────────────────────────────────────
 async function loadWeather() {
+  const tout = 12000; // 12s timeout — never hang on "Loading conditions"
+  const signal = AbortSignal.timeout ? AbortSignal.timeout(tout) : (() => { const c=new AbortController(); setTimeout(()=>c.abort(),tout); return c.signal; })();
   try {
     const [atm,mar] = await Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=kn&forecast_days=16&timezone=Europe/London').then(r=>r.json()),
-      fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London').then(r=>r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=51.617&longitude=-3.944&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,weather_code&hourly=pressure_msl,wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=weather_code,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min&wind_speed_unit=kn&forecast_days=7&timezone=Europe/London', {signal}).then(r=>r.json()),
+      fetch('https://marine-api.open-meteo.com/v1/marine?latitude=51.566&longitude=-3.978&current=wave_height,wave_direction,wave_period&timezone=Europe/London', {signal}).then(r=>r.json()),
     ]);
     S.weather=atm; S.marine=mar;
     const c=atm.current;
@@ -2695,7 +2702,16 @@ async function loadWeather() {
     }
     // Re-render the selected day if the user had switched away from Today
     if (S.selectedDay !== 0) renderDayView(S.selectedDay);
-  } catch(e) { console.error('Weather load failed',e); }
+  } catch(e) {
+    console.error('Weather load failed:', e.message);
+    // Update banner so it never stays on "Loading conditions" forever
+    const banner = $('gonogo-banner');
+    if (banner) {
+      banner.className = 'gonogo-caution';
+      const v = $('gonogo-verdict'); if(v) v.textContent = 'Weather unavailable';
+      const r = $('gonogo-reason'); if(r) r.textContent = 'Check WiFi · tap ↻ Refresh to retry';
+    }
+  }
 }
 
 function buildBfBar(bf) {
@@ -4765,7 +4781,7 @@ function init() {
     });
   loadWaves().catch(e => console.warn('Waves:', e));
 
-  renderDayView(0);
+  try { renderDayView(0); } catch(e) { console.warn('renderDayView:', e.message); }
   setInterval(()=>{ if(S.selectedDay===0) renderDayView(0); }, 60000);
   setInterval(() => loadTides().catch(console.warn),    12*3600000);
   setInterval(() => loadWeather().catch(console.warn),  15*60*1000);
